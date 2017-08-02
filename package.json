@@ -9,6 +9,8 @@
   "author": "Kananek Thongkam <info.dvgamer@gmail.com>",
   "license": "ISC",
   "dependencies": {
+    "async-q": "^0.3.1",
+    "q": "^1.5.0",
     "request": "^2.81.0",
     "request-promise": "^4.2.1"
   }

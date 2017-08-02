@@ -26,7 +26,11 @@ let getLinks = url => {
 		let image = /id="img".*?src="(.*?)"/ig.exec(res)[1]
 		let nl = /return nl\('(.*?)'\)/ig.exec(res)[1]
 
-		console.log('donwloader --> ', image)
+		let msg = `[${(index + 1)}/${Manga.page}] Downloading -->`
+	  process.stdout.clearLine()
+	  process.stdout.cursorTo(0)
+		process.stdout.write(msg)
+
 		let req = request2({
 			method: 'GET',
 			headers: {
@@ -44,25 +48,30 @@ let getLinks = url => {
 	    		case 'image/jpg':
 	    		case 'image/jpeg':
 	    			// def.resolve()
-	    			let dir = `./downloader/${Manga.name}/`
-	    			req.pipe(fs.createWriteStream(`./downloader/${index}.jpg`))
+	    			let name = Manga.name.replace(/[\/\\|.:?<>"]/ig,'')
+	    			let dir = `./downloader/${name}/`
+	    			req.pipe(fs.createWriteStream(`./downloader/${(index+1)}.jpg`))
 						// writer.on('end', () => {
-						console.log(`     saved --> ./downloader/${index}.jpg'`)
+	  				process.stdout.cursorTo(msg.length + 1)
+						process.stdout.write(` saved --> ./downloader/${(index+1)}.jpg`)
+						// console.log(`     saved --> ./downloader/${index}.jpg'`)
 					  def.resolve()
 						// })
 	    			break;
 	    		default:
-	    			console.log(index, '--> ', response.headers['content-type'])
+	    			// console.log(index, '--> ', response.headers['content-type'])
 	    			def.resolve()
 	    			break;
 	    	}
 	    } else {
-  			console.log(index, '--> ', response.statusCode, response.headers['content-type'])
+  			// console.log(index, '--> ', response.statusCode, response.headers['content-type'])
     		def.resolve()
 	    }
 	  })
 	  req.on('error', function(err) {
-	    console.log(' not found -->', index, err.message)
+			process.stdout.cursorTo(msg.length + 1)
+			process.stdout.write(` not found --> err.message`)
+	    // console.log(' not found -->', index, err.message)
 	    let link = Manga.items[index]
 	    Manga.items[index] = `${link}${link.indexOf('?') > -1 ? '&' : '?'}nl=${nl}`
     	request({ url: Manga.items[index] }).then(res => { getImage(res, index, def) })
@@ -82,7 +91,6 @@ let getLinks = url => {
 		if (Manga.items.length != Manga.page) {
 			let all = []
 			for (let i = 1; i < Math.ceil(Manga.page / Manga.items.length); i++) {
-				console.log('page:', `${url}?p=${i}`)
 				all.push(() => request({ uri: `${url}?p=${i}` }).then((res) => addItem(res)))
 			}
 			return async.series(all).then(()=>{
@@ -92,7 +100,7 @@ let getLinks = url => {
 	}).then(() => {
 		let all = []
 		for (let i = 0; i < Manga.items.length; i++) {
-			console.log('link:', Manga.items[i])
+			// console.log('link:', Manga.items[i])
 			all.push(() => {
 				let def = Q.defer()
 				let index = i
@@ -102,12 +110,13 @@ let getLinks = url => {
 		}
 		return async.series(all)
 	}).then(() => {
-
+		process.stdout.cursorTo((`[${Manga.page}/${Manga.page}] Downloading -->`).length + 1)
+		process.stdout.write(` Successful.\n`)
 	})
 }
 
 // https://e-hentai.org/g/1094682/dc0dc56bec/
 // https://e-hentai.org/g/1065889/6f6def69bd/
-getLinks('https://e-hentai.org/g/1094682/dc0dc56bec/').then(()=>{
-	console.log('Successful.')
+getLinks('https://e-hentai.org/g/1065889/6f6def69bd/').then(()=>{
+	console.log('End.')
 })

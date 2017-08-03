@@ -2,6 +2,12 @@
 ### Overview
 โปรแกรมดาวน์โหลดมังงะจาก `e-hentai.org` เท่านั้น สามารถดาวน์โหลดได้ทีละ 1 เรื่อง แล้วเก็บอยู่ในโฟลเดอร์ `downloader` ตามชื่อเรื่องนั้นๆ 
 
+#### ตัวอย่างโปรแกรมที่จะให้ใช้งาน
+โปรแกรมเก่าที่เขียนด้วยภาษา C#
+
+![app][app-c#]
+
+
 ### Installation
 ``` bash
 git clone https://github.com/unhax/ghentai-downloader.git
@@ -10,5 +16,14 @@ npm i
 npm run loader "https://e-hentai.org/g/1090454/ca52c4401c/"
 ```
 
+![command line][beta-cmd]
+
 ### Milestones
 - Window App
+
+
+
+
+
+[beta-cmd]: https://raw.githubusercontent.com/unhax/ghentai-downloader/master/docs/beta-cmd-loader.png
+[app-c#]: https://raw.githubusercontent.com/unhax/ghentai-downloader/master/docs/sample-app.jpg

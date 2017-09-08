@@ -135,7 +135,7 @@
         }
       },
       onQueue (item) {
-        if (this.url.trim() !== '' && /e-hentai.org\/g\/\w{1,7}\/\w{1,10}/g.test(this.url.trim())) {
+        if (this.url.trim() !== '' && /hentai.org\/g\/\w{1,7}\/\w{1,10}/g.test(this.url.trim())) {
           this.urlBegin()
         } else if (this.manga.length > 0) {
           this.beginDownload()

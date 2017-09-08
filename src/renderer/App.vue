@@ -2,18 +2,26 @@
   <div id="app"> 
     <div class="header">
       <div class="row">
-        <div class="col-xs-9">
+        <div class="col-xs-8">
           <div class="form-group">
-            <input type="text" class="form-control input-sm" id="inputSuccess1" aria-describedby="helpBlock2" placeholder="https://e-hentai.org/g/1031609/631e04b5f7/" @keyup.enter="addManga">
+            <input :readonly="state_verify" type="text" class="form-control input-sm" id="inputSuccess1" aria-describedby="helpBlock2" placeholder="https://e-hentai.org/g/1031609/631e04b5f7/" maxlength="50" @keyup.enter="onAddManga" v-model="url">
             <i class="fa fa-link fa-input-left" aria-hidden="true"></i>
             <i class="fa fa-search fa-input-right" aria-hidden="true"></i>
-            <span id="helpBlock2" class="help-block">A block of help text that breaks onto a new line and may extend beyond one line.</span>
+            <span id="helpBlock2" class="help-block" style="color: #616161;"><b>Save as directory:</b> {{directory_name}}</span>
           </div>
         </div>
-        <div class="col-xs-3">
-          <button type="submit" class="btn btn-sm btn-default btn-block">
-            <i class="fa fa-download" aria-hidden="true"></i> Download
-          </button>
+        <div class="col-xs-4">
+          <div class="btn-group" role="group">
+            <button :disabled="state_verify" type="button" class="btn" 
+              :class="!state_verify ? 'btn-success' : 'btn-default'" 
+              style="padding: 5px 27px;width: 136px;" @click="onAddManga">
+              <i :class="['fa', state_icon]"  aria-hidden="true"></i> {{state_name}}
+            </button>
+            <button :disabled="state_verify" type="button" 
+              class="btn btn-default" style="padding: 5px 11px;" @click="onBrowse">
+              <i class="fa fa-folder-o" aria-hidden="true"></i>
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -38,7 +46,7 @@
         <tbody>
           <tr>
             <td colspan="5" style="padding: 0px !important;">
-              <div style="height:216px;overflow-x:hidden;overflow-y:scroll;">
+              <div style="height:224px;overflow-x:hidden;overflow-y:scroll;">
               <table class="table table-striped manga-items" style="padding:0px;margin:0px;">
                 <colgroup>
                   <col style="width:6%;">
@@ -68,37 +76,59 @@
 </template>
 
 <script>
-  import { ipcRenderer as ipc } from 'electron'
-  import store from 'renderer/vuex/store'
-
-  ipc.on('CLIENT_GET_FOLDER_ANIME', (e, path) => {
-    console.log('CLIENT_GET_FOLDER_ANIME')
-    store.commit('anime-loadding')
-    if (path && path[0]) {
-      store.commit('anime-set_path', path[0])
-    }
-  })
-
   export default {
-    store,
+    name: 'ghentai',
     data: () => {
       return {
-        manga: [
-          { name: 'aaaa', language: 'Thai', size: '3.2 mb', page: 18, items: [ '' ], status: 'Pendding' },
-          { name: 'aaaa', language: 'Thai', size: '3.2 mb', page: 18, items: [ '' ], status: 'Pendding' },
-          { name: 'aaaa', language: 'Thai', size: '3.2 mb', page: 18, items: [ '' ], status: 'Pendding' },
-          { name: 'aaaa', language: 'Thai', size: '3.2 mb', page: 18, items: [ '' ], status: 'Pendding' },
-          { name: 'aaaa', language: 'Thai', size: '3.2 mb', page: 18, items: [ '' ], status: 'Pendding' },
-          { name: 'aaaa', language: 'Thai', size: '3.2 mb', page: 18, items: [ '' ], status: 'Pendding' },
-          { name: 'aaaa', language: 'Thai', size: '3.2 mb', page: 18, items: [ '' ], status: 'Pendding' },
-          { name: 'aaaa', language: 'Thai', size: '3.2 mb', page: 18, items: [ '' ], status: 'Pendding' },
-          { name: 'aaaa', language: 'Thai', size: '3.2 mb', page: 18, items: [ '' ], status: 'Pendding' }
-        ]
+        state_verify: false,
+        state_icon: 'fa-download',
+        state_name: 'Download',
+        url: 'https://e-hentai.org/g/1031609/631e04b5f7/',
+        directory_name: '%USERPROFILE%\\Downloads',
+        manga: []
       }
     },
 
     methods: {
-      getIndex (item) {
+      urlBegin () {
+        let vm = this
+        let found = false
+        for (var i = 0; i < vm.manga.length; i++) {
+          if (vm.manga[i].url === vm.url) {
+            found = true
+            break
+          }
+        }
+        if (!found) {
+          vm.state_verify = true
+          vm.state_icon = 'fa-circle-o-notch fa-spin fa-fw'
+          vm.state_name = 'Initialize...'
+          vm.URL_VERIFY(vm.url).then(manga => {
+            if (manga) {
+              manga.url = vm.url
+              manga.status = 'WAITING'
+              vm.manga.push(manga)
+            }
+            vm.urlDone()
+          })
+        }
+      },
+      urlDone () {
+        this.state_verify = false
+        this.state_icon = 'a-download'
+        this.state_name = 'Download'
+      },
+      onAddManga (item) {
+        if (/e-hentai.org\/g\/\w{1,7}\/\w{1,10}/g.test(this.url.trim())) {
+          console.log('add', this.url)
+          this.urlBegin()
+        }
+      },
+      onBrowse (item) {
+        let vm = this
+        vm.CHANGE_DIRECTORY().then(folder => {
+          if (folder) vm.directory_name = folder
+        })
       }
     },
     created () {
@@ -168,4 +198,14 @@
     padding: 4px;
     font-size: 1rem;
   }
+
+  ::-webkit-scrollbar {
+    width: 5px;
+    height: 8px;
+    background-color: #aaa;
+  }
+  ::-webkit-scrollbar-thumb {
+      background: #000; 
+  }
+  
 </style>

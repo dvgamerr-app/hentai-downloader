@@ -17,6 +17,13 @@ export function server (mainWindow) {
       console.log('URL_VERIFY', e)
     })
   })
+  ipcMain.on('DOWNLOAD_BEGIN', function (e, sender) {
+    hentai.emiter.download(sender.manga, sender.directory, e.sender).then(() => {
+      e.sender.send('DOWNLOAD_COMPLATE')
+    }).catch(e => {
+      console.log('DOWNLOAD_COMPLATE', e)
+    })
+  })
 }
 export const client = {
   config: {},
@@ -27,7 +34,6 @@ export const client = {
           let def = Q.defer()
           ipcRenderer.send('CHANGE_DIRECTORY')
           ipcRenderer.once('CHANGE_DIRECTORY', (e, dir) => {
-            console.log('CHANGE_DIRECTORY', dir ? dir[0] : '')
             def.resolve(dir ? dir[0] : '')
           })
           return def.promise
@@ -37,6 +43,18 @@ export const client = {
           ipcRenderer.send('URL_VERIFY', url)
           ipcRenderer.once('URL_VERIFY', (e, manga) => {
             def.resolve(manga)
+          })
+          return def.promise
+        },
+        DOWNLOAD: (manga, events) => {
+          let def = Q.defer()
+          ipcRenderer.send('DOWNLOAD_BEGIN', manga)
+          ipcRenderer.on('DOWNLOAD_WATCH', (e, status) => {
+            events(status)
+          })
+          ipcRenderer.once('DOWNLOAD_COMPLATE', (e, manga) => {
+            ipcRenderer.removeListener('DOWNLOAD_WATCH', (e) => { })
+            def.resolve()
           })
           return def.promise
         }

@@ -4,7 +4,7 @@
       <div class="row">
         <div class="col-xs-8">
           <div class="form-group">
-            <input :readonly="state_verify" type="text" class="form-control input-sm" id="inputSuccess1" aria-describedby="helpBlock2" placeholder="https://e-hentai.org/g/1031609/631e04b5f7/" maxlength="50" @keyup.enter="onAddManga" v-model="url">
+            <input ref="url" :readonly="state_verify" type="text" class="form-control input-sm" id="inputSuccess1" aria-describedby="helpBlock2" placeholder="https://e-hentai.org/g/1031609/631e04b5f7/" maxlength="50" @keyup.enter="onQueue" v-model="url">
             <i class="fa fa-link fa-input-left" aria-hidden="true"></i>
             <i class="fa fa-search fa-input-right" aria-hidden="true"></i>
             <span id="helpBlock2" class="help-block" style="color: #616161;"><b>Save as directory:</b> {{directory_name}}</span>
@@ -12,9 +12,9 @@
         </div>
         <div class="col-xs-4">
           <div class="btn-group" role="group">
-            <button :disabled="state_verify" type="button" class="btn" 
+            <button :disabled="state_verify || (!directory_name && state_name === 'Download')" type="button" class="btn" 
               :class="!state_verify ? 'btn-success' : 'btn-default'" 
-              style="padding: 5px 27px;width: 136px;" @click="onAddManga">
+              style="padding: 5px 27px;width: 136px;" @click="onQueue">
               <i :class="['fa', state_icon]"  aria-hidden="true"></i> {{state_name}}
             </button>
             <button :disabled="state_verify" type="button" 
@@ -81,10 +81,10 @@
     data: () => {
       return {
         state_verify: false,
-        state_icon: 'fa-download',
-        state_name: 'Download',
-        url: 'https://e-hentai.org/g/1031609/631e04b5f7/',
-        directory_name: '%USERPROFILE%\\Downloads',
+        state_icon: 'fa-list',
+        state_name: 'Queue',
+        url: '',
+        directory_name: null,
         manga: []
       }
     },
@@ -93,10 +93,11 @@
       urlBegin () {
         let vm = this
         let found = false
-        for (var i = 0; i < vm.manga.length; i++) {
-          if (vm.manga[i].url === vm.url) {
-            found = true
-            break
+        for (var i = vm.manga.length - 1; i >= 0; i--) {
+          if (vm.manga[i].status !== 'DONE') {
+            if (vm.manga[i].url === vm.url) found = true
+          } else {
+            vm.manga.splice(i, 1)
           }
         }
         if (!found) {
@@ -114,14 +115,32 @@
         }
       },
       urlDone () {
+        this.$refs.url.focus()
+        this.state_icon = 'fa-download'
+        this.state_name = 'Redownload'
         this.state_verify = false
-        this.state_icon = 'a-download'
-        this.state_name = 'Download'
+        this.url = ''
       },
-      onAddManga (item) {
-        if (/e-hentai.org\/g\/\w{1,7}\/\w{1,10}/g.test(this.url.trim())) {
-          console.log('add', this.url)
+      beginDownload () {
+        let vm = this
+        vm.state_verify = true
+        vm.state_icon = 'fa-circle-o-notch fa-spin fa-fw'
+        vm.state_name = 'Loading...'
+        vm.DOWNLOAD({ manga: vm.manga, directory: vm.directory_name }, vm.onWatch).then(vm.urlDone)
+      },
+      onWatch (manga) {
+        this.manga[manga.index].status = manga.status
+        if (manga.finish) {
+          this.manga[manga.index].status = 'DONE'
+        }
+      },
+      onQueue (item) {
+        if (this.url.trim() !== '' && /e-hentai.org\/g\/\w{1,7}\/\w{1,10}/g.test(this.url.trim())) {
           this.urlBegin()
+        } else if (this.manga.length > 0) {
+          this.beginDownload()
+        } else {
+          this.urlDone()
         }
       },
       onBrowse (item) {
@@ -131,13 +150,27 @@
         })
       }
     },
+    watch: {
+      url (value) {
+        if (value || this.manga.length === 0) {
+          this.state_icon = 'fa-list'
+          this.state_name = 'Queue'
+        } else {
+          this.state_icon = 'fa-download'
+          this.state_name = 'Download'
+        }
+      }
+    },
     created () {
+      let vm = this
+      this.$nextTick(() => {
+        vm.$refs.url.focus()
+      })
     }
   }
 </script>
 
 <style>
-
   * {
     margin: 0;
     padding: 0;
@@ -155,7 +188,7 @@
     font-size: 0.9rem;
   }
   .form-control, .btn {
-    border-radius: 0px;
+    border-radius: 0px !important;
     box-shadow: none !important;
   }
   input.input-sm {

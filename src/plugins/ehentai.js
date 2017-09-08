@@ -1,19 +1,29 @@
 'use strict'
+import slack from './slack.js'
 
 const fs = require('fs')
+const path = require('path')
 const async = require('async-q')
 const Q = require('q')
 const xhr = require('request')
 const request = require('request-promise')
+const events = require('events')
+const em = new events.EventEmitter()
 
-let getImage = (res, manga, index, def) => {
+let getFilename = (index, total) => {
+  return `${Math.pow(10, (total.toString().length - index.toString().length) + 1).toString().substr(2, 10) + index}`
+}
+
+let getImage = (res, manga, l, index, def, directory, emit) => {
   let image = /id="img".*?src="(.*?)"/ig.exec(res)[1]
   let nl = /return nl\('(.*?)'\)/ig.exec(res)[1]
+  let filename = getFilename(index + 1, manga.page)
 
-  let msg = `Downloading...  -- '${(index + 1)}.jpg' of ${manga.page} files -->`
-  process.stdout.clearLine()
-  process.stdout.cursorTo(0)
-  process.stdout.write(msg)
+  emit.send('DOWNLOAD_WATCH', { index: l, status: `${filename} of ${manga.page}`, finish: false })
+  // let msg = `Downloading...  -- '${(index + 1)}.jpg' of ${manga.page} files -->`
+  // process.stdout.clearLine()
+  // process.stdout.cursorTo(0)
+  // process.stdout.write(msg)
 
   let req = xhr({
     method: 'GET',
@@ -32,19 +42,19 @@ let getImage = (res, manga, index, def) => {
       switch (response.headers['content-type']) {
         case 'image/jpg':
         case 'image/jpeg':
-          // def.resolve()
-          process.stdout.cursorTo(msg.length + 1)
-          process.stdout.write(` saved.`)
-
           let name = manga.name.replace(/[/\\|.:?<>"]/ig, '')
-          let dir = `./downloader/${name}/`
+          let dir = path.join(directory, name)
 
           if (!fs.existsSync(dir)) fs.mkdirSync(dir)
-          req.pipe(fs.createWriteStream(`${dir}${(index + 1)}.jpg`))
-          // writer.on('end', () => {
-          // console.log(`     saved --> ./downloader/${index}.jpg'`)
-          def.resolve()
-          // })
+          let fsStream = fs.createWriteStream(`${dir}/${filename}.jpg`)
+          req.pipe(fsStream)
+
+          fsStream.on('finish', () => {
+            emit.send('DOWNLOAD_WATCH', { index: l, status: `${filename} of ${manga.page}`, finish: (parseInt(manga.page) === index + 1) })
+            def.resolve()
+            fsStream.close()
+          })
+
           break
         default:
           // console.log(index, '--> ', response.headers['content-type'])
@@ -57,29 +67,34 @@ let getImage = (res, manga, index, def) => {
     }
   })
   req.on('error', err => {
-    process.stdout.cursorTo(msg.length + 1)
-    process.stdout.write(` ${err.message}`)
-    // console.log(' not found -->', index, err.message)
+    // process.stdout.cursorTo(msg.length + 1)
+    // process.stdout.write(` ${err.message}`)
+    if (process.env.NODE_ENV === 'development') {
+      console.log(' not found -->', index, err.message)
+    }
     let link = manga.items[index]
     manga.items[index] = `${link}${link.indexOf('?') > -1 ? '&' : '?'}nl=${nl}`
-    request({ url: manga.items[index] }).then(res => { getImage(res, manga, index, def) })
+    request({ url: manga.items[index] }).then(res => { getImage(res, manga, l, index, def, directory, emit) })
   })
 }
-
-export function download (manga, diectory) {
+em.download = (list, directory, emit) => {
+  // emit('DOWNLOAD_WATCH', {})
   let all = []
-  for (let i = 0; i < manga.items.length; i++) {
-    // console.log('link:', manga.items[i])
-    all.push(() => {
-      let def = Q.defer()
-      let index = i
-      request(manga.items[index]).then(res => { getImage(res, manga, index, def) })
-      return def.promise
-    })
+  for (let l = 0; l < list.length; l++) {
+    let manga = list[l]
+    for (let i = 0; i < manga.items.length; i++) {
+      // console.log('link:', manga.items[i])
+      all.push(() => {
+        let def = Q.defer()
+        request(manga.items[i]).then(res => { getImage(res, manga, l, i, def, directory, emit) })
+        return def.promise
+      })
+    }
   }
   return async.series(all)
 }
 
+export const emiter = em
 export function init (link) {
   let addItem = (manga, data) => {
     let links = data.match(/gdtm".*?<a href="(.*?)">/ig)
@@ -115,16 +130,28 @@ export function init (link) {
     let language = /Language:.*?class="gdt2">(.*?)&/ig.exec(res)
     let size = /File Size:.*?class="gdt2">(.*?)</ig.exec(res)
     let length = /Length:.*?gdt2">(.*?).page/ig.exec(res)
+    let cover = /<div id="gleft">.*?url\((.*?)\)/ig.exec(res)
 
-    let manga = { name: name[1], language: language[1], size: size[1], page: length[1], items: [] }
+    let manga = {
+      url: link,
+      name: name[1],
+      cover: cover[1],
+      language: language[1],
+      size: size[1],
+      page: length[1],
+      items: []
+    }
 
     if (!manga.name) throw new Error('manga.name is not found')
     if (!manga.language) throw new Error('manga.language is not found')
     if (!manga.size) throw new Error('manga.size is not found')
     if (!manga.page) throw new Error('manga.page is not found')
 
-    console.log(manga.name)
-    console.log(`${manga.language} -- ${manga.size} (${manga.page})`)
+    slack(manga)
+    if (process.env.NODE_ENV === 'development') {
+      console.log(manga.name)
+      console.log(`${manga.language} -- ${manga.size} (${manga.page})`)
+    }
 
     addItem(manga, res)
     if (manga.items.length !== manga.page) {

@@ -17,6 +17,5 @@
 
 ![app][app-new]
 
-
 [app-c#]: https://raw.githubusercontent.com/unhax/ghentai-downloader/master/docs/sample-app.jpg
 [app-new]: https://raw.githubusercontent.com/unhax/ghentai-downloader/master/docs/new-app.png

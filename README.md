@@ -16,7 +16,7 @@
 - [ ] เพิ่ม login `forums.e-hentai.org`
 - [ ] auto-update โปรแกรม
 
-![app][app-new]
+![app][app-items]
 
 ### โปรแกรมเวอชั่นก่อนหน้านี้
 ซึ่งถูกพัฒนาด้วยภาษา C# และยังพบข้อจำกัดในการเข้าถึงข้อมูลผ่าน protocal https อยู่หลายส่วน
@@ -24,4 +24,4 @@
 ![app][app-c#]
 
 [app-c#]: https://raw.githubusercontent.com/unhax/ghentai-downloader/master/docs/sample-app.jpg
-[app-new]: https://raw.githubusercontent.com/unhax/ghentai-downloader/master/docs/new-app.png
+[app-items]: https://raw.githubusercontent.com/unhax/ghentai-downloader/master/docs/app-items.png

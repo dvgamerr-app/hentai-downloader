@@ -1,5 +1,5 @@
 'use strict'
-import slack from './slack.js'
+import { slack, logs } from './slack.js'
 
 const URL = require('url-parse')
 const fs = require('fs')
@@ -105,6 +105,7 @@ export function init (link) {
     }
   }
 
+  let checkpoint = 0
   return (() => {
     let def = Q.defer()
     if (!/http.*?\/\/.*?hentai.org\/g\/\d+?\/[a-f0-9]{10}\//ig.test(link)) {
@@ -114,6 +115,7 @@ export function init (link) {
     }
     return def.promise
   })().then(() => {
+    checkpoint = new Date()
     return request({
       url: link,
       header: {
@@ -127,6 +129,7 @@ export function init (link) {
       }
     })
   }).then(res => {
+    logs('hentai-downloader', `*request time* \`${Math.round(new Date() - checkpoint)}ms\`\n${link}`)
     let name = /<div id="gd2">.*?gn">(.*?)<\/.*?gj">(.*?)<\/.*?<\/div>/ig.exec(res)
     let language = /Language:.*?class="gdt2">(.*?)&/ig.exec(res)
     let size = /File Size:.*?class="gdt2">(.*?)</ig.exec(res)
@@ -168,5 +171,7 @@ export function init (link) {
     } else {
       return manga
     }
+  }).catch(ex => {
+    logs('hentai-downloader', `*error*: ${link}\n${ex.toString()}`)
   })
 }

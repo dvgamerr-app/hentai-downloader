@@ -146,7 +146,7 @@
           this.urlBegin()
         } else if (this.manga.length > 0) {
           this.beginDownload()
-        } else {
+        } else if (this.url.trim() !== '') {
           this.urlDone()
         }
       },

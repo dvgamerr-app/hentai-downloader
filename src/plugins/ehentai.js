@@ -1,5 +1,5 @@
 'use strict'
-import slack, logs from './slack.js'
+import slack from './slack.js'
 
 const fs = require('fs')
 const path = require('path')

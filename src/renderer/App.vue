@@ -80,6 +80,13 @@
     name: 'ghentai',
     data: () => {
       return {
+        STATE: {
+          FAIL: 0,
+          PREAPRE: 1,
+          WAITING: 2,
+          DOWNLOAD: 3,
+          SUCCESS: 4
+        },
         state_verify: false,
         state_icon: 'fa-list',
         state_name: 'Queue',
@@ -135,7 +142,7 @@
         }
       },
       onQueue (item) {
-        if (this.url.trim() !== '' && /hentai.org\/g\/\w{1,7}\/\w{1,10}/g.test(this.url.trim())) {
+        if (this.url.trim() !== '' && /e-hentai.org\/g\/\w{1,7}\/\w{1,10}/g.test(this.url.trim())) {
           this.urlBegin()
         } else if (this.manga.length > 0) {
           this.beginDownload()

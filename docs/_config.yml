@@ -1,1 +1,9 @@
+
+title: Hentai Downloader
+description: how to download manga from exhentai.org or e-hentai.org
+google_analytics: UA-81630553-1
+show_downloads: true
 theme: jekyll-theme-minimal
+
+gems:
+  - jekyll-mentions

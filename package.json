@@ -19,7 +19,7 @@
     "postinstall": "npm run lint:fix"
   },
   "build": {
-    "productName": "hentai-downloader",
+    "productName": "Hentai Downloader",
     "appId": "co.touno.hentai.downloader.app",
     "directories": {
       "output": "build"
@@ -59,6 +59,7 @@
     "numeral": "^2.0.6",
     "request": "^2.81.0",
     "request-promise": "^4.2.1",
+    "url-parse": "^1.1.9",
     "vue": "^2.3.3",
     "vue-electron": "^1.0.6",
     "vue-router": "^2.5.3",

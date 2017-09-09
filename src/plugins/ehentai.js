@@ -1,6 +1,7 @@
 'use strict'
 import slack from './slack.js'
 
+const URL = require('url-parse')
 const fs = require('fs')
 const path = require('path')
 const async = require('async-q')
@@ -132,6 +133,7 @@ export function init (link) {
     let length = /Length:.*?gdt2">(.*?).page/ig.exec(res)
     let cover = /<div id="gleft">.*?url\((.*?)\)/ig.exec(res)
 
+    let ex = new URL(link)
     let manga = {
       url: link,
       name: name[1],
@@ -147,7 +149,7 @@ export function init (link) {
     if (!manga.size) throw new Error('manga.size is not found')
     if (!manga.page) throw new Error('manga.page is not found')
 
-    slack(manga)
+    slack(ex.host, manga)
     if (process.env.NODE_ENV === 'development') {
       console.log(manga.name)
       console.log(`${manga.language} -- ${manga.size} (${manga.page})`)

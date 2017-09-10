@@ -12,11 +12,12 @@
 - **คำเตือน** ไม่ควรเปิดเว็บ `e-hentai.org` ระหว่างที่ดาวน์โหลดมังงะเพราะจะทำให้รูปบางรูปอาจจะโหลดไม่สำเร็จ
 
 #### Features
-- [x] ดาวน์โหลดมังงะจาก `e-hentai.org` ได้จาก link
-- [x] ดาวน์โหลดแบบต่อเนื่องได้
-- [ ] ดาวน์โหลดมังงะจาก `exhentai.org` ได้จาก link
-- [ ] เพิ่ม login `forums.e-hentai.org`
-- [ ] auto-update โปรแกรม
+- [x] queue list downloading.
+- [ ] history list
+- [ ] initital manga progress and current manga downloading list color
+- [ ] config directory save
+- [ ] auto-update version
+- [ ] `exhentai.org` download manga.
 
 ![app][app-items]
 

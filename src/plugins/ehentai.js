@@ -79,6 +79,8 @@ let getImage = (res, manga, l, index, def, directory, emit) => {
   })
 }
 em.download = (list, directory, emit) => {
+  // let checkpoint = 0
+  // checkpoint = new Date()
   // emit('DOWNLOAD_WATCH', {})
   let all = []
   for (let l = 0; l < list.length; l++) {
@@ -92,6 +94,8 @@ em.download = (list, directory, emit) => {
       })
     }
   }
+
+  logs('hentai-downloader', `*downloading request* \`${all.length}\` time`)
   return async.series(all)
 }
 
@@ -105,7 +109,6 @@ export function init (link) {
     }
   }
 
-  let checkpoint = 0
   return (() => {
     let def = Q.defer()
     if (!/http.*?\/\/.*?hentai.org\/g\/\d+?\/[a-f0-9]{10}\//ig.test(link)) {
@@ -115,7 +118,6 @@ export function init (link) {
     }
     return def.promise
   })().then(() => {
-    checkpoint = new Date()
     return request({
       url: link,
       header: {
@@ -129,7 +131,6 @@ export function init (link) {
       }
     })
   }).then(res => {
-    logs('hentai-downloader', `*request time* \`${Math.round(new Date() - checkpoint)}ms\`\n${link}`)
     let name = /<div id="gd2">.*?gn">(.*?)<\/.*?gj">(.*?)<\/.*?<\/div>/ig.exec(res)
     let language = /Language:.*?class="gdt2">(.*?)&/ig.exec(res)
     let size = /File Size:.*?class="gdt2">(.*?)</ig.exec(res)

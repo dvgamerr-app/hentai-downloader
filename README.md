@@ -1,6 +1,8 @@
-# Hentai Downloader `1.0.0`
+# Hentai Downloader `1.0.1`
 ## Overview
 โปรแกรมดาวน์โหลดมังงะจาก `e-hentai.org` และ `exhentai.org (features)` สามารถเพิ่มคิวได้เรื่อยๆ ตามต้องการ แต่ระบบจะเริ่มดาวน์โหลดทีละเรื่องที่ละไฟล์เท่านั้น ไม่สามารถสร้าง thread ขึ้นมาแบ่งการดาวน์โหลดได้ ซึ่งเป็นข้อจำกัดของตัวเว็บไซต์เอง ดาวน์โหลดได้ที่ [HentaiDownloader](https://github.com/unhax/ghentai-downloader/releases)
+
+![Icon][icons]
 
 #### How to use
 - copy link จากเว็บ `e-hentai.org` ใส่ในช่อง url แล้วกด Enter
@@ -18,4 +20,5 @@
 
 ![app][app-items]
 
+[icons]: https://raw.githubusercontent.com/unhax/ghentai-downloader/master/build/icons/256x256.png
 [app-items]: https://raw.githubusercontent.com/unhax/ghentai-downloader/master/docs/app-items.png

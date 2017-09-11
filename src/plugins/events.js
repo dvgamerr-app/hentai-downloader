@@ -2,11 +2,16 @@ import { dialog, ipcMain, ipcRenderer } from 'electron'
 import * as hentai from './ehentai.js'
 import Q from 'q'
 
+const settings = require('electron-settings')
+
 export function server (mainWindow) {
   ipcMain.on('CHANGE_DIRECTORY', function (e, source) {
     dialog.showOpenDialog(mainWindow, {
       properties: ['openDirectory']
     }, fileNames => {
+      settings.set('config', {
+        directory: fileNames ? fileNames[0] : ''
+      })
       e.sender.send('CHANGE_DIRECTORY', fileNames)
     })
   })
@@ -30,6 +35,9 @@ export const client = {
   install: Vue => {
     Vue.mixin({
       methods: {
+        ConfigLoaded: () => {
+          return settings.get('config')
+        },
         CHANGE_DIRECTORY: () => {
           let def = Q.defer()
           ipcRenderer.send('CHANGE_DIRECTORY')

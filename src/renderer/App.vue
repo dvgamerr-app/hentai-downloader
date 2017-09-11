@@ -170,6 +170,8 @@
     },
     created () {
       let vm = this
+      let config = this.ConfigLoaded()
+      this.directory_name = config.directory
       this.$nextTick(() => {
         vm.$refs.url.focus()
       })

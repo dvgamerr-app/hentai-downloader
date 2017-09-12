@@ -1,4 +1,4 @@
-# Hentai Downloader `1.0.1`
+# Hentai Downloader `1.1.0`
 ## Overview
 โปรแกรมดาวน์โหลดมังงะจาก `e-hentai.org` และ `exhentai.org (features)` สามารถเพิ่มคิวได้เรื่อยๆ ตามต้องการ แต่ระบบจะเริ่มดาวน์โหลดทีละเรื่องที่ละไฟล์เท่านั้น ไม่สามารถสร้าง thread ขึ้นมาแบ่งการดาวน์โหลดได้ ซึ่งเป็นข้อจำกัดของตัวเว็บไซต์เอง ดาวน์โหลดได้ที่ [HentaiDownloader](https://github.com/unhax/ghentai-downloader/releases)
 
@@ -15,9 +15,10 @@
 - [x] queue list downloading.
 - [ ] history list
 - [ ] initital manga progress and current manga downloading list color
-- [ ] config directory save
+- [x] config directory save
 - [ ] auto-update version
-- [ ] `exhentai.org` download manga.
+- [x] `exhentai.org` download manga.
+- [ ] addon login for `exhentai.org` rare.
 
 ![app][app-items]
 

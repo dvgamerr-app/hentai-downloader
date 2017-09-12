@@ -2,12 +2,17 @@
   <div id="app"> 
     <div class="header">
       <div class="row">
+        <div class="col-xs-12">
+          <span id="helpBlock2" class="help-block" style="color: #616161;"><b>Save as directory:</b> {{directory_name}}</span>
+        </div>
+      </div>
+      <div class="row">
         <div class="col-xs-8">
-          <div class="form-group">
-            <input ref="url" :readonly="state_verify" type="text" class="form-control input-sm" id="inputSuccess1" aria-describedby="helpBlock2" placeholder="https://e-hentai.org/g/1031609/631e04b5f7/" maxlength="50" @keyup.enter="onQueue" v-model="url">
+          <div class="form-group" :class="{ 'has-error' : error_message }" style="margin-bottom:2px">
+            <input ref="url" :readonly="state_verify" type="text" class="form-control input-sm" id="txtURL" aria-describedby="helpBlock2" placeholder="https://e-hentai.org/g/1031609/631e04b5f7/" maxlength="50" @keyup.enter="onQueue" v-model="url">
             <i class="fa fa-link fa-input-left" aria-hidden="true"></i>
             <i class="fa fa-search fa-input-right" aria-hidden="true"></i>
-            <span id="helpBlock2" class="help-block" style="color: #616161;"><b>Save as directory:</b> {{directory_name}}</span>
+            <span class="help-block" style="margin-bottom:0px;height:13px;"><b>{{error_message}}</b></span>
           </div>
         </div>
         <div class="col-xs-4">
@@ -76,6 +81,8 @@
 </template>
 
 <script>
+  const URL = require('url-parse')
+
   export default {
     name: 'ghentai',
     data: () => {
@@ -91,6 +98,7 @@
         state_icon: 'fa-list',
         state_name: 'Queue',
         url: '',
+        error_message: '',
         directory_name: null,
         manga: []
       }
@@ -102,23 +110,31 @@
         let found = false
         for (var i = vm.manga.length - 1; i >= 0; i--) {
           if (vm.manga[i].status !== 'DONE') {
-            if (vm.manga[i].url === vm.url) found = true
+            let url1 = new URL(vm.url)
+            let url2 = new URL(vm.manga[i].url)
+            if (url1.pathname === url2.pathname) found = true
           } else {
             vm.manga.splice(i, 1)
           }
         }
+        vm.error_message = ''
         if (!found) {
           vm.state_verify = true
           vm.state_icon = 'fa-circle-o-notch fa-spin fa-fw'
           vm.state_name = 'Initialize...'
-          vm.URL_VERIFY(vm.url).then(manga => {
-            if (manga) {
-              manga.url = vm.url
+          vm.URL_VERIFY(vm.url).then(res => {
+            console.log('URL_VERIFY', res)
+            if (!res.error) {
+              let manga = res.data
               manga.status = 'WAITING'
               vm.manga.push(manga)
+            } else {
+              vm.error_message = res.error
             }
             vm.urlDone()
           })
+        } else {
+          vm.urlDone()
         }
       },
       urlDone () {
@@ -130,6 +146,8 @@
       },
       beginDownload () {
         let vm = this
+        vm.url = ''
+        vm.error_message = ''
         vm.state_verify = true
         vm.state_icon = 'fa-circle-o-notch fa-spin fa-fw'
         vm.state_name = 'Loading...'
@@ -142,12 +160,13 @@
         }
       },
       onQueue (item) {
-        if (this.url.trim() !== '' && /e-hentai.org\/g\/\w{1,7}\/\w{1,10}/g.test(this.url.trim())) {
+        if (this.url.trim() !== '' && this.onCheckURL(this.url)) {
           this.urlBegin()
         } else if (this.manga.length > 0) {
           this.beginDownload()
         } else if (this.url.trim() !== '') {
-          this.urlDone()
+          this.$refs.url.focus()
+          this.state_verify = false
         }
       },
       onBrowse (item) {
@@ -155,6 +174,9 @@
         vm.CHANGE_DIRECTORY().then(folder => {
           if (folder) vm.directory_name = folder
         })
+      },
+      onCheckURL: (url) => {
+        return /hentai.org\/g\/\w{1,7}\/\w{1,10}/g.test(url)
       }
     },
     watch: {

@@ -17,9 +17,9 @@ export function server (mainWindow) {
   })
   ipcMain.on('URL_VERIFY', function (e, url) {
     hentai.init(url).then(manga => {
-      e.sender.send('URL_VERIFY', manga)
-    }).catch(e => {
-      console.log('URL_VERIFY', e)
+      e.sender.send('URL_VERIFY', { error: false, data: manga })
+    }).catch(ex => {
+      e.sender.send('URL_VERIFY', { error: ex.toString(), data: {} })
     })
   })
   ipcMain.on('DOWNLOAD_BEGIN', function (e, sender) {
@@ -49,8 +49,8 @@ export const client = {
         URL_VERIFY: url => {
           let def = Q.defer()
           ipcRenderer.send('URL_VERIFY', url)
-          ipcRenderer.once('URL_VERIFY', (e, manga) => {
-            def.resolve(manga)
+          ipcRenderer.once('URL_VERIFY', (e, res) => {
+            def.resolve(res)
           })
           return def.promise
         },

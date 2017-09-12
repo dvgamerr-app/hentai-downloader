@@ -102,7 +102,11 @@ em.download = (list, directory, emit) => {
 
 export const emiter = em
 export function init (link) {
-  let addItem = (manga, data) => {
+  let baseUrl = new URL(link.trim())
+  if (baseUrl.hostname === 'exhentai.org') baseUrl.hostname = 'e-hentai.org'
+  link = `https://${baseUrl.hostname}${baseUrl.pathname}`
+
+  let getImage = (manga, data) => {
     let links = data.match(/gdtm".*?<a href="(.*?)">/ig)
     for (var i = 0; i < links.length; i++) {
       let link = /gdtm".*?<a href="(.*?)">/i.exec(links[i])[1]
@@ -110,10 +114,55 @@ export function init (link) {
     }
   }
 
+  let getManga = res => {
+    if (!/DOCTYPE.html.PUBLIC/ig.test(res)) throw new Error(res)
+
+    let fixed = /\/g\/.*?\/.*?\//ig.exec(baseUrl.pathname)
+    if (fixed) link = `https://${baseUrl.hostname}${fixed[0]}`
+
+    let name = /<div id="gd2">.*?gn">(.*?)<\/.*?gj">(.*?)<\/.*?<\/div>/ig.exec(res)
+    let language = /Language:.*?class="gdt2">(.*?)&/ig.exec(res)
+    let size = /File Size:.*?class="gdt2">(.*?)</ig.exec(res)
+    let length = /Length:.*?gdt2">(.*?).page/ig.exec(res)
+    let cover = /<div id="gleft">.*?url\((.*?)\)/ig.exec(res)
+
+    let manga = {
+      url: link,
+      name: name[1],
+      cover: cover[1],
+      language: language[1],
+      size: size[1],
+      page: length[1],
+      items: []
+    }
+
+    if (!manga.name) throw new Error('manga.name is not found')
+    if (!manga.language) throw new Error('manga.language is not found')
+    if (!manga.size) throw new Error('manga.size is not found')
+    if (!manga.page) throw new Error('manga.page is not found')
+
+    slack(baseUrl.host, manga)
+
+    getImage(manga, res)
+    if (manga.items.length !== manga.page) {
+      let all = []
+      for (let i = 1; i < Math.ceil(manga.page / manga.items.length); i++) {
+        all.push(() => request(`${link}?p=${i}`).then((res) => getImage(manga, res)))
+      }
+      return async.series(all).then(() => {
+        if (manga.items.length !== parseInt(manga.page)) throw new Error(`manga.items is '${manga.items.length}' and length is '${manga.page}'`)
+        return manga
+      })
+    } else {
+      return manga
+    }
+  }
+
+  console.log('URL', `${link}`)
   return (() => {
     let def = Q.defer()
-    if (!/http.*?\/\/.*?hentai.org\/g\/\d+?\/[a-f0-9]{10}\//ig.test(link)) {
-      def.reject('This link is not Hentai!!.')
+    if (!/g\/\d+?\/[a-f0-9]{10}\//ig.test(baseUrl.pathname)) {
+      def.reject(new Error(`Key missing, or incorrect key provided.`))
     } else {
       def.resolve()
     }
@@ -131,49 +180,19 @@ export function init (link) {
         'upgrade-insecure-requests': '1'
       }
     })
-  }).then(res => {
-    let name = /<div id="gd2">.*?gn">(.*?)<\/.*?gj">(.*?)<\/.*?<\/div>/ig.exec(res)
-    let language = /Language:.*?class="gdt2">(.*?)&/ig.exec(res)
-    let size = /File Size:.*?class="gdt2">(.*?)</ig.exec(res)
-    let length = /Length:.*?gdt2">(.*?).page/ig.exec(res)
-    let cover = /<div id="gleft">.*?url\((.*?)\)/ig.exec(res)
-
-    let ex = new URL(link)
-    let manga = {
-      url: link,
-      name: name[1],
-      cover: cover[1],
-      language: language[1],
-      size: size[1],
-      page: length[1],
-      items: []
-    }
-
-    if (!manga.name) throw new Error('manga.name is not found')
-    if (!manga.language) throw new Error('manga.language is not found')
-    if (!manga.size) throw new Error('manga.size is not found')
-    if (!manga.page) throw new Error('manga.page is not found')
-
-    slack(ex.host, manga)
-    if (process.env.NODE_ENV === 'development') {
-      console.log(manga.name)
-      console.log(`${manga.language} -- ${manga.size} (${manga.page})`)
-    }
-
-    addItem(manga, res)
-    if (manga.items.length !== manga.page) {
-      let all = []
-      for (let i = 1; i < Math.ceil(manga.page / manga.items.length); i++) {
-        all.push(() => request(`${link}?p=${i}`).then((res) => addItem(manga, res)))
+  }).then(getManga).catch(ex => {
+    if (ex.statusCode === 404) {
+      if (ex.error) {
+        if (baseUrl.hostname === 'e-hentai.org') baseUrl.hostname = 'exhentai.org'
+        logs('hentai-downloader', `*rare*: https://${baseUrl.hostname}${baseUrl.pathname}`)
+        throw new Error('This gallery has been removed or is unavailable.')
+      } else {
+        logs('hentai-downloader', `*error*: ${link}\n${ex.name.toString()}`)
+        throw new Error(ex.name)
       }
-      return async.series(all).then(() => {
-        if (manga.items.length !== parseInt(manga.page)) throw new Error(`manga.items is '${manga.items.length}' and length is '${manga.page}'`)
-        return manga
-      })
     } else {
-      return manga
+      logs('hentai-downloader', `*error*: ${link}\n${ex.toString()}`)
+      throw ex
     }
-  }).catch(ex => {
-    logs('hentai-downloader', `*error*: ${link}\n${ex.toString()}`)
   })
 }

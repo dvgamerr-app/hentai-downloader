@@ -41,27 +41,31 @@ let getImage = (res, manga, l, index, def, directory, emit) => {
   })
   req.on('response', response => {
     if (response.statusCode === 200) {
+      let extensions = null
       switch (response.headers['content-type']) {
         case 'image/jpg':
         case 'image/jpeg':
-          let name = manga.name.replace(/[/\\|.:?<>"]/ig, '')
-          let dir = path.join(directory, name)
-
-          if (!fs.existsSync(dir)) fs.mkdirSync(dir)
-          let fsStream = fs.createWriteStream(`${dir}/${filename}.jpg`)
-          req.pipe(fsStream)
-
-          fsStream.on('finish', () => {
-            emit.send('DOWNLOAD_WATCH', { index: l, status: `${filename} of ${manga.page}`, finish: (parseInt(manga.page) === index + 1) })
-            def.resolve()
-            fsStream.close()
-          })
-
+          extensions = 'jpg'
           break
-        default:
-          // console.log(index, '--> ', response.headers['content-type'])
+        case 'image/gif':
+          extensions = 'gif'
+          break
+      }
+      if (extensions) {
+        let name = manga.name.replace(/[/\\|.:?<>"]/ig, '')
+        let dir = path.join(directory, name)
+
+        if (!fs.existsSync(dir)) fs.mkdirSync(dir)
+        let fsStream = fs.createWriteStream(`${dir}/${filename}.${extensions}`)
+        req.pipe(fsStream)
+
+        fsStream.on('finish', () => {
+          emit.send('DOWNLOAD_WATCH', { index: l, status: `${filename} of ${manga.page}`, finish: (parseInt(manga.page) === index + 1) })
           def.resolve()
-          break
+          fsStream.close()
+        })
+      } else {
+        def.resolve()
       }
     } else {
       // console.log(index, '--> ', response.statusCode, response.headers['content-type'])

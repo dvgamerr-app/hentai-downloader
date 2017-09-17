@@ -2,17 +2,27 @@
   <div id="app"> 
     <div class="header">
       <div class="row">
-        <div class="col-xs-12">
-          <span id="helpBlock2" class="help-block" style="color: #616161;"><b>Save as directory:</b> {{directory_name}}</span>
+        <div class="col-xs-8">
+          <span class="help-block" style="color: #616161;"><b>Save as directory:</b> {{directory_name}}</span>
+        </div>
+        <div class="col-xs-4 text-right">
+          <span class="help-block" style="color: #616161;">Please login <b>exhentai.org</b>, <a href="#">LOGIN</a></span>
         </div>
       </div>
       <div class="row">
         <div class="col-xs-8">
-          <div class="form-group" :class="{ 'has-error' : error_message }" style="margin-bottom:2px">
-            <input ref="url" :readonly="state_verify" type="text" class="form-control input-sm" id="txtURL" aria-describedby="helpBlock2" placeholder="https://e-hentai.org/g/1031609/631e04b5f7/" maxlength="50" @keyup.enter="onQueue" v-model="url">
+          <div v-if="!wait" class="form-group" :class="{ 'has-error' : error_message }" style="margin-bottom:2px">
+            <input ref="url" :readonly="state_verify" type="text" class="form-control input-sm" id="txtURL" placeholder="https://e-hentai.org/g/1031609/631e04b5f7/" maxlength="50" @keyup.enter="onQueue" v-model="url">
             <i class="fa fa-link fa-input-left" aria-hidden="true"></i>
             <i class="fa fa-search fa-input-right" aria-hidden="true"></i>
             <span class="help-block" style="margin-bottom:0px;height:13px;"><b>{{error_message}}</b></span>
+          </div>
+          <div v-else style="margin-top: 4px;">
+            <div class="progress" style="margin-bottom:0px;">
+              <div class="progress-bar progress-bar-success progress-bar-striped" role="progressbar" aria-valuenow="40" aria-valuemin="0" aria-valuemax="100" style="width: 40%">
+              </div>
+            </div>
+            <span class="help-block">40% Complete (success)</span>
           </div>
         </div>
         <div class="col-xs-4">
@@ -24,7 +34,7 @@
             </button>
             <button :disabled="state_verify" type="button" 
               class="btn btn-default" style="padding: 5px 11px;" @click="onBrowse">
-              <i class="fa fa-folder-o" aria-hidden="true"></i>
+              <i class="fa fa-gear" aria-hidden="true"></i>
             </button>
           </div>
         </div>
@@ -87,6 +97,8 @@
     name: 'ghentai',
     data: () => {
       return {
+        signin: true,
+        wait: false,
         STATE: {
           FAIL: 0,
           PREAPRE: 1,
@@ -160,6 +172,7 @@
         }
       },
       onQueue (item) {
+        this.wait = !this.wait
         if (this.url.trim() !== '' && this.onCheckURL(this.url)) {
           this.urlBegin()
         } else if (this.manga.length > 0) {

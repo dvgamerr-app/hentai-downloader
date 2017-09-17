@@ -200,3 +200,29 @@ export function init (link) {
     }
   })
 }
+
+export function login (username, password) {
+  return request({
+    url: `https://forums.e-hentai.org/index.php?act=Login&CODE=01`,
+    method: 'POST',
+    header: {
+      'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/59.0.3071.115 Safari/537.36',
+      'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
+      'accept-language': 'th-TH,th;q=0.8,en-US;q=0.6,en;q=0.4,ja;q=0.2',
+      'content-type': 'application/x-www-form-urlencoded',
+      'cache-control': 'no-cache',
+      'pragma': 'no-cache',
+      'referer': 'https://e-hentai.org/',
+      'upgrade-insecure-requests': '1'
+    },
+    form: {
+      CookieDate: 1,
+      b: 'd',
+      bt: '1-1',
+      UserName: username.trim(),
+      PassWord: password.trim(),
+      ipb_login_submit: 'Login!'
+    },
+    resolveWithFullResponse: true
+  })
+}

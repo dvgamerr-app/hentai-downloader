@@ -29,6 +29,19 @@ export function server (mainWindow) {
       console.log('DOWNLOAD_COMPLATE', e)
     })
   })
+  ipcMain.on('LOGIN', function (e, sender) {
+    hentai.login('dvgamer', 'dvg7po8ai').then(raw => {
+      let getName = /You are now logged in as:(.*?)<br/ig.exec(raw.body)
+      console.log(`https://forums.e-hentai.org/index.php?act=Login&CODE=01`)
+      if (getName) {
+        console.log(`Login Success: ${getName[1]}`)
+        console.log(raw.headers['set-cookie'])
+      }
+      e.sender.send('LOGIN')
+    }).catch(e => {
+      console.log('LOGIN', e)
+    })
+  })
 }
 export const client = {
   config: {},
@@ -65,9 +78,15 @@ export const client = {
             def.resolve()
           })
           return def.promise
+        },
+        LOGIN: () => {
+          let def = Q.defer()
+          ipcRenderer.send('LOGIN')
+          return def.promise
         }
       },
       created () {
+        // ipcRenderer.send('LOGIN')
         // console.log('created `vue-mbos.js`mixin.')
       }
     })

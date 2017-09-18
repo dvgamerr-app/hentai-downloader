@@ -2,7 +2,7 @@
 <html>
   <head>
     <meta charset="utf-8">
-    <title>Hentai Downloader</title>
+    <title>Hentai Downloader 1.2.0</title>
     <% if (htmlWebpackPlugin.options.nodeModules) { %>
       <!-- Add `node_modules/` to global paths so `require` works properly in development -->
       <script>
@@ -18,11 +18,12 @@
       (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
       m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
       })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
-
-      ga('create', 'UA-81630553-1', 'auto');
-      ga('send', 'pageview');
+      if (process.env.NODE_ENV !== 'development') {
+        ga('create', 'UA-81630553-1', 'auto');
+        ga('send', 'pageview');
       
-      if (process.env.NODE_ENV !== 'development') window.__static = require('path').join(__dirname, '/static').replace(/\\/g, '\\\\')
+        window.__static = require('path').join(__dirname, '/static').replace(/\\/g, '\\\\')
+      }
     </script>
     <!-- webpack builds are automatically injected -->
   </body>

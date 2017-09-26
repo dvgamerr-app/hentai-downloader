@@ -9,9 +9,7 @@ export function server (mainWindow) {
     dialog.showOpenDialog(mainWindow, {
       properties: ['openDirectory']
     }, fileNames => {
-      settings.set('config', {
-        directory: fileNames ? fileNames[0] : ''
-      })
+      if (fileNames) settings.set('config', { directory: fileNames[0] })
       e.sender.send('CHANGE_DIRECTORY', fileNames)
     })
   })
@@ -30,17 +28,23 @@ export function server (mainWindow) {
     })
   })
   ipcMain.on('LOGIN', function (e, sender) {
-    hentai.login('dvgamer', 'dvg7po8ai').then(raw => {
-      let getName = /You are now logged in as:(.*?)<br/ig.exec(raw.body)
-      console.log(`https://forums.e-hentai.org/index.php?act=Login&CODE=01`)
-      if (getName) {
-        console.log(`Login Success: ${getName[1]}`)
-        console.log(raw.headers['set-cookie'])
-      }
-      e.sender.send('LOGIN')
-    }).catch(e => {
-      console.log('LOGIN', e)
-    })
+    let account = settings.get('config.account')
+    if (account) {
+      hentai.login(account.username, account.password).then(raw => {
+        let getName = /You are now logged in as:(.*?)<br/ig.exec(raw.body)
+        console.log(`https://forums.e-hentai.org/index.php?act=Login&CODE=01`)
+        if (getName) {
+          console.log(`Login Success: ${getName[1]}`)
+          console.log(raw.headers['set-cookie'])
+        }
+        e.sender.send('LOGIN', true)
+      }).catch(ex => {
+        e.sender.send('LOGIN', false)
+        console.log('LOGIN', ex)
+      })
+    } else {
+      e.sender.send('LOGIN', false)
+    }
   })
 }
 export const client = {
@@ -82,6 +86,9 @@ export const client = {
         LOGIN: () => {
           let def = Q.defer()
           ipcRenderer.send('LOGIN')
+          ipcRenderer.on('LOGIN', (e, success) => {
+            def.resolve(success)
+          })
           return def.promise
         }
       },

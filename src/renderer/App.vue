@@ -1,7 +1,7 @@
 <template>
   <div id="app"> 
     <div class="header">
-      <div  v-if="!page.option" class="row">
+      <div class="row">
         <div class="col-xs-8">
           <span class="help-block" style="color: #616161;"><b>Save as directory:</b> {{directory_name}}</span>
         </div>
@@ -9,10 +9,10 @@
           <span class="help-block" style="color: #616161;">Please login <b>exhentai.org</b>, <a href="#" @click.prevent="page.option = true">LOGIN</a></span>
         </div>
       </div>
-      <div v-if="!page.option" class="row">
-        <div class="col-xs-8">
-          <div v-if="!wait" class="form-group" :class="{ 'has-error' : error_message }" style="margin-bottom:2px">
-            <input ref="url" :readonly="state_verify" type="text" class="form-control input-sm" id="txtURL" placeholder="https://e-hentai.org/g/1031609/631e04b5f7/" maxlength="50" @keyup.enter="onQueue" v-model="url">
+      <div class="row">
+        <div v-if="!page.option" class="col-xs-8">
+          <div v-if="!state_verify" class="form-group" :class="{ 'has-error' : error_message }" style="margin-bottom:2px">
+            <input ref="url" type="text" class="form-control input-sm" id="txtURL" placeholder="https://e-hentai.org/g/1031609/631e04b5f7/" maxlength="50" @keyup.enter="onQueue" v-model="url">
             <i class="fa fa-link fa-input-left" aria-hidden="true"></i>
             <i class="fa fa-search fa-input-right" aria-hidden="true"></i>
             <span class="help-block" style="margin-bottom:0px;height:13px;"><b>{{error_message}}</b></span>
@@ -25,7 +25,7 @@
             <span class="help-block">40% Complete (success)</span>
           </div>
         </div>
-        <div class="col-xs-4">
+        <div v-if="!page.option" class="col-xs-4">
           <div class="btn-group" role="group">
             <button :disabled="state_verify || (!directory_name && state_name === 'Download')" type="button" class="btn" 
               :class="!state_verify ? 'btn-success' : 'btn-default'" 
@@ -37,21 +37,26 @@
             </button>
           </div>
         </div>
+        <div v-else class="col-xs-12" style="margin-bottom: 1.2rem;padding-right:19px;">
+          <div class="input-group">
+            <input type="text" readonly class="form-control" placeholder="Directory for..." maxlength="50" v-model="directory_name"
+              style="padding: 7px;font-size: 1rem;height:auto">
+            <span class="input-group-btn">
+              <button class="btn btn-primary" type="button" style="padding: 0.38em 1.5em;" @click="onBrowse">Browse</button>
+              <button class="btn btn-default" type="button" style="padding: 0.38em 0.6em;" @click="page.option = false">
+                <i class="fa fa-arrow-circle-left" aria-hidden="true"></i>
+              </button>
+            </span>
+          </div>
+        </div>
       </div>
-      <div v-else class="row">
+      <div  v-if="false" class="row">
         <div class="col-xs-12">
           <button type="button" class="btn btn-default pull-right" style="padding:6px 13px 7px 10px;font-size: 1.1rem" @click="page.option = false">
             <i class="fa fa-chevron-left" aria-hidden="true"></i> BACK
           </button>
           <div class="page-header" style="margin-top: -10px;">
             <h3>Directory Manga</h3>
-          </div>
-          <div class="input-group">
-            <input type="text" readonly class="form-control" placeholder="Directory for..." maxlength="50" v-model="directory_name"
-              style="padding: 7px;font-size: 1rem;height:auto">
-            <span class="input-group-btn">
-              <button class="btn btn-primary" type="button" style="padding: 6px 10px;font-size: 1.15rem;" @click="onBrowse">Browse</button>
-            </span>
           </div>
           <div class="page-header">
             <h3>Sign-In exhentai.org</h3>
@@ -74,7 +79,7 @@
         </div>
       </div>
     </div>
-    <div v-if="!page.option">
+    <div>
       <table class="table">
         <colgroup>
           <col style="width:6%;">
@@ -131,11 +136,10 @@
     data: () => {
       return {
         page: {
-          option: true
+          signin: false,
+          option: false
         },
         miner: null,
-        signin: true,
-        wait: false,
         STATE: {
           FAIL: 0,
           PREAPRE: 1,
@@ -186,11 +190,14 @@
         }
       },
       urlDone () {
-        this.$refs.url.focus()
-        this.state_icon = 'fa-download'
-        this.state_name = 'Redownload'
-        this.state_verify = false
-        this.url = ''
+        let vm = this
+        vm.state_icon = 'fa-download'
+        vm.state_name = 'Redownload'
+        vm.state_verify = false
+        vm.url = ''
+        vm.$nextTick(() => {
+          vm.$refs.url.focus()
+        })
       },
       beginDownload () {
         let vm = this
@@ -208,7 +215,6 @@
         }
       },
       onQueue (item) {
-        this.wait = !this.wait
         if (this.url.trim() !== '' && this.onCheckURL(this.url)) {
           this.urlBegin()
         } else if (this.manga.length > 0) {
@@ -221,7 +227,10 @@
       onBrowse (item) {
         let vm = this
         vm.CHANGE_DIRECTORY().then(folder => {
-          if (folder) vm.directory_name = folder
+          if (folder) {
+            vm.directory_name = folder
+            vm.page.option = false
+          }
         })
       },
       onCheckURL: (url) => {

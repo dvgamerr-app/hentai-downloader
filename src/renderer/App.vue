@@ -47,6 +47,7 @@
                 <i class="fa fa-arrow-circle-left" aria-hidden="true"></i>
               </button>
             </span>
+            
           </div>
         </div>
       </div>
@@ -175,7 +176,7 @@
           vm.state_icon = 'fa-circle-o-notch fa-spin fa-fw'
           vm.state_name = 'Initialize...'
           vm.URL_VERIFY(vm.url).then(res => {
-            console.log('URL_VERIFY', res)
+            // console.log('URL_VERIFY', res)
             if (!res.error) {
               let manga = res.data
               manga.status = 'WAITING'

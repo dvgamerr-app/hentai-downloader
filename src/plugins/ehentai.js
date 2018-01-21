@@ -21,11 +21,9 @@ let getImage = (res, manga, l, index, def, directory, emit) => {
   let nl = /return nl\('(.*?)'\)/ig.exec(res)[1]
   let filename = getFilename(index + 1, manga.page)
 
-  emit.send('DOWNLOAD_WATCH', { index: l, status: `${filename} of ${manga.page}`, finish: false })
+  emit.send('DOWNLOAD_WATCH', { index: l, current: filename, total: parseInt(manga.page), finish: false, error: false })
   // let msg = `Downloading...  -- '${(index + 1)}.jpg' of ${manga.page} files -->`
-  // process.stdout.clearLine()
-  // process.stdout.cursorTo(0)
-  // process.stdout.write(msg)
+  // console.log(msg)
 
   let req = xhr({
     method: 'GET',
@@ -47,6 +45,9 @@ let getImage = (res, manga, l, index, def, directory, emit) => {
         case 'image/jpeg':
           extensions = 'jpg'
           break
+        case 'image/png':
+          extensions = 'png'
+          break
         case 'image/gif':
           extensions = 'gif'
           break
@@ -60,7 +61,7 @@ let getImage = (res, manga, l, index, def, directory, emit) => {
         req.pipe(fsStream)
 
         fsStream.on('finish', () => {
-          emit.send('DOWNLOAD_WATCH', { index: l, status: `${filename} of ${manga.page}`, finish: (parseInt(manga.page) === index + 1) })
+          emit.send('DOWNLOAD_WATCH', { index: l, current: filename, total: parseInt(manga.page), finish: (parseInt(manga.page) === index + 1) })
           def.resolve()
           fsStream.close()
         })
@@ -74,7 +75,7 @@ let getImage = (res, manga, l, index, def, directory, emit) => {
   })
   req.on('error', err => {
     // process.stdout.cursorTo(msg.length + 1)
-    // process.stdout.write(` ${err.message}`)
+    // console.log(` ${err.message}`)
     if (process.env.NODE_ENV === 'development') {
       console.log(' not found -->', index, err.message)
     }
@@ -105,10 +106,8 @@ em.download = (list, directory, emit) => {
 }
 
 export const emiter = em
-export function init (link) {
+export function init (link, emit) {
   let baseUrl = new URL(link.trim())
-  if (baseUrl.hostname === 'exhentai.org') baseUrl.hostname = 'e-hentai.org'
-  link = `https://${baseUrl.hostname}${baseUrl.pathname}`
 
   let getImage = (manga, data) => {
     let links = data.match(/gdtm".*?<a href="(.*?)">/ig)
@@ -121,7 +120,7 @@ export function init (link) {
   let getManga = res => {
     if (!/DOCTYPE.html.PUBLIC/ig.test(res)) throw new Error(res)
 
-    let fixed = /\/g\/.*?\/.*?\//ig.exec(baseUrl.pathname)
+    let fixed = /\/\w{1}\/\d{1,8}\/[0-9a-f]+?\//ig.exec(baseUrl.pathname)
     if (fixed) link = `https://${baseUrl.hostname}${fixed[0]}`
 
     let name = /<div id="gd2">.*?gn">(.*?)<\/.*?gj">(.*?)<\/.*?<\/div>/ig.exec(res)
@@ -131,6 +130,7 @@ export function init (link) {
     let cover = /<div id="gleft">.*?url\((.*?)\)/ig.exec(res)
 
     let manga = {
+      ref: fixed[0],
       url: link,
       name: name[1],
       cover: cover[1],
@@ -146,18 +146,35 @@ export function init (link) {
     if (!manga.page) throw new Error('manga.page is not found')
 
     slack(baseUrl.host, manga)
-
     getImage(manga, res)
+    let totalPage = Math.ceil(manga.page / manga.items.length)
+    emit.send('INIT_MANGA', { page: 1, total: totalPage })
     if (manga.items.length !== manga.page) {
       let all = []
-      for (let i = 1; i < Math.ceil(manga.page / manga.items.length); i++) {
-        all.push(() => request(`${link}?p=${i}`).then((res) => getImage(manga, res)))
+      for (let i = 1; i < totalPage; i++) {
+        all.push(() => {
+          emit.send('INIT_MANGA', { page: i + 1, total: totalPage })
+          return request(`${link}?p=${i}`).then((res) => getImage(manga, res))
+        })
       }
       return async.series(all).then(() => {
+        request({
+          url: link,
+          header: {
+            'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/59.0.3071.115 Safari/537.36',
+            'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
+            'accept-language': 'th-TH,th;q=0.8,en-US;q=0.6,en;q=0.4,ja;q=0.2',
+            'cache-control': 'no-cache',
+            'pragma': 'no-cache',
+            'referer': `https://${baseUrl.hostname}/`,
+            'upgrade-insecure-requests': '1'
+          }
+        })
         if (manga.items.length !== parseInt(manga.page)) throw new Error(`manga.items is '${manga.items.length}' and length is '${manga.page}'`)
         return manga
       })
     } else {
+      //  call api saved
       return manga
     }
   }
@@ -165,9 +182,14 @@ export function init (link) {
   console.log('URL', `${link}`)
   return (() => {
     let def = Q.defer()
-    if (!/g\/\d+?\/[a-f0-9]{10}\//ig.test(baseUrl.pathname)) {
+    if (!/\/\w{1}\/\d{1,8}\/[0-9a-f]+?\//ig.test(baseUrl.pathname)) {
       def.reject(new Error(`Key missing, or incorrect key provided.`))
     } else {
+      let fixed = /\/\w{1}\/\d{1,8}\/[0-9a-f]+?\//ig.exec(baseUrl.pathname)
+
+      if (baseUrl.hostname === 'exhentai.org') baseUrl.hostname = 'e-hentai.org'
+
+      link = `https://${baseUrl.hostname}${fixed[0]}`
       def.resolve()
     }
     return def.promise
@@ -180,14 +202,13 @@ export function init (link) {
         'accept-language': 'th-TH,th;q=0.8,en-US;q=0.6,en;q=0.4,ja;q=0.2',
         'cache-control': 'no-cache',
         'pragma': 'no-cache',
-        'referer': 'https://e-hentai.org/',
+        'referer': `https://${baseUrl.hostname}/`,
         'upgrade-insecure-requests': '1'
       }
     })
   }).then(getManga).catch(ex => {
     if (ex.statusCode === 404) {
       if (ex.error) {
-        if (baseUrl.hostname === 'e-hentai.org') baseUrl.hostname = 'exhentai.org'
         logs('hentai-downloader', `*rare*: https://${baseUrl.hostname}${baseUrl.pathname}`)
         throw new Error('This gallery has been removed or is unavailable.')
       } else {
@@ -212,15 +233,17 @@ export function login (username, password) {
       'content-type': 'application/x-www-form-urlencoded',
       'cache-control': 'no-cache',
       'pragma': 'no-cache',
-      'referer': 'https://e-hentai.org/',
+      'referer': 'https://forums.e-hentai.org/index.php',
       'upgrade-insecure-requests': '1'
     },
     form: {
+      referer: 'https://forums.e-hentai.org/index.php',
       CookieDate: 1,
       b: 'd',
       bt: '1-1',
       UserName: username.trim(),
       PassWord: password.trim(),
+      'g-recaptcha-response': '03AMPJSYUP6di4VRxYc3H_eGu-nXfCnXSUCorsnX0Iq1Ut9xYYlT1OChDQGtGHp_dC043jje-vXVecdOIjstmgxrup6kqYlp6x0i1tSevgbEMmWTbJKPQecRWEUgzmWoqaNFOGJmTaeMv2V0_f9Oz44Hxybzll4btnSN1tcgWFrqHcnuGG-7nAt4tizqEWhOyjzTw2IWIGZuq8TK3fSZx6Ymenqr-z8KlM8BVfXIa0q7HJifGXFoDo3iYfNrieyqY2tWgrVE_5NfgH-HpWVcPg43RO7sIwwWUVVXrCvBEGh1Vnx6ma-UjYcXgHUynyH7u-utqQEkKB_tj9p5llQHHqzEfgiDJyN6do5HuG-1HTie3sclnRqJ7v-1ziGSuySaED0Uafa_yrgc_B4TGYsSAe605Aca-z0892f0GvQ2w7NXO4eRkpBc1_Yv8',
       ipb_login_submit: 'Login!'
     },
     resolveWithFullResponse: true

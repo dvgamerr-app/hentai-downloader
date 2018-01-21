@@ -14,7 +14,7 @@ export function server (mainWindow) {
     })
   })
   ipcMain.on('URL_VERIFY', function (e, url) {
-    hentai.init(url).then(manga => {
+    hentai.init(url, e.sender).then(manga => {
       e.sender.send('URL_VERIFY', { error: false, data: manga })
     }).catch(ex => {
       e.sender.send('URL_VERIFY', { error: ex.toString(), data: {} })
@@ -27,23 +27,24 @@ export function server (mainWindow) {
       console.log('DOWNLOAD_COMPLATE', e)
     })
   })
-  ipcMain.on('LOGIN', function (e, sender) {
-    let account = settings.get('config.account')
-    if (account) {
-      hentai.login(account.username, account.password).then(raw => {
+  ipcMain.on('LOGIN', function (e, account) {
+    if (account.username.trim() !== '' || account.password.trim() !== '') {
+      console.log('LOGIN', account)
+      hentai.login(account.username.trim(), account.password.trim()).then(raw => {
         let getName = /You are now logged in as:(.*?)<br/ig.exec(raw.body)
-        console.log(`https://forums.e-hentai.org/index.php?act=Login&CODE=01`)
         if (getName) {
-          console.log(`Login Success: ${getName[1]}`)
-          console.log(raw.headers['set-cookie'])
+          console.log(`Login: ${getName[1]}`)
+          settings.set('config', { username: account.username, password: account.password, name: getName[0], cookie: raw.headers['set-cookie'] })
+          e.sender.send('LOGIN', { success: true, name: getName[1], cookie: raw.headers['set-cookie'] })
+        } else {
+          let message = /"errorwrap"[\w\W]*?<p>(.*?)</ig.exec(raw.body)[1]
+          e.sender.send('LOGIN', { success: false, message: message })
         }
-        e.sender.send('LOGIN', true)
       }).catch(ex => {
-        e.sender.send('LOGIN', false)
-        console.log('LOGIN', ex)
+        e.sender.send('LOGIN', { success: false, message: ex.message })
       })
     } else {
-      e.sender.send('LOGIN', false)
+      e.sender.send('LOGIN', { success: false, message: 'This field is empty.' })
     }
   })
 }
@@ -71,24 +72,28 @@ export const client = {
           })
           return def.promise
         },
+        INIT_MANGA: callback => {
+          let updated = (e, sender) => {
+            callback(sender)
+          }
+          ipcRenderer.removeListener('INIT_MANGA', updated)
+          ipcRenderer.on('INIT_MANGA', updated)
+        },
         DOWNLOAD: (manga, events) => {
           let def = Q.defer()
+
           ipcRenderer.send('DOWNLOAD_BEGIN', manga)
-          ipcRenderer.on('DOWNLOAD_WATCH', (e, status) => {
-            events(status)
-          })
-          ipcRenderer.once('DOWNLOAD_COMPLATE', (e, manga) => {
-            ipcRenderer.removeListener('DOWNLOAD_WATCH', (e) => { })
-            def.resolve()
-          })
+          ipcRenderer.removeListener('DOWNLOAD_WATCH', events)
+          ipcRenderer.removeListener('DOWNLOAD_COMPLATE', (e, data) => { def.resolve() })
+          ipcRenderer.on('DOWNLOAD_WATCH', events)
+          ipcRenderer.on('DOWNLOAD_COMPLATE', (e, data) => { def.resolve() })
           return def.promise
         },
-        LOGIN: () => {
+        LOGIN: (user, pass) => {
           let def = Q.defer()
-          ipcRenderer.send('LOGIN')
-          ipcRenderer.on('LOGIN', (e, success) => {
-            def.resolve(success)
-          })
+          ipcRenderer.send('LOGIN', { username: user, password: pass })
+          ipcRenderer.removeListener('LOGIN', (e, data) => { def.resolve(data) })
+          ipcRenderer.on('LOGIN', (e, data) => { def.resolve(data) })
           return def.promise
         }
       },

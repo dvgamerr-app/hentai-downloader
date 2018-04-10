@@ -1,8 +1,11 @@
-import { dialog, ipcMain, ipcRenderer } from 'electron'
+import { app, dialog, ipcMain, ipcRenderer } from 'electron'
 import * as hentai from './ehentai.js'
 import Q from 'q'
 
 const settings = require('electron-settings')
+
+let config = settings.get('config')
+if (!config || !(config || {}).directory) settings.set('config', { directory: app.getPath('downloads') })
 
 export function server (mainWindow) {
   ipcMain.on('CHANGE_DIRECTORY', function (e, source) {
@@ -34,7 +37,7 @@ export function server (mainWindow) {
         let getName = /You are now logged in as:(.*?)<br/ig.exec(raw.body)
         if (getName) {
           console.log(`Login: ${getName[1]}`)
-          settings.set('config', { username: account.username, password: account.password, name: getName[0], cookie: raw.headers['set-cookie'] })
+          settings.set('config', { username: account.username, password: account.password, name: getName[1], cookie: raw.headers['set-cookie'] })
           e.sender.send('LOGIN', { success: true, name: getName[1], cookie: raw.headers['set-cookie'] })
         } else {
           let message = /"errorwrap"[\w\W]*?<p>(.*?)</ig.exec(raw.body)[1]

@@ -7,7 +7,7 @@
         </div>
         <div class="col-xs-4 text-right">
           <span v-if="sign.cookie == null" class="help-block" style="color: #616161;">Please login <b>exhentai.org</b>, <a href="#" @click.prevent="page.signin = true">LOGIN</a></span>
-          <span v-else class="help-block" style="color: #616161;">Hello, {{sign.name}}</span>
+          <span v-else class="help-block" style="color: #616161;">Hello, You are now logged in as {{sign.name}}</span>
         </div>
       </div>
       <div v-if="page.signin" class="row">
@@ -25,7 +25,8 @@
             </div>
             <div v-if="!state_signin" class="col-xs-4 form-group">
               <label for="txtUsername">Sign-In exhentai.org</label>
-              <textarea class="form-control" id="txtPassoword" v-model="sign.header" rows="3"></textarea>
+              <input type="text" class="form-control" id="txtUsername" placeholder="Username" v-model="sign.username">
+              <input type="text" class="form-control" id="txtPassword" placeholder="Password" v-model="sign.password">
             </div>
             <div v-if="!state_signin" class="col-xs-3 item">
               <button type="submit" class="btn btn-sm btn-success"><i class="fa fa-sign-in"></i> Sign-In</button>
@@ -93,7 +94,7 @@
           <col style="width:10%;">
           <col style="width:5%;">
         </colgroup>
-        <thead>
+        <thead class="thead-dark">
           <tr>
             <th style="text-align:center;">#</th>
             <th>Name</th>
@@ -279,22 +280,23 @@
         })
       },
       onSignIn () {
-        window.open('https://forums.e-hentai.org/index.php?s=5fa113c1ae71be8c9540e5d33d280f2d&act=Login&CODE=00')
-        // let vm = this
-        // vm.state_signin = true
-        // vm.LOGIN(vm.sign.username, vm.sign.password).then(data => {
-        //   vm.state_signin = false
-        //   if (data.success) {
-        //     vm.sign.cookie = data.cookie
-        //     vm.sign.name = data.name
-        //     vm.page.signin = false
-        //   } else {
-        //     vm.sign.username = ''
-        //     vm.sign.password = ''
-        //     vm.error_message = data.message
-        //   }
-        //   console.log('LOGIN:', data)
-        // })
+        // window.open('https://forums.e-hentai.org/index.php?s=5fa113c1ae71be8c9540e5d33d280f2d&act=Login&CODE=00')
+        let vm = this
+        vm.state_signin = true
+        console.log('LOGIN:', vm.sign.username, vm.sign.password)
+        vm.LOGIN(vm.sign.username, vm.sign.password).then(data => {
+          vm.state_signin = false
+          if (data.success) {
+            vm.sign.cookie = data.cookie
+            vm.sign.name = data.name
+            vm.page.signin = false
+          } else {
+            vm.sign.username = ''
+            vm.sign.password = ''
+            vm.error_message = data.message
+          }
+          console.log('DATA:', data)
+        })
       },
       onCheckURL: (url) => {
         return /hentai.org\/\w{1}\/\d{1,8}\/[0-9a-f]+?\//g.test(url)
@@ -452,6 +454,13 @@
   }
   .form.signin > .form-group {
     margin-bottom: 0px !important;
+  }
+  #txtUsername, #txtPassword {
+    padding: 4px;
+    height: 24px;
+    font-size: 11px;
+    margin-bottom: 4px;
+    border: #929292 solid 1px;
   }
 
   ::-webkit-scrollbar {

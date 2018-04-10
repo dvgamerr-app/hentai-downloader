@@ -222,20 +222,21 @@ export function init (link, emit) {
   })
 }
 
-export function login (username, password) {
-  return request({
+let httpHeader = {
+  'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/59.0.3071.115 Safari/537.36',
+  'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
+  'accept-language': 'th-TH,th;q=0.8,en-US;q=0.6,en;q=0.4,ja;q=0.2',
+  'content-type': 'application/x-www-form-urlencoded',
+  'cache-control': 'no-cache',
+  'upgrade-insecure-requests': '1'
+}
+export async function login (username, password) {
+  let res1 = await request({
     url: `https://forums.e-hentai.org/index.php?act=Login&CODE=01`,
     method: 'POST',
-    header: {
-      'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/59.0.3071.115 Safari/537.36',
-      'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
-      'accept-language': 'th-TH,th;q=0.8,en-US;q=0.6,en;q=0.4,ja;q=0.2',
-      'content-type': 'application/x-www-form-urlencoded',
-      'cache-control': 'no-cache',
-      'pragma': 'no-cache',
-      'referer': 'https://forums.e-hentai.org/index.php',
-      'upgrade-insecure-requests': '1'
-    },
+    header: Object.assign(httpHeader, {
+      'referer': 'https://forums.e-hentai.org/index.php'
+    }),
     form: {
       referer: 'https://forums.e-hentai.org/index.php',
       CookieDate: 1,
@@ -243,9 +244,9 @@ export function login (username, password) {
       bt: '1-1',
       UserName: username.trim(),
       PassWord: password.trim(),
-      'g-recaptcha-response': '03AMPJSYUP6di4VRxYc3H_eGu-nXfCnXSUCorsnX0Iq1Ut9xYYlT1OChDQGtGHp_dC043jje-vXVecdOIjstmgxrup6kqYlp6x0i1tSevgbEMmWTbJKPQecRWEUgzmWoqaNFOGJmTaeMv2V0_f9Oz44Hxybzll4btnSN1tcgWFrqHcnuGG-7nAt4tizqEWhOyjzTw2IWIGZuq8TK3fSZx6Ymenqr-z8KlM8BVfXIa0q7HJifGXFoDo3iYfNrieyqY2tWgrVE_5NfgH-HpWVcPg43RO7sIwwWUVVXrCvBEGh1Vnx6ma-UjYcXgHUynyH7u-utqQEkKB_tj9p5llQHHqzEfgiDJyN6do5HuG-1HTie3sclnRqJ7v-1ziGSuySaED0Uafa_yrgc_B4TGYsSAe605Aca-z0892f0GvQ2w7NXO4eRkpBc1_Yv8',
       ipb_login_submit: 'Login!'
     },
     resolveWithFullResponse: true
   })
+  return res1
 }

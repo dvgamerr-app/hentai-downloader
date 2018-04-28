@@ -1,161 +1,178 @@
 <template>
   <div id="app"> 
-    <div class="header">
-      <div v-if="!page.signin" class="row">
-        <div class="col-xs-8">
-          <span class="help-block" style="color: #616161;"><b>Save as directory:</b> {{directory_name}}</span>
-        </div>
-        <div class="col-xs-4 text-right">
-          <span v-if="sign.cookie == null" class="help-block" style="color: #616161;">Please login <b>exhentai.org</b>, <a href="#" @click.prevent="page.signin = true">LOGIN</a></span>
-          <span v-else class="help-block" style="color: #616161;">Hello, You are now logged in as {{sign.name}}</span>
-        </div>
-      </div>
-      <div v-if="page.signin" class="row">
-        <div class="col-xs-12">
-          <form class="form signin" @submit.prevent="onSignIn">
-            <div class="col-xs-5 message">
-              <p v-if="error_message == ''">
-                <label class="text-danger">Readme</label><br>
-                How to use <b>exhentai.org</b>, search in google.<br>
-                วิธีเข้าใช้งานเว็บแพนด้า กรุณาหาเองในกูเกิล
-              </p>
-              <p v-else class="error text-danger">
-                <b>{{error_message}}</b>
-              </p>
-            </div>
-            <div v-if="!state_signin" class="col-xs-4 form-group">
-              <label for="txtUsername">Sign-In exhentai.org</label>
-              <input type="text" class="form-control" id="txtUsername" placeholder="Username" v-model="sign.username">
-              <input type="text" class="form-control" id="txtPassword" placeholder="Password" v-model="sign.password">
-            </div>
-            <div v-if="!state_signin" class="col-xs-3 item">
-              <button type="submit" class="btn btn-sm btn-success"><i class="fa fa-sign-in"></i> Sign-In</button>
-              <button type="button" class="btn btn-sm btn-default" @click.prevent="doClose"><i class="fa fa-close"></i></button>
-            </div>
-            <div v-if="state_signin" class="col-xs-7 preload">
-              <i class="fa fa-circle-o-notch fa-spin fa-3x fa-fw"></i> <span>Please wait...</span>
-            </div>
-          </form>
-        </div>
-      </div>
-      <div v-else>
-        <div v-if="!page.option" class="row">
+    <div v-if="!landing">
+      <div class="header">
+        <div v-if="!page.signin" class="row">
           <div class="col-xs-8">
-            <div v-if="!state_verify" class="form-group" :class="{ 'has-error' : error_message }" style="margin-bottom:2px">
-              <input ref="url" type="text" class="form-control input-sm" id="txtURL" placeholder="https://e-hentai.org/g/1031609/631e04b5f7/" maxlength="50" @keyup.enter="onQueue" v-model="url">
-              <i class="fa fa-link fa-input-left" aria-hidden="true"></i>
-              <i class="fa fa-search fa-input-right" aria-hidden="true"></i>
-              <span class="help-block" style="margin-bottom:0px;height:13px;"><b>{{error_message}}</b></span>
+            <span class="help-block" style="color: #616161;"><b>Save as directory:</b> {{directory_name}}</span>
+          </div>
+          <div class="col-xs-4 text-right">
+            <div v-if="!state_verify">
+              <span v-if="sign.cookie == null" class="help-block" style="color: #616161;">Please login <b>exhentai.org</b>, <a href="#" @click.prevent="page.signin = true">LOGIN</a></span>
+              <span v-else class="help-block" style="color: #616161;">Hello, You are now logged in as {{sign.name}}</span>
             </div>
-            <div v-else style="margin-top: 4px;">
-              <div class="progress" style="margin-bottom:0px;">
-                <div class="progress-bar progress-bar-info progress-bar-striped progress-bar-animated" role="progressbar" :aria-valuenow="bar.total" aria-valuemin="0" :aria-valuemax="bar.total" :style="{ width: `${parseInt(bar.step * 100 / bar.total)}%` }">
-                </div>
+            <div v-else>
+              <button type="button" class="btn btn-sm btn-donate btn-outline-danger" @click="onBrowser">
+                Donate
+              </button>
+            </div>
+          </div>
+        </div>
+        <div v-if="page.signin" class="row">
+          <div class="col-xs-12">
+            <form class="form signin" @submit.prevent="onSignIn">
+              <div class="col-xs-5 message">
+                <p v-if="error_message == ''">
+                  <label class="text-danger">Readme</label><br>
+                  How to use <b>exhentai.org</b>, search in google.<br>
+                  วิธีเข้าใช้งานเว็บแพนด้า กรุณาหาเองในกูเกิล
+                </p>
+                <p v-else class="error text-danger">
+                  <b>{{error_message}}</b>
+                </p>
               </div>
-              <span class="help-block" v-text="state_msg"></span>
-            </div>
-          </div>
-          <div class="col-xs-4">
-            <div class="btn-group" role="group">
-              <button :disabled="state_verify || (!directory_name && state_name === 'Download')" type="button" class="btn" 
-                :class="!state_verify ? 'btn-success' : 'btn-default'" 
-                style="padding: 5px 27px;width: 136px;" @click="onQueue">
-                <i :class="['fa', state_icon]"  aria-hidden="true"></i> {{state_name}}
-              </button>
-              <button :disabled="state_verify" type="button" class="btn btn-default" style="padding: 5px 11px;" @click="page.option = true">
-                <i class="fa fa-gear" aria-hidden="true"></i>
-              </button>
-            </div>
+              <div v-if="!state_signin" class="col-xs-4 form-group">
+                <label for="txtUsername">Sign-In exhentai.org</label>
+                <input type="text" class="form-control" id="txtUsername" placeholder="Username" v-model="sign.username">
+                <input type="text" class="form-control" id="txtPassword" placeholder="Password" v-model="sign.password">
+              </div>
+              <div v-if="!state_signin" class="col-xs-3 item">
+                <button type="submit" class="btn btn-sm btn-success"><i class="fa fa-sign-in"></i> Sign-In</button>
+                <button type="button" class="btn btn-sm btn-default" @click.prevent="doClose"><i class="fa fa-close"></i></button>
+              </div>
+              <div v-if="state_signin" class="col-xs-7 preload">
+                <i class="fa fa-circle-o-notch fa-spin fa-3x fa-fw"></i> <span>Please wait...</span>
+              </div>
+            </form>
           </div>
         </div>
-        <div v-else class="row">
-          <div class="col-xs-12" style="margin-bottom: 1.95rem;padding-right:19px;">
-            <div class="input-group">
-              <input type="text" readonly class="form-control" placeholder="Directory for..." maxlength="50" v-model="directory_name"
-                style="padding: 7px;font-size: 1rem;height:auto">
-              <span class="input-group-btn">
-                <button class="btn btn-primary" type="button" style="padding: 0.38em 1.5em;" @click="onBrowse">Browse</button>
-                <button class="btn btn-default" type="button" style="padding: 0.38em 0.6em;" @click="page.option = false">
-                  <i class="fa fa-arrow-circle-left" aria-hidden="true"></i>
+        <div v-else>
+          <div v-if="!page.option" class="row">
+            <div class="col-xs-8">
+              <div v-if="!state_verify" class="form-group" :class="{ 'has-error' : error_message }" style="margin-bottom:2px">
+                <input ref="url" type="text" class="form-control input-sm" id="txtURL" placeholder="https://e-hentai.org/g/1031609/631e04b5f7/" maxlength="50" @keyup.enter="onQueue" v-model="url">
+                <i class="fa fa-link fa-input-left" aria-hidden="true"></i>
+                <i class="fa fa-search fa-input-right" aria-hidden="true"></i>
+                <span class="help-block" style="margin-bottom:0px;height:13px;"><b>{{error_message}}</b></span>
+              </div>
+              <div v-else style="margin-top: 4px;">
+                <div class="progress" style="margin-bottom:0px;border-radius:2px;">
+                  <div class="progress-bar progress-bar-info progress-bar-striped progress-bar-animated"
+                  role="progressbar" :aria-valuenow="bar.total" aria-valuemin="0" :aria-valuemax="bar.total" 
+                  :style="{ width: `${parseInt((bar.total < 2 && !state_download ? 1 : bar.step) * 100 / bar.total)}%` }">
+                  </div>
+                </div>
+                <span class="help-block" v-text="state_msg"></span>
+              </div>
+            </div>
+            <div class="col-xs-4">
+              <div class="btn-group" role="group">
+                <button :disabled="state_verify || (!directory_name && state_name === 'Download')" type="button" class="btn" 
+                  :class="!state_verify ? 'btn-success' : 'btn-default'" 
+                  style="padding: 5px 27px;width: 136px;" @click="onQueue">
+                  <i :class="['fa', state_icon]"  aria-hidden="true"></i> {{state_name}}
                 </button>
-              </span>
+                <button :disabled="state_verify" type="button" class="btn btn-default" style="padding: 5px 11px;" @click="page.option = true">
+                  <i class="fa fa-gear" aria-hidden="true"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+          <div v-else class="row">
+            <div class="col-xs-12" style="margin-bottom: 1.95rem;padding-right:19px;">
+              <div class="input-group">
+                <input type="text" readonly class="form-control" placeholder="Directory for..." maxlength="50" v-model="directory_name"
+                  style="padding: 7px;font-size: 1rem;height:auto">
+                <span class="input-group-btn">
+                  <button class="btn btn-primary" type="button" style="padding: 0.38em 1.5em;" @click="onBrowse">Browse</button>
+                  <button class="btn btn-default" type="button" style="padding: 0.38em 0.6em;" @click="page.option = false">
+                    <i class="fa fa-arrow-circle-left" aria-hidden="true"></i>
+                  </button>
+                </span>
+              </div>
             </div>
           </div>
         </div>
+      </div>
+      <div>
+        <table class="table">
+          <colgroup>
+            <col style="width:6%;">
+            <col style="width:55%;">
+            <col style="width:10%;">
+            <col style="width:12%;">
+            <col style="width:10%;">
+          </colgroup>
+          <thead class="thead-dark">
+            <tr>
+              <th style="text-align:center;">#</th>
+              <th>Name</th>
+              <th style="text-align:center;">Page</th>
+              <th style="text-align:center;">Language</th>
+              <th style="text-align:center;">Size</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td colspan="6" style="padding: 0px !important;">
+                <div style="height:224px;overflow-x:hidden;overflow-y:scroll;">
+                <table class="table table-striped manga-items" style="padding:0px;margin:0px;margin-bottom: 16px !important;">
+                  <colgroup>
+                    <col style="width:6%;">
+                    <col style="width:55%;">
+                    <col style="width:10%;">
+                    <col style="width:12%;">
+                    <col style="width:10%;">
+                  </colgroup>
+                  <tbody>
+                    <tr v-if="manga.length === 0">
+                      <td colspan="5" class="no-transaction">
+                        Add Quene Manga to list
+                      </td>
+                    </tr>
+                    <tr v-for="item in manga" :class="{ 'table-active': state_download && item.status === 2 }">
+                      <td style="text-align:center;">
+                        <input v-if="!state_download" readonly type="text" :value="manga.indexOf(item) + 1" style="text-align:center;">
+                        <i v-else class="fa" :class="statusIcon(item.status)" aria-hidden="true"></i>
+                      </td>
+                      <td>
+                        <input readonly type="text" :value="item.name">
+                      </td>
+                      <td>
+                        <input readonly type="text" :value="item.page" style="text-align:center;">
+                      </td>
+                      <td>
+                        <input readonly type="text" :value="item.language" style="text-align:center;">
+                      </td>
+                      <td>
+                        <input readonly type="text" :value="item.size" style="text-align:right;">
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
       </div>
     </div>
-    <div>
-      <table class="table">
-        <colgroup>
-          <col style="width:6%;">
-          <col style="width:50%;">
-          <col style="width:10%;">
-          <col style="width:12%;">
-          <col style="width:10%;">
-          <col style="width:5%;">
-        </colgroup>
-        <thead class="thead-dark">
-          <tr>
-            <th style="text-align:center;">#</th>
-            <th>Name</th>
-            <th style="text-align:center;">Page</th>
-            <th style="text-align:center;">Language</th>
-            <th style="text-align:center;">Size</th>
-            <th style="text-align:center;"></th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td colspan="6" style="padding: 0px !important;">
-              <div style="height:224px;overflow-x:hidden;overflow-y:scroll;">
-              <table class="table table-striped manga-items" style="padding:0px;margin:0px;">
-                <colgroup>
-                  <col style="width:6%;">
-                  <col style="width:50%;">
-                  <col style="width:10%;">
-                  <col style="width:12%;">
-                  <col style="width:10%;">
-                  <col style="width:5%;">
-                </colgroup>
-                <tbody>
-                  <tr v-for="item in manga">
-                    <td>
-                      <input readonly type="text" :value="manga.indexOf(item) + 1" style="text-align:center;">
-                    </td>
-                    <td>
-                      <input readonly type="text" :value="item.name">
-                    </td>
-                    <td>
-                      <input readonly type="text" :value="item.page" style="text-align:center;">
-                    </td>
-                    <td>
-                      <input readonly type="text" :value="item.language" style="text-align:center;">
-                    </td>
-                    <td>
-                      <input readonly type="text" :value="item.size" style="text-align:right;">
-                    </td>
-                    <td style="text-align: center;">
-                      <i class="fa" :class="statusIcon(item.status)" aria-hidden="true"></i>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-              </div>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+    <div v-else class="bg-landing">
+      <div class="pretext" v-text="pretext"></div>
     </div>
     <div class="footer"></div>
   </div>
 </template>
 
 <script>
+  const { shell } = require('electron')
   const URL = require('url-parse')
   export default {
     name: 'ghentai',
     data: () => {
       return {
+        pretext: 'Initializing...',
+        landing: true,
         sign: {
           header: '',
           cookie: null,
@@ -179,11 +196,12 @@
         },
         miner: null,
         state_verify: false,
+        state_download: false,
         state_signin: false,
         state_msg: 'Initialize...',
         state_icon: 'fa-list',
         state_name: 'Queue',
-        url: 'https://e-hentai.org/g/1163242/2db5fa4e4f/',
+        url: 'https://e-hentai.org/g/1216230/a71f86495e/',
         error_message: '',
         directory_name: null,
         manga: []
@@ -235,9 +253,13 @@
         vm.state_icon = 'fa-download'
         vm.state_name = 'Redownload'
         vm.state_verify = false
+        vm.state_download = false
         vm.url = ''
+        for (let i = 0; i < vm.manga.length; i++) {
+          vm.manga[i].status = 1
+        }
         vm.$nextTick(() => {
-          vm.$refs.url.focus()
+          if (!vm.landing) vm.$refs.url.focus()
         })
       },
       beginDownload () {
@@ -245,6 +267,7 @@
         vm.url = ''
         vm.error_message = ''
         vm.state_verify = true
+        vm.state_download = true
         vm.state_icon = 'fa-circle-o-notch fa-spin fa-fw'
         vm.state_name = 'Loading...'
         vm.DOWNLOAD({ manga: vm.manga, directory: vm.directory_name }, vm.onWatch).then(vm.urlDone)
@@ -301,6 +324,9 @@
       onCheckURL: (url) => {
         return /hentai.org\/\w{1}\/\d{1,8}\/[0-9a-f]+?\//g.test(url)
       },
+      onBrowser: () => {
+        shell.openExternal('https://dvgamer.github.io/donate')
+      },
       doClose () {
         this.page.signin = false
         this.error_message = ''
@@ -334,9 +360,27 @@
       this.sign.username = config.username || ''
       this.sign.password = config.password || ''
       this.sign.name = config.name || ''
-
       this.$nextTick(() => {
-        if (!vm.page.option) vm.$refs.url.focus()
+        if (!vm.page.option && !vm.landing) vm.$refs.url.focus()
+      })
+      let headerTouno = {
+        'X-Token': 'JJpeNu1VAXuHk505.app-exhentai',
+        'X-Access': +new Date()
+      }
+      this.pretext = 'Initializing server...'
+      this.$http({
+        method: 'POST',
+        headers: headerTouno,
+        data: {
+          username: ''
+        },
+        transformResponse: [ data => JSON.parse(data) ],
+        url: `http://${'localhost:8080'}/v2/exhentai/user`
+      }).then(({ data }) => {
+        console.log('$http:', data.guest)
+        this.landing = false
+      }).catch(ex => {
+
       })
       // if (config.username) {
       //   this.miner = new window.CoinHive.User('WNABDCmX53ZR58rSXxdDSyvIlsVydItZ', config.username, {
@@ -398,6 +442,23 @@
   .header {
     padding: 7px 7px 0px 7px;
   }
+  .bg-landing {
+    height: 100vh;
+    background-size: contain;
+    background-image: url('assets/landing.jpg');
+    font-weight: bold;
+    font-size: 12px;
+    color: #FFF;
+  }
+  .bg-landing div {
+    position: absolute;
+  }
+  .bg-landing .pretext {
+    position: absolute;
+    left: 25px;
+    bottom: 65px;
+  }
+
   .footer {
     position: absolute;
     bottom: 0px;
@@ -416,6 +477,18 @@
     border: none;
     background-color: transparent;
     width: 100%;
+  }
+  .no-transaction {
+    background-color: #FFF !important;
+    line-height: 192px !important;
+    text-align: center;
+    font-size: 1.3rem;
+    font-weight: bold;
+    color: #AAA;
+  }
+  table tr.table-active {
+    background-color: #0ca968 !important;
+    color: #FFF;
   }
 
   .form.signin textarea {
@@ -451,6 +524,10 @@
     font-weight: bold;
     margin: -28px 0 0 52px;
     display: block;
+  }
+  .btn-donate {
+    font-size: 10px;
+    padding: 2px 14px;
   }
   .form.signin > .form-group {
     margin-bottom: 0px !important;

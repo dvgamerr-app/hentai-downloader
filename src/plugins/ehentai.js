@@ -1,6 +1,4 @@
 'use strict'
-import { slack, logs } from './slack.js'
-
 const URL = require('url-parse')
 const fs = require('fs')
 const path = require('path')
@@ -11,6 +9,13 @@ const xhr = require('request')
 const request = require('request-promise')
 const events = require('events')
 const em = new events.EventEmitter()
+
+const logs = msg => {
+  if (process.env.NODE_ENV === 'development') console.log(msg)
+}
+
+let allCookie = []
+const jarCookieSession = () => allCookie.map(cookie => cookie.split(';')[0]).join('; ')
 
 let getFilename = (index, total) => {
   return `${Math.pow(10, (total.toString().length - index.toString().length) + 1).toString().substr(2, 10) + index}`
@@ -23,7 +28,7 @@ let getImage = (res, manga, l, index, def, directory, emit) => {
 
   emit.send('DOWNLOAD_WATCH', { index: l, current: filename, total: parseInt(manga.page), finish: false, error: false })
   // let msg = `Downloading...  -- '${(index + 1)}.jpg' of ${manga.page} files -->`
-  // console.log(msg)
+  // logs(msg)
 
   let req = xhr({
     method: 'GET',
@@ -69,15 +74,15 @@ let getImage = (res, manga, l, index, def, directory, emit) => {
         def.resolve()
       }
     } else {
-      // console.log(index, '--> ', response.statusCode, response.headers['content-type'])
+      // logs(index, '--> ', response.statusCode, response.headers['content-type'])
       def.resolve()
     }
   })
   req.on('error', err => {
     // process.stdout.cursorTo(msg.length + 1)
-    // console.log(` ${err.message}`)
+    // logs(` ${err.message}`)
     if (process.env.NODE_ENV === 'development') {
-      console.log(' not found -->', index, err.message)
+      logs(' not found -->', index, err.message)
     }
     let link = manga.items[index]
     manga.items[index] = `${link}${link.indexOf('?') > -1 ? '&' : '?'}nl=${nl}`
@@ -92,7 +97,7 @@ em.download = (list, directory, emit) => {
   for (let l = 0; l < list.length; l++) {
     let manga = list[l]
     for (let i = 0; i < manga.items.length; i++) {
-      // console.log('link:', manga.items[i])
+      // logs('link:', manga.items[i])
       all.push(() => {
         let def = Q.defer()
         request(manga.items[i]).then(res => { getImage(res, manga, l, i, def, directory, emit) })
@@ -101,7 +106,7 @@ em.download = (list, directory, emit) => {
     }
   }
 
-  logs('hentai-downloader', `*downloading request* \`${all.length}\` time`)
+  // logs('hentai-downloader', `*downloading request* \`${all.length}\` time`)
   return async.series(all)
 }
 
@@ -118,8 +123,6 @@ export function init (link, emit) {
   }
 
   let getManga = res => {
-    if (!/DOCTYPE.html.PUBLIC/ig.test(res)) throw new Error(res)
-
     let fixed = /\/\w{1}\/\d{1,8}\/[0-9a-f]+?\//ig.exec(baseUrl.pathname)
     if (fixed) link = `https://${baseUrl.hostname}${fixed[0]}`
 
@@ -128,6 +131,12 @@ export function init (link, emit) {
     let size = /File Size:.*?class="gdt2">(.*?)</ig.exec(res)
     let length = /Length:.*?gdt2">(.*?).page/ig.exec(res)
     let cover = /<div id="gleft">.*?url\((.*?)\)/ig.exec(res)
+
+    if (!name) throw new Error('manga.name is not found')
+    if (!language) throw new Error('manga.language is not found')
+    if (!size) throw new Error('manga.size is not found')
+    if (!length) throw new Error('manga.page is not found')
+    if (!cover) throw new Error('manga.page is not found')
 
     let manga = {
       ref: fixed[0],
@@ -140,12 +149,7 @@ export function init (link, emit) {
       items: []
     }
 
-    if (!manga.name) throw new Error('manga.name is not found')
-    if (!manga.language) throw new Error('manga.language is not found')
-    if (!manga.size) throw new Error('manga.size is not found')
-    if (!manga.page) throw new Error('manga.page is not found')
-
-    slack(baseUrl.host, manga)
+    // slack(baseUrl.host, manga)
     getImage(manga, res)
     let totalPage = Math.ceil(manga.page / manga.items.length)
     emit.send('INIT_MANGA', { page: 1, total: totalPage })
@@ -174,49 +178,79 @@ export function init (link, emit) {
         return manga
       })
     } else {
-      //  call api saved
       return manga
     }
   }
 
-  console.log('URL', `${link}`)
-  return (() => {
-    let def = Q.defer()
-    if (!/\/\w{1}\/\d{1,8}\/[0-9a-f]+?\//ig.test(baseUrl.pathname)) {
-      def.reject(new Error(`Key missing, or incorrect key provided.`))
-    } else {
-      let fixed = /\/\w{1}\/\d{1,8}\/[0-9a-f]+?\//ig.exec(baseUrl.pathname)
+  let reqHentai = async (uri, method, options) => new Promise((resolve, reject) => {
+    let cookie = jarCookieSession()
 
-      if (baseUrl.hostname === 'exhentai.org') baseUrl.hostname = 'e-hentai.org'
+    options = Object.assign({
+      'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/59.0.3071.115 Safari/537.36',
+      'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
+      'accept-language': 'th-TH,th;q=0.8,en-US;q=0.6,en;q=0.4,ja;q=0.2',
+      'cache-control': 'no-cache',
+      'cookie': cookie === '' ? undefined : cookie,
+      'pragma': 'no-cache',
+      'authority': 'e-hentai.org',
+      'referer': `https://${baseUrl.hostname}/`,
+      'upgrade-insecure-requests': '1'
+    }, options || {})
 
-      link = `https://${baseUrl.hostname}${fixed[0]}`
-      def.resolve()
-    }
-    return def.promise
-  })().then(() => {
-    return request({
-      url: link,
-      header: {
-        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/59.0.3071.115 Safari/537.36',
-        'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
-        'accept-language': 'th-TH,th;q=0.8,en-US;q=0.6,en;q=0.4,ja;q=0.2',
-        'cache-control': 'no-cache',
-        'pragma': 'no-cache',
-        'referer': `https://${baseUrl.hostname}/`,
-        'upgrade-insecure-requests': '1'
+    console.log(`URL REQUEST: ${uri}`, options)
+    xhr({
+      url: uri,
+      method: method || 'GET',
+      header: options,
+      timeout: 5000
+    }, (error, { statusCode, headers }, body) => {
+      console.log(`URL RESPONSE: ${statusCode}`, headers)
+      if (error) reject(new Error(error))
+      if (statusCode === 302 || statusCode === 200) {
+        if (headers['set-cookie']) {
+          for (let i = 0; i < headers['set-cookie'].length; i++) {
+            let c = headers['set-cookie'][i].split(';')
+            let co = allCookie.filter(item => item === c[0])
+            if (co.length === 0) allCookie.push(headers['set-cookie'][i])
+          }
+        }
+        resolve(body)
+      } else {
+        reject(new Error(statusCode))
       }
     })
-  }).then(getManga).catch(ex => {
+  })
+
+  return (async () => {
+    if (!/\/\w{1}\/\d{1,8}\/[0-9a-f]+?\//ig.test(baseUrl.pathname)) {
+      throw new Error(`Key missing, or incorrect key provided.`)
+    } else {
+      let fixed = /\/\w{1}\/\d{1,8}\/[0-9a-f]+?\//ig.exec(baseUrl.pathname)
+      if (baseUrl.hostname === 'exhentai.org') baseUrl.hostname = 'e-hentai.org'
+      link = `https://${baseUrl.hostname}${fixed[0]}`
+    }
+    let res = await reqHentai(link)
+    if (!/DOCTYPE.html.PUBLIC/ig.test(res)) throw new Error(res)
+    let warnMe = /<a href="(.*?)">Never Warn Me Again/ig.exec(res)
+    if (warnMe) {
+      logs(`Never Warn Me Again: ${warnMe[1]}`)
+      await reqHentai(warnMe[1], 'HEAD', {
+        'referer': link
+      })
+    }
+    return getManga(res)
+  })().catch(ex => {
+    console.error(ex.statusCode, ex)
     if (ex.statusCode === 404) {
       if (ex.error) {
-        logs('hentai-downloader', `*rare*: https://${baseUrl.hostname}${baseUrl.pathname}`)
+        // logs('hentai-downloader', `*rare*: https://${baseUrl.hostname}${baseUrl.pathname}`)
         throw new Error('This gallery has been removed or is unavailable.')
       } else {
-        logs('hentai-downloader', `*error*: ${link}\n${ex.name.toString()}`)
+        // logs('hentai-downloader', `*error*: ${link}\n${ex.name.toString()}`)
         throw new Error(ex.name)
       }
     } else {
-      logs('hentai-downloader', `*error*: ${link}\n${ex.toString()}`)
+      // logs('hentai-downloader', `*error*: ${link}\n${ex.toString()}`)
       throw ex
     }
   })
@@ -226,7 +260,6 @@ let httpHeader = {
   'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/59.0.3071.115 Safari/537.36',
   'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
   'accept-language': 'th-TH,th;q=0.8,en-US;q=0.6,en;q=0.4,ja;q=0.2',
-  'content-type': 'application/x-www-form-urlencoded',
   'cache-control': 'no-cache',
   'upgrade-insecure-requests': '1'
 }

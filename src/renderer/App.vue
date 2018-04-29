@@ -159,6 +159,10 @@
     </div>
     <div v-else class="bg-landing">
       <div class="pretext" v-text="pretext"></div>
+      <div v-if="exmsg" class="premenu">
+        <a class="btn btn-sm btn-outline-success" href="#"><i class="fa fa-refresh"></i></a>
+        <a class="btn btn-sm btn-outline-danger" href="#"><i class="fa fa-close"></i></a></div>
+      <div class="exmsg" v-text="exmsg"></div>
     </div>
     <div class="footer"></div>
   </div>
@@ -172,6 +176,7 @@
     data: () => {
       return {
         pretext: 'Initializing...',
+        exmsg: '',
         landing: true,
         sign: {
           header: '',
@@ -374,13 +379,16 @@
         data: {
           username: ''
         },
+        timeout: 3000,
         transformResponse: [ data => JSON.parse(data) ],
         url: `http://${'localhost:8080'}/v2/exhentai/user`
       }).then(({ data }) => {
         console.log('$http:', data.guest)
         this.landing = false
       }).catch(ex => {
-
+        console.log(ex)
+        this.pretext = 'Server is down. or'
+        this.exmsg = `ERROR::${ex.message}`
       })
       // if (config.username) {
       //   this.miner = new window.CoinHive.User('WNABDCmX53ZR58rSXxdDSyvIlsVydItZ', config.username, {
@@ -457,6 +465,18 @@
     position: absolute;
     left: 25px;
     bottom: 65px;
+  }
+  .bg-landing .premenu {
+    position: absolute;
+    right: 0px;
+    top: 5px;
+  }
+
+  .bg-landing .exmsg {
+    position: absolute;
+    left: 25px;
+    bottom: 45px;
+    color: #a91b0c;
   }
 
   .footer {

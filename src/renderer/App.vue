@@ -3,15 +3,16 @@
     <div v-if="!landing">
       <div class="header">
         <div v-if="!page.signin" class="row">
-          <div class="col-xs-8">
-            <span class="help-block" style="color: #616161;"><b>Save as directory:</b> {{directory_name}}</span>
+          <div class="col-sm-7">
+            <span class="help-block"><b>Save as directory:</b> {{directory_name}}</span>
           </div>
-          <div class="col-xs-4 text-right">
-            <div v-if="!state_verify">
-              <span v-if="sign.cookie == null" class="help-block" style="color: #616161;">Please login <b>exhentai.org</b>, <a href="#" @click.prevent="page.signin = true">LOGIN</a></span>
+          <div class="col-sm-5">
+            <div v-if="!state_verify" class="text-right">
+              <span v-if="sign.cookie == null" class="help-block">Hey <b>{{sign.username}}</b></span>
               <span v-else class="help-block" style="color: #616161;">Hello, You are now logged in as {{sign.name}}</span>
-            </div>
-            <div>
+              <button v-if="sign.cookie == null" type="button" class="btn btn-sm btn-singin btn-primary" @click.prevent="page.signin = true">
+                Login
+              </button>
               <button type="button" class="btn btn-sm btn-donate btn-outline-danger" @click="onBrowser">
                 Donate
               </button>
@@ -19,9 +20,9 @@
           </div>
         </div>
         <div v-if="page.signin" class="row">
-          <div class="col-xs-12">
+          <div class="col-sm-12">
             <form class="form signin" @submit.prevent="onSignIn">
-              <div class="col-xs-5 message">
+              <div class="col-sm-5 message">
                 <p v-if="error_message == ''">
                   <label class="text-danger">Readme</label><br>
                   How to use <b>exhentai.org</b>, search in google.<br>
@@ -31,16 +32,16 @@
                   <b>{{error_message}}</b>
                 </p>
               </div>
-              <div v-if="!state_signin" class="col-xs-4 form-group">
+              <div v-if="!state_signin" class="col-sm-4 form-group">
                 <label for="txtUsername">Sign-In exhentai.org</label>
                 <input type="text" class="form-control" id="txtUsername" placeholder="Username" v-model="sign.username">
                 <input type="text" class="form-control" id="txtPassword" placeholder="Password" v-model="sign.password">
               </div>
-              <div v-if="!state_signin" class="col-xs-3 item">
+              <div v-if="!state_signin" class="col-sm-3 item">
                 <button type="submit" class="btn btn-sm btn-success"><i class="fa fa-sign-in"></i> Sign-In</button>
                 <button type="button" class="btn btn-sm btn-default" @click.prevent="doBack"><i class="fa fa-close"></i></button>
               </div>
-              <div v-if="state_signin" class="col-xs-7 preload">
+              <div v-if="state_signin" class="col-sm-7 preload">
                 <i class="fa fa-circle-o-notch fa-spin fa-3x fa-fw"></i> <span>Please wait...</span>
               </div>
             </form>
@@ -48,7 +49,7 @@
         </div>
         <div v-else>
           <div v-if="!page.option" class="row">
-            <div class="col-xs-8">
+            <div class="col-sm-8">
               <div v-if="!state_verify" class="form-group" :class="{ 'has-error' : error_message }" style="margin-bottom:2px">
                 <input ref="url" type="text" class="form-control input-sm" id="txtURL" placeholder="https://e-hentai.org/g/1031609/631e04b5f7/" maxlength="50" @keyup.enter="onQueue" v-model="url">
                 <i class="fa fa-link fa-input-left" aria-hidden="true"></i>
@@ -65,7 +66,7 @@
                 <span class="help-block" v-text="state_msg"></span>
               </div>
             </div>
-            <div class="col-xs-4">
+            <div class="col-sm-4">
               <div class="btn-group" role="group">
                 <button :disabled="state_verify || (!directory_name && state_name === 'Download')" type="button" class="btn" 
                   :class="!state_verify ? 'btn-success' : 'btn-default'" 
@@ -79,7 +80,7 @@
             </div>
           </div>
           <div v-else class="row">
-            <div class="col-xs-12" style="margin-bottom: 1.95rem;padding-right:19px;">
+            <div class="col-sm-12" style="margin-bottom: 1.95rem;padding-right:19px;">
               <div class="input-group">
                 <input type="text" readonly class="form-control" placeholder="Directory for..." maxlength="50" v-model="directory_name"
                   style="padding: 7px;font-size: 1rem;height:auto">
@@ -354,10 +355,8 @@
         this.pretext = 'Initializing server...'
         this.exmsg = ``
         this.reqTounoIO(`http://${'localhost:8080'}/v2/exhentai/user`).then(({ data }) => {
-          console.log('$http:', data.guest)
-          vm.pretext = 'Server is down. or'
-          vm.exmsg = `ERROR::`
-          // vm.landing = false
+          vm.sign.username = data.guest
+          vm.landing = false
         }).catch(ex => {
           console.log(ex)
           vm.pretext = 'Server is down.'
@@ -421,14 +420,13 @@
   html,
   body { height: 100%; }
   #app { 
-    background-color: #FFFFFF !important; 
     width: 100%;
     height: 100%;
     overflow: hidden;
-    font-size: 1.15rem !important; 
+    font-size: 0.9rem !important; 
   }
   .help-block {
-    font-size: 0.9rem;
+    font-size: 0.65rem;
   }
   .form-control, .btn {
     border-radius: 0px !important;
@@ -565,7 +563,7 @@
     margin: -28px 0 0 52px;
     display: block;
   }
-  .btn-donate {
+  .btn-donate, .btn-singin {
     font-size: 10px;
     padding: 2px 14px;
   }

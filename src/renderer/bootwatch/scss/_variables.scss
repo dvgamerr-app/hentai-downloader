@@ -1,0 +1,143 @@
+// Superhero 4.1.1
+// Bootswatch
+
+//
+// Color system
+//
+
+$white:    #fff;
+$gray-100: #EBEBEB;
+$gray-200: #4E5D6C;
+$gray-300: #dee2e6;
+$gray-400: #ced4da;
+$gray-500: #adb5bd;
+$gray-600: #868e96;
+$gray-700: #495057;
+$gray-800: #343a40;
+$gray-900: #212529;
+$black:    #000;
+
+$blue:    #DF691A;
+$indigo:  #6610f2;
+$purple:  #6f42c1;
+$pink:    #e83e8c;
+$red:     #d9534f;
+$orange:  #f0ad4e;
+$yellow:  #f0ad4e;
+$green:   #5cb85c;
+$teal:    #20c997;
+$cyan:    #5bc0de;
+
+$primary:       $blue;
+$secondary:     $gray-200;
+$success:       $green;
+$info:          $cyan;
+$warning:       $yellow;
+$danger:        $red;
+$light:         lighten($gray-200, 25%);
+$dark:          $gray-200;
+
+// Body
+
+$body-bg:                   #2B3E50;
+$body-color:                $gray-100;
+
+// Components
+
+$border-radius:               0;
+$border-radius-lg:            0;
+$border-radius-sm:            0;
+
+// Fonts
+$font-family-sans-serif:      "Lato", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+
+$text-muted:                  rgba(255,255,255,.4);
+
+// Tables
+
+$table-accent-bg:             rgba($white,.05);
+$table-hover-bg:              rgba($white,.075);
+
+$table-dark-bg:               $light;
+$table-dark-border-color:     $gray-200;
+$table-dark-color:            $body-bg;
+
+// Forms
+
+$input-group-addon-color:           $gray-400;
+
+// Dropdowns
+
+$dropdown-bg:                       $gray-200;
+$dropdown-divider-bg:               rgba($black,.15);
+
+$dropdown-link-color:               $body-color;
+$dropdown-link-hover-color:         $dropdown-link-color;
+$dropdown-link-hover-bg:            $table-hover-bg;
+
+// Navs
+
+$nav-link-disabled-color:           rgba(255,255,255,.4);
+
+$nav-tabs-border-color:             $gray-200;
+$nav-tabs-link-active-color:        $body-color;
+$nav-tabs-link-active-border-color: $gray-200;
+
+// Navbar
+
+$navbar-padding-y:                  0.25rem;
+
+$navbar-dark-color:                 rgba($white,.75);
+$navbar-dark-hover-color:           $white;
+
+// Pagination
+
+$pagination-color:                  $white;
+$pagination-bg:                     $gray-200;
+$pagination-border-color:           transparent;
+
+$pagination-hover-color:            $white;
+$pagination-hover-bg:               $nav-link-disabled-color;
+$pagination-hover-border-color:     $pagination-border-color;
+
+$pagination-disabled-color:         $nav-link-disabled-color;
+$pagination-disabled-bg:            $pagination-bg;
+$pagination-disabled-border-color:  $pagination-border-color;
+
+// Modals
+
+$modal-content-bg:                  $gray-200;
+
+$modal-header-border-color:         rgba(0,0,0,.2);
+
+// Cards
+
+$card-cap-bg:                       $table-hover-bg;
+$card-bg:                           $gray-200;
+
+// Popovers
+
+$popover-bg:                        $gray-200;
+
+$popover-header-bg:                 $table-hover-bg;
+
+// List group
+
+$list-group-bg:                     $gray-200;
+$list-group-border-color:           transparent;
+
+$list-group-hover-bg:               $nav-link-disabled-color;
+
+$list-group-disabled-color:         $nav-link-disabled-color;
+
+$list-group-action-color:           $white;
+$list-group-action-hover-color:     $white;
+
+// Breadcrumbs
+
+$breadcrumb-divider-color:          $body-color;
+$breadcrumb-active-color:           $body-color;
+
+// Code
+
+$pre-color:                         inherit;

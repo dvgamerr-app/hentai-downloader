@@ -5,8 +5,8 @@ import App from './App'
 
 import * as vEvents from '../plugins/events'
 
-import './bootwatch/css/bootstrap.css'
-import './bootwatch/css/font-awesome.css'
+import './bootwatch/scss/index.scss'
+import './bootwatch/scss/font-awesome.css'
 
 Vue.use(vEvents.client)
 

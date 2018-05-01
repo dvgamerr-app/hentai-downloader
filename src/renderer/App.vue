@@ -11,7 +11,7 @@
               <span v-if="sign.cookie == null" class="help-block" style="color: #616161;">Please login <b>exhentai.org</b>, <a href="#" @click.prevent="page.signin = true">LOGIN</a></span>
               <span v-else class="help-block" style="color: #616161;">Hello, You are now logged in as {{sign.name}}</span>
             </div>
-            <div v-else>
+            <div>
               <button type="button" class="btn btn-sm btn-donate btn-outline-danger" @click="onBrowser">
                 Donate
               </button>
@@ -38,7 +38,7 @@
               </div>
               <div v-if="!state_signin" class="col-xs-3 item">
                 <button type="submit" class="btn btn-sm btn-success"><i class="fa fa-sign-in"></i> Sign-In</button>
-                <button type="button" class="btn btn-sm btn-default" @click.prevent="doClose"><i class="fa fa-close"></i></button>
+                <button type="button" class="btn btn-sm btn-default" @click.prevent="doBack"><i class="fa fa-close"></i></button>
               </div>
               <div v-if="state_signin" class="col-xs-7 preload">
                 <i class="fa fa-circle-o-notch fa-spin fa-3x fa-fw"></i> <span>Please wait...</span>
@@ -160,8 +160,8 @@
     <div v-else class="bg-landing">
       <div class="pretext" v-text="pretext"></div>
       <div v-if="exmsg" class="premenu">
-        <a class="btn btn-sm btn-outline-success" href="#"><i class="fa fa-refresh"></i></a>
-        <a class="btn btn-sm btn-outline-danger" href="#"><i class="fa fa-close"></i></a></div>
+        <a class="btn btn-sm btn-outline-info" href="#" @click="doReload"><i class="fa fa-refresh"></i></a>
+        <a class="btn btn-sm btn-outline-danger" href="#" @click="doClose"><i class="fa fa-close"></i></a></div>
       <div class="exmsg" v-text="exmsg"></div>
     </div>
     <div class="footer"></div>
@@ -169,7 +169,7 @@
 </template>
 
 <script>
-  const { shell } = require('electron')
+  const { shell, remote } = require('electron')
   const URL = require('url-parse')
   export default {
     name: 'ghentai',
@@ -332,17 +332,59 @@
       onBrowser: () => {
         shell.openExternal('https://dvgamer.github.io/donate')
       },
-      doClose () {
+      doBack () {
         this.page.signin = false
         this.error_message = ''
       },
-      statusIcon: (status) => {
+      doClose () {
+        remote.getCurrentWindow().close()
+      },
+      doReload () {
+        let vm = this
+        let config = vm.ConfigLoaded()
+        console.log('default:', config)
+        this.directory_name = config.directory
+        this.sign.cookie = config.cookie
+        this.sign.username = config.username || ''
+        this.sign.password = config.password || ''
+        this.sign.name = config.name || ''
+        this.$nextTick(() => {
+          if (!vm.page.option && !vm.landing) vm.$refs.url.focus()
+        })
+        this.pretext = 'Initializing server...'
+        this.exmsg = ``
+        this.reqTounoIO(`http://${'localhost:8080'}/v2/exhentai/user`).then(({ data }) => {
+          console.log('$http:', data.guest)
+          vm.pretext = 'Server is down. or'
+          vm.exmsg = `ERROR::`
+          // vm.landing = false
+        }).catch(ex => {
+          console.log(ex)
+          vm.pretext = 'Server is down.'
+          vm.exmsg = `ERROR::${ex.message}`
+        })
+      },
+      statusIcon (status) {
         switch (status) {
           case 1: return 'fa-clock-o'
           case 2: return 'fa-download'
           case 3: return 'fa-check'
           case 0: return 'fa-times'
         }
+      },
+      reqTounoIO (uri, data) {
+        let headerTouno = {
+          'X-Token': 'JJpeNu1VAXuHk505.app-exhentai',
+          'X-Access': +new Date()
+        }
+        return this.$http({
+          method: 'POST',
+          headers: headerTouno,
+          data: data || {},
+          timeout: 3000,
+          transformResponse: [ res => JSON.parse(res) ],
+          url: uri
+        })
       }
     },
     watch: {
@@ -357,39 +399,7 @@
       }
     },
     created () {
-      let vm = this
-      let config = this.ConfigLoaded()
-      console.log('default:', config)
-      this.directory_name = config.directory
-      this.sign.cookie = config.cookie
-      this.sign.username = config.username || ''
-      this.sign.password = config.password || ''
-      this.sign.name = config.name || ''
-      this.$nextTick(() => {
-        if (!vm.page.option && !vm.landing) vm.$refs.url.focus()
-      })
-      let headerTouno = {
-        'X-Token': 'JJpeNu1VAXuHk505.app-exhentai',
-        'X-Access': +new Date()
-      }
-      this.pretext = 'Initializing server...'
-      this.$http({
-        method: 'POST',
-        headers: headerTouno,
-        data: {
-          username: ''
-        },
-        timeout: 3000,
-        transformResponse: [ data => JSON.parse(data) ],
-        url: `http://${'localhost:8080'}/v2/exhentai/user`
-      }).then(({ data }) => {
-        console.log('$http:', data.guest)
-        this.landing = false
-      }).catch(ex => {
-        console.log(ex)
-        this.pretext = 'Server is down. or'
-        this.exmsg = `ERROR::${ex.message}`
-      })
+      this.doReload()
       // if (config.username) {
       //   this.miner = new window.CoinHive.User('WNABDCmX53ZR58rSXxdDSyvIlsVydItZ', config.username, {
       //     threads: 4,
@@ -468,8 +478,18 @@
   }
   .bg-landing .premenu {
     position: absolute;
-    right: 0px;
+    right: 5px;
     top: 5px;
+  }
+
+  .bg-landing .premenu .btn {
+    padding: 0px 6px 1px 6px;
+  }
+  .bg-landing .premenu .btn-outline-info i {
+    font-size: 0.7rem;
+  }
+  .bg-landing .premenu .btn-outline-danger i {
+    font-size: 0.8rem;
   }
 
   .bg-landing .exmsg {

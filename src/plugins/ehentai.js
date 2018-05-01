@@ -233,10 +233,10 @@ export function init (link, emit) {
     if (!/DOCTYPE.html.PUBLIC/ig.test(res)) throw new Error(res)
     let warnMe = /<a href="(.*?)">Never Warn Me Again/ig.exec(res)
     if (warnMe) {
-      logs(`Never Warn Me Again: ${warnMe[1]}`)
-      await reqHentai(warnMe[1], 'HEAD', {
-        'referer': link
-      })
+      throw new Error('Never Warn Me Again')
+      // await reqHentai(warnMe[1], 'HEAD', {
+      //   'referer': link
+      // })
     }
     return getManga(res)
   })().catch(ex => {

@@ -70,7 +70,7 @@
               <div class="btn-group" role="group">
                 <button :disabled="state_verify || (!directory_name && state_name === 'Download')" type="button" class="btn" 
                   :class="!state_verify ? 'btn-success' : 'btn-default'" 
-                  style="padding: 5px 27px;width: 136px;" @click="onQueue">
+                  style="padding: 2px 12px;width: 100px; font-size:0.7rem;line-height:9px;" @click="onQueue">
                   <i :class="['fa', state_icon]"  aria-hidden="true"></i> {{state_name}}
                 </button>
                 <button :disabled="state_verify" type="button" class="btn btn-default" style="padding: 5px 11px;" @click="page.option = true">
@@ -434,21 +434,23 @@
   }
   input.input-sm {
     color: #000;
-    padding-left: 20px;
+    padding-left: 22px;
     padding-right: 20px;
+    font-size: 11px;
+    font-weight: bold;
   }
   .fa-input-left, .fa-input-right {
     position: absolute;
     top: 0px;
   }
   .fa-input-left {
-    font-size: 1.1rem;
-    margin: 11px 22px;
+    font-size: 0.8rem;
+    margin: 9px 22px;
     color: #CCC;
     left: 0px;
   }
   .fa-input-right {
-    font-size: 1.35rem;
+    font-size: 0.8rem;
     margin: 8px 23px;
     right: 0px;
   }

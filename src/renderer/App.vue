@@ -1,16 +1,16 @@
 <template>
   <div id="app"> 
     <div v-if="!landing">
-      <div class="header">
+      <div class="header" style="height: 85px;">
         <div v-if="!page.signin" class="row">
           <div class="col-sm-7">
             <span class="help-block"><b>Save as directory:</b> {{directory_name}}</span>
           </div>
           <div class="col-sm-5">
-            <div v-if="!state_verify" class="text-right">
+            <div class="text-right">
               <span v-if="sign.cookie == null" class="help-block">Hey <b>{{sign.username}}</b></span>
               <span v-else class="help-block" style="color: #616161;">Hello, You are now logged in as {{sign.name}}</span>
-              <button v-if="sign.cookie == null" type="button" class="btn btn-sm btn-singin btn-primary" @click.prevent="page.signin = true">
+              <button v-if="sign.cookie == null && !state_verify" type="button" class="btn btn-sm btn-singin btn-primary" @click.prevent="page.signin = true">
                 Login
               </button>
               <button type="button" class="btn btn-sm btn-donate btn-outline-danger" @click="onBrowser">
@@ -21,7 +21,7 @@
         </div>
         <div v-if="page.signin" class="row">
           <div class="col-sm-12">
-            <form class="form signin" @submit.prevent="onSignIn">
+            <form class="form signin row" @submit.prevent="onSignIn">
               <div class="col-sm-5 message">
                 <p v-if="error_message == ''">
                   <label class="text-danger">Readme</label><br>
@@ -33,7 +33,7 @@
                 </p>
               </div>
               <div v-if="!state_signin" class="col-sm-4 form-group">
-                <label for="txtUsername">Sign-In exhentai.org</label>
+                <label for="txtUsername" style="margin-bottom: 0px;">Sign-In exhentai.org</label>
                 <input type="text" class="form-control" id="txtUsername" placeholder="Username" v-model="sign.username">
                 <input type="text" class="form-control" id="txtPassword" placeholder="Password" v-model="sign.password">
               </div>
@@ -54,7 +54,7 @@
                 <input ref="url" type="text" class="form-control input-sm" id="txtURL" placeholder="https://e-hentai.org/g/1031609/631e04b5f7/" maxlength="50" @keyup.enter="onQueue" v-model="url">
                 <i class="fa fa-link fa-input-left" aria-hidden="true"></i>
                 <i class="fa fa-search fa-input-right" aria-hidden="true"></i>
-                <span class="help-block" style="margin-bottom:0px;height:13px;"><b>{{error_message}}</b></span>
+                <span class="help-block text-danger" style="margin-bottom:0px;height:13px;"><b>{{error_message}}</b></span>
               </div>
               <div v-else style="margin-top: 4px;">
                 <div class="progress" style="margin-bottom:0px;border-radius:2px;">
@@ -80,7 +80,7 @@
             </div>
           </div>
           <div v-else class="row" style="margin-top:4px; margin-bottom: 6px;">
-            <div class="col-sm-12" style="padding-right:19px;">
+            <div class="col-sm-12">
               <div class="input-group">
                 <input type="text" readonly class="form-control input-sm" placeholder="Directory for..." maxlength="50" v-model="directory_name"
                   style="padding: 7px;height:auto">
@@ -282,7 +282,7 @@
         this.manga[manga.index].status = 2
         this.bar.step = parseInt(manga.current)
         this.bar.total = manga.total
-        this.state_msg = `'${manga.current}' of ${manga.total} files downloading...`
+        this.state_msg = `${manga.current} of ${manga.total} files downloading...`
         console.log('onWatch', manga)
         if (manga.finish) {
           this.manga[manga.index].status = 3
@@ -549,16 +549,17 @@
     font-size: 10px;
     border-right: #e8e8e8 solid 1px;
     padding: 0px 6px 4px 12px !important;
-    height: 78px;
+    height: 65px;
   }
   .form.signin > .message > p {
     margin-bottom: 0px;
   }
   .form.signin > .message > .error {
-    padding-top: 12px; 
+    padding-top: 12px;
+    color:
   }
   .form.signin > .item {
-    padding-top: 32px;
+    padding-top: 27px;
   }
   .form.signin > .preload {
     padding: 22px 0 0 64px;
@@ -578,8 +579,8 @@
   }
   #txtUsername, #txtPassword {
     padding: 4px;
-    height: 24px;
-    font-size: 11px;
+    height: 20px;
+    font-size: 10px;
     margin-bottom: 4px;
     border: #929292 solid 1px;
   }

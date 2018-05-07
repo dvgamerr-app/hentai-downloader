@@ -10,7 +10,8 @@
             <div class="text-right">
               <span v-if="sign.cookie == null" class="help-block">Hey <b>{{sign.username}}</b></span>
               <span v-else class="help-block" style="color: #616161;">Hello, You are now logged in as {{sign.name}}</span>
-              <button v-if="sign.cookie == null && !state_verify" type="button" class="btn btn-sm btn-singin btn-primary" @click.prevent="page.signin = true">
+              <!-- sign.cookie == null && !state_verify -->
+              <button v-if="false" type="button" class="btn btn-sm btn-singin btn-warning" @click.prevent="page.signin = true">
                 Login
               </button>
               <button type="button" class="btn btn-sm btn-donate btn-outline-danger" @click="onBrowser">
@@ -85,7 +86,7 @@
                 <input type="text" readonly class="form-control input-sm" placeholder="Directory for..." maxlength="50" v-model="directory_name"
                   style="padding: 7px;height:auto">
                 <span class="input-group-btn">
-                  <button class="btn btn-primary" type="button" style="padding: 0.38em 1.5em;" @click="onBrowse">Browse</button>
+                  <button class="btn btn-info" type="button" style="padding: 0.38em 1.5em;" @click="onBrowse">Browse</button>
                   <button class="btn btn-default" type="button" style="padding: 0.38em 0.85em" @click="page.option = false">
                     <i class="fa fa-arrow-circle-left" aria-hidden="true"></i>
                   </button>
@@ -354,14 +355,22 @@
         })
         this.pretext = 'Initializing server...'
         this.exmsg = ``
-        this.reqTounoIO(`http://${'localhost:8080'}/v2/exhentai/user`).then(({ data }) => {
-          vm.sign.username = data.guest
+        if (!config.username) {
+          this.reqTounoIO('exhentai/user').then(({ data }) => {
+            vm.sign.username = data.guest
+            vm.ConfigSaved({
+              guest: data.guest,
+              username: data.guest
+            })
+            vm.landing = false
+          }).catch(ex => {
+            console.log(ex)
+            vm.pretext = 'Server is down.'
+            vm.exmsg = `ERROR::${ex.message}`
+          })
+        } else {
           vm.landing = false
-        }).catch(ex => {
-          console.log(ex)
-          vm.pretext = 'Server is down.'
-          vm.exmsg = `ERROR::${ex.message}`
-        })
+        }
       },
       statusIcon (status) {
         switch (status) {
@@ -382,7 +391,7 @@
           data: data || {},
           timeout: 3000,
           transformResponse: [ res => JSON.parse(res) ],
-          url: uri
+          url: `http://${'localhost:8080'}/v2/${uri}`
         })
       }
     },
@@ -508,7 +517,7 @@
     color: #585858;
   }
   .manga-items > tbody > tr > td {
-    padding: 4px;
+    padding: 2px 4px;
   }
   .manga-items > tbody > tr > td > input {
     border: none;

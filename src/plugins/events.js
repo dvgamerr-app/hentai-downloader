@@ -5,7 +5,10 @@ import Q from 'q'
 const settings = require('electron-settings')
 
 let config = settings.get('config')
-if (!config || !(config || {}).directory) settings.set('config', { directory: app.getPath('downloads') })
+if (!config || !(config || {}).directory) {
+  console.log('config:', config)
+  settings.set('config', { directory: app.getPath('downloads') })
+}
 
 export function server (mainWindow) {
   ipcMain.on('CHANGE_DIRECTORY', function (e, source) {
@@ -18,6 +21,7 @@ export function server (mainWindow) {
   })
   ipcMain.on('URL_VERIFY', function (e, url) {
     hentai.init(url, e.sender).then(manga => {
+      // Request Send Manga
       e.sender.send('URL_VERIFY', { error: false, data: manga })
     }).catch(ex => {
       e.sender.send('URL_VERIFY', { error: ex.toString(), data: {} })
@@ -58,6 +62,9 @@ export const client = {
       methods: {
         ConfigLoaded: () => {
           return settings.get('config')
+        },
+        ConfigSaved: config => {
+          settings.set('config', Object.assign(settings.get('config'), config))
         },
         CHANGE_DIRECTORY: () => {
           let def = Q.defer()

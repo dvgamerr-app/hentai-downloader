@@ -48,7 +48,7 @@
           </div>
         </div>
         <div v-else>
-          <div v-if="!page.option" class="row">
+          <div v-if="!page.option" class="row" style="margin-top:4px; margin-bottom: 6px;">
             <div class="col-sm-8">
               <div v-if="!state_verify" class="form-group" :class="{ 'has-error' : error_message }" style="margin-bottom:2px">
                 <input ref="url" type="text" class="form-control input-sm" id="txtURL" placeholder="https://e-hentai.org/g/1031609/631e04b5f7/" maxlength="50" @keyup.enter="onQueue" v-model="url">
@@ -66,7 +66,7 @@
                 <span class="help-block" v-text="state_msg"></span>
               </div>
             </div>
-            <div class="col-sm-4">
+            <div class="col-sm-4" style="text-align:right;">
               <div class="btn-group" role="group">
                 <button :disabled="state_verify || (!directory_name && state_name === 'Download')" type="button" class="btn" 
                   :class="!state_verify ? 'btn-success' : 'btn-default'" 
@@ -79,14 +79,14 @@
               </div>
             </div>
           </div>
-          <div v-else class="row">
-            <div class="col-sm-12" style="margin-bottom: 1.95rem;padding-right:19px;">
+          <div v-else class="row" style="margin-top:4px; margin-bottom: 6px;">
+            <div class="col-sm-12" style="padding-right:19px;">
               <div class="input-group">
-                <input type="text" readonly class="form-control" placeholder="Directory for..." maxlength="50" v-model="directory_name"
-                  style="padding: 7px;font-size: 1rem;height:auto">
+                <input type="text" readonly class="form-control input-sm" placeholder="Directory for..." maxlength="50" v-model="directory_name"
+                  style="padding: 7px;height:auto">
                 <span class="input-group-btn">
                   <button class="btn btn-primary" type="button" style="padding: 0.38em 1.5em;" @click="onBrowse">Browse</button>
-                  <button class="btn btn-default" type="button" style="padding: 0.38em 0.6em;" @click="page.option = false">
+                  <button class="btn btn-default" type="button" style="padding: 0.38em 0.85em" @click="page.option = false">
                     <i class="fa fa-arrow-circle-left" aria-hidden="true"></i>
                   </button>
                 </span>
@@ -131,22 +131,22 @@
                         Add Quene Manga to list
                       </td>
                     </tr>
-                    <tr v-for="item in manga" :class="{ 'table-active': state_download && item.status === 2 }">
+                    <tr v-for="item in manga" :class="{ 'table-success': state_download && item.status === 2 }">
                       <td style="text-align:center;">
-                        <input v-if="!state_download" readonly type="text" :value="manga.indexOf(item) + 1" style="text-align:center;">
+                        <input v-if="!state_download" readonly type="text" :value="manga.indexOf(item) + 1" style="text-align:center;" class="input-sm">
                         <i v-else class="fa" :class="statusIcon(item.status)" aria-hidden="true"></i>
                       </td>
                       <td>
-                        <input readonly type="text" :value="item.name">
+                        <input readonly  class="input-sm" type="text" :value="item.name">
                       </td>
                       <td>
-                        <input readonly type="text" :value="item.page" style="text-align:center;">
+                        <input readonly  class="input-sm" type="text" :value="item.page" style="text-align:center;">
                       </td>
                       <td>
-                        <input readonly type="text" :value="item.language" style="text-align:center;">
+                        <input readonly  class="input-sm" type="text" :value="item.language" style="text-align:center;">
                       </td>
                       <td>
-                        <input readonly type="text" :value="item.size" style="text-align:right;">
+                        <input readonly  class="input-sm" type="text" :value="item.size" style="text-align:right;">
                       </td>
                     </tr>
                   </tbody>
@@ -282,7 +282,7 @@
         this.manga[manga.index].status = 2
         this.bar.step = parseInt(manga.current)
         this.bar.total = manga.total
-        this.state_msg = `'${manga.current}.' of ${manga.total} files downloading...`
+        this.state_msg = `'${manga.current}' of ${manga.total} files downloading...`
         console.log('onWatch', manga)
         if (manga.finish) {
           this.manga[manga.index].status = 3
@@ -331,7 +331,7 @@
         return /hentai.org\/\w{1}\/\d{1,8}\/[0-9a-f]+?\//g.test(url)
       },
       onBrowser: () => {
-        shell.openExternal('https://dvgamer.github.io/donate')
+        shell.openExternal('https://app.touno.io/donate')
       },
       doBack () {
         this.page.signin = false
@@ -423,7 +423,6 @@
     width: 100%;
     height: 100%;
     overflow: hidden;
-    font-size: 0.9rem !important; 
   }
   .help-block {
     font-size: 0.65rem;
@@ -432,12 +431,11 @@
     border-radius: 0px !important;
     box-shadow: none !important;
   }
-  input.input-sm {
+  input.input-sm, input.input-sm:focus {
     color: #000;
     padding-left: 22px;
     padding-right: 20px;
     font-size: 11px;
-    font-weight: bold;
   }
   .fa-input-left, .fa-input-right {
     position: absolute;
@@ -511,26 +509,32 @@
   }
   .manga-items > tbody > tr > td {
     padding: 4px;
-    font-size: 1rem;
   }
   .manga-items > tbody > tr > td > input {
     border: none;
     background-color: transparent;
     width: 100%;
+    padding: 0px 6px !important;
   }
   .no-transaction {
     background-color: #FFF !important;
     line-height: 192px !important;
     text-align: center;
-    font-size: 1.3rem;
+    font-size: 1rem;
     font-weight: bold;
     color: #AAA;
+  }
+  tr.table-success input {
+    color: #FFF !important;
   }
   table tr.table-active {
     background-color: #0ca968 !important;
     color: #FFF;
   }
-
+  .table thead.thead-dark th {
+    font-size: 11px;
+    padding: 0.3rem 0.75rem
+  }
   .form.signin textarea {
     margin-bottom: 4px !important;
     padding: 5px !important;

@@ -1,63 +1,51 @@
-// Superhero 4.1.1
+// Flatly 4.1.1
 // Bootswatch
 
+// Navbar =======================================================================
 
-// Variables ===================================================================
+.bg-primary {
+  .navbar-nav .active > .nav-link {
+    color: $success !important;
+  }
+}
 
-$web-font-path: "https://fonts.googleapis.com/css?family=Lato:300,400,700" !default;
-@import url($web-font-path);
-
-// Navbar ======================================================================
-
-.navbar {
-  font-size: $font-size-sm;
+.bg-dark {
+  background-color: $success !important;
+  &.navbar-dark .navbar-nav {
+    .nav-link:focus,
+    .nav-link:hover,
+    .active > .nav-link {
+      color: $primary !important;
+    }
+  }
 }
 
 // Buttons =====================================================================
 
 .btn {
-
-  &-info,
-  &-warning {
-    color: $white;
+  &-secondary,
+  &-secondary:hover,
+  &-warning,
+  &-warning:hover {
+    color: #fff;
   }
 }
 
 // Typography ==================================================================
 
-.dropdown-menu {
-
-  font-size: $font-size-sm;
-}
-
-.dropdown-header {
-  font-size: $font-size-sm;
-}
-
-.blockquote-footer {
-  color: $body-color;
-}
-
 // Tables ======================================================================
 
 .table {
-  font-size: $font-size-sm;
 
   .thead-dark th {
-    color: $white;
+    background-color: $primary;
   }
 
-  a:not(.btn) {
+  &-success,
+  &-info,
+  &-warning,
+  &-danger {
     color: #fff;
-    text-decoration: underline;
-  }
-
-  .dropdown-menu a {
-    text-decoration: none;
-  }
-
-  .text-muted {
-    color: $text-muted;
   }
 
   &-success {
@@ -115,39 +103,44 @@ $web-font-path: "https://fonts.googleapis.com/css?family=Lato:300,400,700" !defa
 
 // Forms =======================================================================
 
-label,
-.radio label,
-.checkbox label,
-.help-block {
-  font-size: $font-size-sm;
-}
-
-.input-addon,
-.input-group-addon {
-  color: $body-color;
-}
-
 // Navs ========================================================================
 
-.nav-tabs,
-.nav-pills {
-  .nav-link,
-  .nav-link:hover {
-    color: $body-color;
-  }
-
-  .nav-link.disabled {
-    color: $nav-link-disabled-color;
+.nav-tabs {
+  .nav-link.active,
+  .nav-link.active:focus,
+  .nav-link.active:hover,
+  .nav-item.open .nav-link,
+  .nav-item.open .nav-link:focus,
+  .nav-item.open .nav-link:hover {
+    color: $primary;
   }
 }
 
-.page-link:hover,
-.page-link:focus {
-  color: #fff;
-  text-decoration: none;
+.pagination {
+  a:hover {
+    text-decoration: none;
+  }
 }
 
 // Indicators ==================================================================
+
+.close {
+  text-decoration: none;
+  opacity: 0.4;
+
+  &:hover,
+  &:focus {
+    opacity: 1;
+  }
+}
+
+.badge {
+  &-secondary,
+  &-warning {
+    color: #fff;
+  }
+}
+
 
 .alert {
   border: none;
@@ -164,42 +157,19 @@ label,
       background-color: $value;
     }
   }
-}
 
-.badge {
-  &-warning,
-  &-info {
-    color: $white;
-  }
-}
-
-.close {
-  opacity: 0.5;
-
-  &:hover,
-  &:focus {
-    opacity: 1;
+  &-light {
+    &,
+    & a,
+    & .alert-link {
+      color: $body-color;
+    }
   }
 }
 
 // Progress bars ===============================================================
 
 // Containers ==================================================================
-
-.modal {
-  &-header,
-  &-footer {
-    background-color: $table-hover-bg;
-
-    .close {
-      color: #fff;
-      text-shadow: none;
-      opacity: 0.5;
-
-      &:hover,
-      &:focus {
-        opacity: 1;
-      }
-    }
-  }
+.modal .close{
+  color: $black;
 }

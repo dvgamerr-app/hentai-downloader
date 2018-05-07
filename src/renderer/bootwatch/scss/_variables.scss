@@ -1,143 +1,111 @@
-// Superhero 4.1.1
+// Flatly 4.1.1
 // Bootswatch
 
 //
 // Color system
 //
 
-$white:    #fff;
-$gray-100: #EBEBEB;
-$gray-200: #4E5D6C;
-$gray-300: #dee2e6;
-$gray-400: #ced4da;
-$gray-500: #adb5bd;
-$gray-600: #868e96;
-$gray-700: #495057;
-$gray-800: #343a40;
-$gray-900: #212529;
-$black:    #000;
+$white:    #fff !default;
+$gray-100: #f8f9fa !default;
+$gray-200: #ecf0f1 !default;
+$gray-300: #dee2e6 !default;
+$gray-400: #ced4da !default;
+$gray-500: #b4bcc2 !default;
+$gray-600: #95a5a6 !default;
+$gray-700: #7b8a8b !default;
+$gray-800: #343a40 !default;
+$gray-900: #212529 !default;
+$black:    #000 !default;
 
-$blue:    #DF691A;
-$indigo:  #6610f2;
-$purple:  #6f42c1;
-$pink:    #e83e8c;
-$red:     #d9534f;
-$orange:  #f0ad4e;
-$yellow:  #f0ad4e;
-$green:   #5cb85c;
-$teal:    #20c997;
-$cyan:    #5bc0de;
+$blue:    #2C3E50 !default;
+$indigo:  #6610f2 !default;
+$purple:  #6f42c1 !default;
+$pink:    #e83e8c !default;
+$red:     #E74C3C !default;
+$orange:  #fd7e14 !default;
+$yellow:  #F39C12 !default;
+$green:   #18BC9C !default;
+$teal:    #20c997 !default;
+$cyan:    #3498DB !default;
 
-$primary:       $blue;
-$secondary:     $gray-200;
-$success:       $green;
-$info:          $cyan;
-$warning:       $yellow;
-$danger:        $red;
-$light:         lighten($gray-200, 25%);
-$dark:          $gray-200;
+$primary:       $blue !default;
+$secondary:     $gray-600 !default;
+$success:       $green !default;
+$info:          $cyan !default;
+$warning:       $yellow !default;
+$danger:        $red !default;
+$light:         $gray-200 !default;
+$dark:          $gray-700 !default;
 
-// Body
+// Links
 
-$body-bg:                   #2B3E50;
-$body-color:                $gray-100;
-
-// Components
-
-$border-radius:               0;
-$border-radius-lg:            0;
-$border-radius-sm:            0;
+$link-color:                $success !default;
 
 // Fonts
-$font-family-sans-serif:      "Lato", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
 
-$text-muted:                  rgba(255,255,255,.4);
+$font-family-sans-serif:      "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol" !default;
+
+$font-size-base:              0.8375rem !default;
+
+$h1-font-size:                3rem !default;
+$h2-font-size:                2.5rem !default;
+$h3-font-size:                2rem !default;
 
 // Tables
 
-$table-accent-bg:             rgba($white,.05);
-$table-hover-bg:              rgba($white,.075);
-
-$table-dark-bg:               $light;
-$table-dark-border-color:     $gray-200;
-$table-dark-color:            $body-bg;
-
-// Forms
-
-$input-group-addon-color:           $gray-400;
+$table-accent-bg:             $gray-200 !default;
 
 // Dropdowns
 
-$dropdown-bg:                       $gray-200;
-$dropdown-divider-bg:               rgba($black,.15);
-
-$dropdown-link-color:               $body-color;
-$dropdown-link-hover-color:         $dropdown-link-color;
-$dropdown-link-hover-bg:            $table-hover-bg;
+$dropdown-link-color:               $gray-700 !default;
+$dropdown-link-hover-color:         $white !default;
+$dropdown-link-hover-bg:            $primary !default;
 
 // Navs
 
-$nav-link-disabled-color:           rgba(255,255,255,.4);
+$nav-link-padding-y:                .5rem !default !default;
+$nav-link-padding-x:                2rem !default;
+$nav-link-disabled-color:           $gray-600 !default !default;
 
-$nav-tabs-border-color:             $gray-200;
-$nav-tabs-link-active-color:        $body-color;
-$nav-tabs-link-active-border-color: $gray-200;
+$nav-tabs-border-color:             $gray-200 !default;
 
 // Navbar
 
-$navbar-padding-y:                  0.25rem;
+$navbar-padding-y:                  1rem !default;
 
-$navbar-dark-color:                 rgba($white,.75);
-$navbar-dark-hover-color:           $white;
+$navbar-dark-color:                 $white !default;
+$navbar-dark-hover-color:           $success !default;
 
 // Pagination
 
-$pagination-color:                  $white;
-$pagination-bg:                     $gray-200;
-$pagination-border-color:           transparent;
+$pagination-color:                  $white !default;
+$pagination-bg:                     $success !default;
+$pagination-border-width:           0 !default;
+$pagination-border-color:           transparent !default;
 
-$pagination-hover-color:            $white;
-$pagination-hover-bg:               $nav-link-disabled-color;
-$pagination-hover-border-color:     $pagination-border-color;
+$pagination-hover-color:            $white !default;
+$pagination-hover-bg:               darken($success, 15%) !default;
+$pagination-hover-border-color:     transparent !default;
 
-$pagination-disabled-color:         $nav-link-disabled-color;
-$pagination-disabled-bg:            $pagination-bg;
-$pagination-disabled-border-color:  $pagination-border-color;
+$pagination-active-bg:              $pagination-hover-bg !default;
+$pagination-active-border-color:    transparent !default;
 
-// Modals
+$pagination-disabled-color:         $gray-200 !default;
+$pagination-disabled-bg:            lighten($success, 15%) !default;
+$pagination-disabled-border-color:  transparent !default;
 
-$modal-content-bg:                  $gray-200;
+// Progress bars
 
-$modal-header-border-color:         rgba(0,0,0,.2);
-
-// Cards
-
-$card-cap-bg:                       $table-hover-bg;
-$card-bg:                           $gray-200;
-
-// Popovers
-
-$popover-bg:                        $gray-200;
-
-$popover-header-bg:                 $table-hover-bg;
+$progress-height:                   0.625rem !default;
+$progress-font-size:                0.625rem !default;
 
 // List group
 
-$list-group-bg:                     $gray-200;
-$list-group-border-color:           transparent;
+$list-group-hover-bg:               $gray-200 !default;
 
-$list-group-hover-bg:               $nav-link-disabled-color;
+$list-group-disabled-bg:            $gray-200 !default;
 
-$list-group-disabled-color:         $nav-link-disabled-color;
+// Close
 
-$list-group-action-color:           $white;
-$list-group-action-hover-color:     $white;
-
-// Breadcrumbs
-
-$breadcrumb-divider-color:          $body-color;
-$breadcrumb-active-color:           $body-color;
-
-// Code
-
-$pre-color:                         inherit;
+$close-color:                       $white !default;
+$close-text-shadow:                 none !default;

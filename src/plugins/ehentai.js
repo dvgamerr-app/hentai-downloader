@@ -192,20 +192,32 @@ export function init (link, emit) {
       'cache-control': 'no-cache',
       'cookie': cookie === '' ? undefined : cookie,
       'pragma': 'no-cache',
-      'authority': 'e-hentai.org',
+      ':authority': 'e-hentai.org',
+      ':scheme': 'https',
       'referer': `https://${baseUrl.hostname}/`,
       'upgrade-insecure-requests': '1'
     }, options || {})
 
-    console.log(`URL REQUEST: ${uri}`, options)
+    console.log(`URL REQUEST: ${uri}`)
+    console.log(`URL  COOKIE: ${cookie}`)
     xhr({
       url: uri,
       method: method || 'GET',
       header: options,
+      strictSSL: true,
+      agentOptions: {
+        passphrase: 'dvg7po8ai',
+        key: fs.readFileSync(path.join(__dirname, 'cert/key.pem')),
+        cert: fs.readFileSync(path.join(__dirname, 'cert/cert.pem'))
+      },
       timeout: 5000
-    }, (error, { statusCode, headers }, body) => {
-      console.log(`URL RESPONSE: ${statusCode}`, headers)
-      if (error) reject(new Error(error))
+    }, (error, res, body) => {
+      if (error) {
+        reject(new Error(error))
+        return
+      }
+      let { statusCode, headers } = res
+      console.log(`URL RESPONSE: ${statusCode}`, headers['set-cookie'])
       if (statusCode === 302 || statusCode === 200) {
         if (headers['set-cookie']) {
           for (let i = 0; i < headers['set-cookie'].length; i++) {
@@ -234,13 +246,12 @@ export function init (link, emit) {
     let warnMe = /<a href="(.*?)">Never Warn Me Again/ig.exec(res)
     if (warnMe) {
       throw new Error('Never Warn Me Again')
-      // await reqHentai(warnMe[1], 'HEAD', {
-      //   'referer': link
-      // })
+      res = await reqHentai(warnMe[1], 'GET', {
+        'referer': link
+      })
     }
     return getManga(res)
   })().catch(ex => {
-    console.error(ex.statusCode, ex)
     if (ex.statusCode === 404) {
       if (ex.error) {
         // logs('hentai-downloader', `*rare*: https://${baseUrl.hostname}${baseUrl.pathname}`)

@@ -3,6 +3,19 @@ import * as hentai from './ehentai.js'
 import Q from 'q'
 
 const settings = require('electron-settings')
+const request = require('request')
+const isDev = process.env.NODE_ENV === 'development'
+
+let apiTouno = () => request.defaults({
+  method: 'POST',
+  baseUrl: `${isDev ? 'http://localhost:8080' : 'https://touno.io'}/v2`,
+  timeout: 5000,
+  transformResponse: [ res => JSON.parse(res) ],
+  headers: {
+    'X-Token': 'JJpeNu1VAXuHk505.app-exhentai',
+    'X-Access': +new Date()
+  }
+})
 
 let config = settings.get('config')
 if (!config || !(config || {}).directory) {
@@ -20,8 +33,13 @@ export function server (mainWindow) {
     })
   })
   ipcMain.on('URL_VERIFY', function (e, url) {
-    hentai.init(url, e.sender).then(manga => {
+    hentai.init(url, e.sender).then(async manga => {
       // Request Send Manga
+      await apiTouno({
+        url: '/exhentai',
+        data: {}
+      })
+
       e.sender.send('URL_VERIFY', { error: false, data: manga })
     }).catch(ex => {
       e.sender.send('URL_VERIFY', { error: ex.toString(), data: {} })

@@ -246,9 +246,9 @@ export function init (link, emit) {
     let warnMe = /<a href="(.*?)">Never Warn Me Again/ig.exec(res)
     if (warnMe) {
       throw new Error('Never Warn Me Again')
-      res = await reqHentai(warnMe[1], 'GET', {
-        'referer': link
-      })
+      // res = await reqHentai(warnMe[1], 'GET', {
+      //   'referer': link
+      // })
     }
     return getManga(res)
   })().catch(ex => {

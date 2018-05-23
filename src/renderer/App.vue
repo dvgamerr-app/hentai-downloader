@@ -8,7 +8,7 @@
           </div>
           <div class="col-sm-5">
             <div class="text-right">
-              <span v-if="sign.cookie == null" class="help-block">Hey <b>{{sign.username}}</b></span>
+              <span v-if="sign.cookie == null" class="help-block">Hey <b>{{sign.nickname}}</b></span>
               <span v-else class="help-block" style="color: #616161;">Hello, You are now logged in as {{sign.name}}</span>
               <!-- sign.cookie == null && !state_verify -->
               <button v-if="false" type="button" class="btn btn-sm btn-singin btn-warning" @click.prevent="page.signin = true">
@@ -173,6 +173,9 @@
 <script>
   const { shell, remote } = require('electron')
   const URL = require('url-parse')
+  const os = require('os')
+  const { existsSync, mkdirSync, readFileSync, writeFileSync } = require('fs')
+  const { join } = require('path')
 
   const isDev = false
 
@@ -188,7 +191,7 @@
           cookie: null,
           username: '',
           password: '',
-          name: ''
+          nickname: ''
         },
         page: {
           signin: false,
@@ -203,6 +206,10 @@
           PREPARE: 1,
           DOWNLOAD: 2,
           SUCCESS: 3
+        },
+        folder: {
+          name: 'exHentai',
+          id: '_id.exh'
         },
         reset: false,
         state_verify: false,
@@ -350,9 +357,9 @@
       doReload () {
         let vm = this
         let config = vm.ConfigLoaded()
-        console.log('default:', config)
         this.directory_name = config.directory
         this.sign.cookie = config.cookie
+        this.sign.nickname = config.nickname || ''
         this.sign.username = config.username || ''
         this.sign.password = config.password || ''
         this.sign.name = config.name || ''
@@ -361,17 +368,33 @@
         })
         this.pretext = 'Initializing server...'
         this.exmsg = ``
+        let appDir = join(os.tmpdir(), `../${vm.folder.name}`)
         let Initialize = async () => {
+          console.log('exh:', join(appDir, vm.folder.id))
+          if (existsSync(join(appDir, vm.folder.id))) {
+            config.guest = readFileSync(join(appDir, vm.folder.id), 'utf-8').toString()
+          }
+
           let res = config.guest ? await vm.reqTounoIO(`exhentai/user`, { g: config.guest }) : { data: { error: true } }
           if (res.data.error) {
             let { data } = await vm.reqTounoIO('exhentai/user')
-            vm.sign.username = data.guest
+            vm.sign.nickname = data.guest
             vm.ConfigSaved({
               guest: data.guest,
-              username: data.guest
+              nickname: data.guest
             })
             await vm.reqTounoIO('exhentai/user/register', { guest: data.guest })
             await vm.reqTounoIO(`exhentai/user`, { g: data.guest })
+            // write file in ./ > g_78ca1b844c
+            let dir = join(appDir)
+            if (!existsSync(dir)) mkdirSync(dir)
+            writeFileSync(join(dir, vm.folder.id), data.guest, 'utf-8')
+          } else {
+            vm.sign.username = res.data.username
+            vm.ConfigSaved({
+              guest: res.data.guest,
+              nickname: res.data.nickname
+            })
           }
         }
 

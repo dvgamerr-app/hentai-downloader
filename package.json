@@ -21,8 +21,8 @@
     "postinstall": "npm run lint:fix"
   },
   "build": {
-    "productName": "Hentai Downloader",
-    "appId": "co.touno.hentai.downloader.app",
+    "productName": "exHentai Downloader",
+    "appId": "io.touno.exhentai.downloader.app",
     "directories": {
       "output": "build"
     },
@@ -66,7 +66,7 @@
     "numeral": "^2.0.6",
     "popper.js": "^1.14.3",
     "postcss-loader": "^2.1.5",
-    "request": "^2.86.0",
+    "request": "^2.87.0",
     "request-promise": "^4.2.2",
     "sass-loader": "^7.0.1",
     "tough-cookie": "^2.3.4",
@@ -91,7 +91,7 @@
     "chai": "^4.0.0",
     "chalk": "^2.4.1",
     "copy-webpack-plugin": "^4.5.1",
-    "cross-env": "^5.1.5",
+    "cross-env": "^5.1.6",
     "css-loader": "^0.28.11",
     "del": "^3.0.0",
     "devtron": "^1.4.0",
@@ -135,10 +135,6 @@
     "webpack-dev-server": "^2.11.2",
     "webpack-hot-middleware": "^2.22.2",
     "webpack-merge": "^4.1.2"
-  },
-  "directories": {
-    "doc": "docs",
-    "test": "test"
   },
   "repository": {
     "type": "git",

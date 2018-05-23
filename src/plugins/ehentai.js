@@ -10,8 +10,8 @@ const request = require('request-promise')
 const events = require('events')
 const em = new events.EventEmitter()
 
-const logs = msg => {
-  if (process.env.NODE_ENV === 'development') console.log(msg)
+const logs = (...msg) => {
+  if (process.env.NODE_ENV === 'development') console.log(...msg)
 }
 
 let allCookie = []
@@ -198,8 +198,8 @@ export function init (link, emit) {
       'upgrade-insecure-requests': '1'
     }, options || {})
 
-    console.log(`URL REQUEST: ${uri}`)
-    console.log(`URL  COOKIE: ${cookie}`)
+    logs(`URL REQUEST: ${uri}`)
+    logs(`URL  COOKIE: ${cookie}`)
     xhr({
       url: uri,
       method: method || 'GET',
@@ -217,12 +217,12 @@ export function init (link, emit) {
         return
       }
       let { statusCode, headers } = res
-      console.log(`URL RESPONSE: ${statusCode}`, headers['set-cookie'])
+      logs(`URL RESPONSE: ${statusCode}`, headers['set-cookie'])
       if (statusCode === 302 || statusCode === 200) {
         if (headers['set-cookie']) {
           for (let i = 0; i < headers['set-cookie'].length; i++) {
             let c = headers['set-cookie'][i].split(';')
-            let co = allCookie.filter(item => item === c[0])
+            let co = allCookie.filter(item => item.split('=')[0] === c[0].split('=')[0])
             if (co.length === 0) allCookie.push(headers['set-cookie'][i])
           }
         }

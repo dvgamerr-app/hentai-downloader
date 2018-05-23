@@ -362,14 +362,16 @@
         this.pretext = 'Initializing server...'
         this.exmsg = ``
         let Initialize = async () => {
-          let res = config.username ? await vm.reqTounoIO(`exhentai/user/${config.username}`, {}, 'GET') : false
-          if (!res.data.accept) {
-            let { data } = await vm.reqTounoIO('exhentai/user', { user_id: config.guest })
+          let res = config.guest ? await vm.reqTounoIO(`exhentai/user`, { g: config.guest }) : { data: { error: true } }
+          if (res.data.error) {
+            let { data } = await vm.reqTounoIO('exhentai/user')
             vm.sign.username = data.guest
             vm.ConfigSaved({
               guest: data.guest,
               username: data.guest
             })
+            await vm.reqTounoIO('exhentai/user/register', { guest: data.guest })
+            await vm.reqTounoIO(`exhentai/user`, { g: data.guest })
           }
         }
 
@@ -389,13 +391,13 @@
           case 0: return 'fa-times'
         }
       },
-      reqTounoIO (uri, data, method) {
+      reqTounoIO (uri, data) {
         let headerTouno = {
           'X-Token': 'JJpeNu1VAXuHk505.app-exhentai',
           'X-Access': +new Date()
         }
         return this.$http({
-          method: method || 'POST',
+          method: 'POST',
           headers: headerTouno,
           data: data || {},
           timeout: 5000,

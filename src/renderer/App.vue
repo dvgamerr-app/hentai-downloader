@@ -173,6 +173,9 @@
 <script>
   const { shell, remote } = require('electron')
   const URL = require('url-parse')
+
+  const isDev = false
+
   export default {
     name: 'ghentai',
     data: () => {
@@ -201,7 +204,7 @@
           DOWNLOAD: 2,
           SUCCESS: 3
         },
-        miner: null,
+        reset: false,
         state_verify: false,
         state_download: false,
         state_signin: false,
@@ -242,7 +245,9 @@
             if (!res.error) {
               let manga = res.data
               manga.status = 1
+              if (vm.reset) vm.manga = []
               vm.manga.push(manga)
+              vm.reset = false
             } else {
               vm.error_message = res.error
             }
@@ -253,7 +258,7 @@
           vm.urlDone()
         }
       },
-      urlDone () {
+      urlDone (complated) {
         let vm = this
         vm.bar.step = 0
         vm.bar.total = 1
@@ -261,6 +266,7 @@
         vm.state_name = 'Redownload'
         vm.state_verify = false
         vm.state_download = false
+        vm.reset = complated || false
         vm.url = ''
         for (let i = 0; i < vm.manga.length; i++) {
           vm.manga[i].status = 1
@@ -277,14 +283,14 @@
         vm.state_download = true
         vm.state_icon = 'fa-circle-o-notch fa-spin fa-fw'
         vm.state_name = 'Loading...'
-        vm.DOWNLOAD({ manga: vm.manga, directory: vm.directory_name }, vm.onWatch).then(vm.urlDone)
+        vm.DOWNLOAD({ manga: vm.manga, directory: vm.directory_name }, vm.onWatch).then(() => vm.urlDone(true))
       },
       onWatch (e, manga) {
         this.manga[manga.index].status = 2
         this.bar.step = parseInt(manga.current)
         this.bar.total = manga.total
         this.state_msg = `${manga.current} of ${manga.total} files downloading...`
-        console.log('onWatch', manga)
+        // console.log('onWatch', manga)
         if (manga.finish) {
           this.manga[manga.index].status = 3
         }
@@ -332,7 +338,7 @@
         return /hentai.org\/\w{1}\/\d{1,8}\/[0-9a-f]+?\//g.test(url)
       },
       onBrowser: () => {
-        shell.openExternal('https://app.touno.io/donate')
+        shell.openExternal('https://touno.io/donate')
       },
       doBack () {
         this.page.signin = false
@@ -355,22 +361,25 @@
         })
         this.pretext = 'Initializing server...'
         this.exmsg = ``
-        if (!config.username) {
-          this.reqTounoIO('exhentai/user').then(({ data }) => {
+        let Initialize = async () => {
+          let res = config.username ? await vm.reqTounoIO(`exhentai/user/${config.username}`, {}, 'GET') : false
+          if (!res.data.accept) {
+            let { data } = await vm.reqTounoIO('exhentai/user', { user_id: config.guest })
             vm.sign.username = data.guest
             vm.ConfigSaved({
               guest: data.guest,
               username: data.guest
             })
-            vm.landing = false
-          }).catch(ex => {
-            console.log(ex)
-            vm.pretext = 'Server is down.'
-            vm.exmsg = `ERROR::${ex.message}`
-          })
-        } else {
-          vm.landing = false
+          }
         }
+
+        Initialize().then(() => {
+          vm.pretext = 'Connected.'
+          vm.landing = false
+        }).catch(ex => {
+          vm.pretext = 'Server is down.'
+          vm.exmsg = `ERROR::${ex.message}`
+        })
       },
       statusIcon (status) {
         switch (status) {
@@ -380,18 +389,18 @@
           case 0: return 'fa-times'
         }
       },
-      reqTounoIO (uri, data) {
+      reqTounoIO (uri, data, method) {
         let headerTouno = {
           'X-Token': 'JJpeNu1VAXuHk505.app-exhentai',
           'X-Access': +new Date()
         }
         return this.$http({
-          method: 'POST',
+          method: method || 'POST',
           headers: headerTouno,
           data: data || {},
-          timeout: 3000,
-          transformResponse: [ res => JSON.parse(res) ],
-          url: `http://${'localhost:8080'}/v2/${uri}`
+          timeout: 5000,
+          json: true,
+          url: `${isDev ? 'http://localhost:8080' : 'https://touno.io'}/v2/${uri}`
         })
       }
     },
@@ -523,7 +532,7 @@
     border: none;
     background-color: transparent;
     width: 100%;
-    padding: 0px 6px !important;
+    padding: 0px !important;
   }
   .no-transaction {
     background-color: #FFF !important;

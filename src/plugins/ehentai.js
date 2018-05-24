@@ -204,12 +204,12 @@ export function init (link, emit) {
       url: uri,
       method: method || 'GET',
       header: options,
-      strictSSL: true,
-      agentOptions: {
-        passphrase: 'dvg7po8ai',
-        key: fs.readFileSync(path.join(__dirname, 'cert/key.pem')),
-        cert: fs.readFileSync(path.join(__dirname, 'cert/cert.pem'))
-      },
+      // strictSSL: true,
+      // agentOptions: {
+      //   passphrase: 'dvg7po8ai',
+      //   key: fs.readFileSync(path.join(__dirname, 'cert/key.pem')),
+      //   cert: fs.readFileSync(path.join(__dirname, 'cert/cert.pem'))
+      // },
       timeout: 5000
     }, (error, res, body) => {
       if (error) {

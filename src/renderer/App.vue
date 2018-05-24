@@ -390,7 +390,7 @@
             if (!existsSync(dir)) mkdirSync(dir)
             writeFileSync(join(dir, vm.folder.id), data.guest, 'utf-8')
           } else {
-            vm.sign.username = res.data.username
+            vm.sign.nickname = res.data.nickname
             vm.ConfigSaved({
               guest: res.data.guest,
               nickname: res.data.nickname

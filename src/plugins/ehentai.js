@@ -5,7 +5,7 @@ const path = require('path')
 const async = require('async-q')
 const Q = require('q')
 const xhr = require('request')
-// const settings = require('electron-settings')
+const settings = require('electron-settings')
 const request = require('request-promise')
 const events = require('events')
 const em = new events.EventEmitter()
@@ -13,9 +13,26 @@ const em = new events.EventEmitter()
 const logs = (...msg) => {
   if (process.env.NODE_ENV === 'development') console.log(...msg)
 }
-
+let isDev = (process.env.NODE_ENV === 'development')
 let allCookie = []
 const jarCookieSession = () => allCookie.map(cookie => cookie.split(';')[0]).join('; ')
+
+const exHentaiHistory = (uri, data) => {
+  let headerTouno = {
+    'X-Token': 'JJpeNu1VAXuHk505.app-exhentai',
+    'X-Access': +new Date()
+  }
+  return request({
+    method: 'POST',
+    headers: headerTouno,
+    body: data || {},
+    timeout: 5000,
+    json: true,
+    url: `${isDev ? 'http://localhost:8080' : 'https://touno.io'}/v2/${uri}`
+  }).then(data => {
+    console.log('response:', data)
+  })
+}
 
 let getFilename = (index, total) => {
   return `${Math.pow(10, (total.toString().length - index.toString().length) + 1).toString().substr(2, 10) + index}`
@@ -66,7 +83,22 @@ let getImage = (res, manga, l, index, def, directory, emit) => {
         req.pipe(fsStream)
 
         fsStream.on('finish', () => {
-          emit.send('DOWNLOAD_WATCH', { index: l, current: filename, total: parseInt(manga.page), finish: (parseInt(manga.page) === index + 1) })
+          let success = parseInt(manga.page) === index + 1
+          emit.send('DOWNLOAD_WATCH', { index: l, current: filename, total: parseInt(manga.page), finish: success })
+          if (success) {
+            let config = settings.get('config')
+            console.log(config)
+            exHentaiHistory('exhentai/manga', {
+              user_id: config.user_id,
+              name: manga.name,
+              link: manga.url,
+              cover: manga.cover,
+              language: manga.language,
+              size: manga.size,
+              page: manga.page,
+              completed: true
+            })
+          }
           def.resolve()
           fsStream.close()
         })
@@ -86,7 +118,7 @@ let getImage = (res, manga, l, index, def, directory, emit) => {
     }
     let link = manga.items[index]
     manga.items[index] = `${link}${link.indexOf('?') > -1 ? '&' : '?'}nl=${nl}`
-    request({ url: manga.items[index] }).then(res => { getImage(res, manga, l, index, def, directory, emit) })
+    request({ url: manga.items[index] }).then(res => getImage(res, manga, l, index, def, directory, emit))
   })
 }
 em.download = (list, directory, emit) => {
@@ -97,10 +129,11 @@ em.download = (list, directory, emit) => {
   for (let l = 0; l < list.length; l++) {
     let manga = list[l]
     for (let i = 0; i < manga.items.length; i++) {
-      // logs('link:', manga.items[i])
       all.push(() => {
         let def = Q.defer()
-        request(manga.items[i]).then(res => { getImage(res, manga, l, i, def, directory, emit) })
+        request(manga.items[i]).then(async res => {
+          getImage(res, manga, l, i, def, directory, emit)
+        })
         return def.promise
       })
     }
@@ -148,7 +181,17 @@ export function init (link, emit) {
       page: length[1],
       items: []
     }
-
+    let config = settings.get('config')
+    console.log(config)
+    exHentaiHistory('exhentai/manga', {
+      user_id: config.user_id,
+      name: manga.name,
+      link: manga.url,
+      cover: manga.cover,
+      language: manga.language,
+      size: manga.size,
+      page: manga.page
+    })
     // slack(baseUrl.host, manga)
     getImage(manga, res)
     let totalPage = Math.ceil(manga.page / manga.items.length)
@@ -204,12 +247,12 @@ export function init (link, emit) {
       url: uri,
       method: method || 'GET',
       header: options,
-      strictSSL: true,
-      agentOptions: {
-        passphrase: 'dvg7po8ai',
-        key: fs.readFileSync(path.join(__dirname, 'cert/key.pem')),
-        cert: fs.readFileSync(path.join(__dirname, 'cert/cert.pem'))
-      },
+      // strictSSL: true,
+      // agentOptions: {
+      //   passphrase: 'dvg7po8ai',
+      //   key: fs.readFileSync(path.join(__dirname, 'cert/key.pem')),
+      //   cert: fs.readFileSync(path.join(__dirname, 'cert/cert.pem'))
+      // },
       timeout: 5000
     }, (error, res, body) => {
       if (error) {

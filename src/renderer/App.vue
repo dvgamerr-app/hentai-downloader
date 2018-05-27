@@ -8,7 +8,7 @@
           </div>
           <div class="col-sm-5">
             <div class="text-right">
-              <span v-if="sign.cookie == null" class="help-block">Hey <b>{{sign.username}}</b></span>
+              <span v-if="sign.cookie == null" class="help-block">Hey <b>{{sign.nickname}}</b></span>
               <span v-else class="help-block" style="color: #616161;">Hello, You are now logged in as {{sign.name}}</span>
               <!-- sign.cookie == null && !state_verify -->
               <button v-if="false" type="button" class="btn btn-sm btn-singin btn-warning" @click.prevent="page.signin = true">
@@ -173,6 +173,9 @@
 <script>
   const { shell, remote } = require('electron')
   const URL = require('url-parse')
+  const os = require('os')
+  const { existsSync, mkdirSync, readFileSync, writeFileSync } = require('fs')
+  const { join } = require('path')
 
   const isDev = false
 
@@ -188,7 +191,7 @@
           cookie: null,
           username: '',
           password: '',
-          name: ''
+          nickname: ''
         },
         page: {
           signin: false,
@@ -204,6 +207,10 @@
           DOWNLOAD: 2,
           SUCCESS: 3
         },
+        folder: {
+          name: 'exHentai',
+          id: '_id.exh'
+        },
         reset: false,
         state_verify: false,
         state_download: false,
@@ -218,7 +225,7 @@
       }
     },
     methods: {
-      urlBegin () {
+      async urlBegin () {
         let vm = this
         let found = false
         for (var i = vm.manga.length - 1; i >= 0; i--) {
@@ -240,19 +247,17 @@
             vm.bar.total = data.total
             vm.state_msg = `Initialize... (${data.page} / ${data.total})`
           })
-          vm.URL_VERIFY(vm.url).then(res => {
-            // console.log('URL_VERIFY', res)
-            if (!res.error) {
-              let manga = res.data
-              manga.status = 1
-              if (vm.reset) vm.manga = []
-              vm.manga.push(manga)
-              vm.reset = false
-            } else {
-              vm.error_message = res.error
-            }
-            vm.urlDone()
-          })
+          let res = await vm.URL_VERIFY(vm.url)
+          if (!res.error) {
+            let manga = res.data
+            manga.status = 1
+            if (vm.reset) vm.manga = []
+            vm.manga.push(manga)
+            vm.reset = false
+          } else {
+            vm.error_message = res.error
+          }
+          vm.urlDone()
         } else {
           vm.error_message = 'This manga is already in the list.'
           vm.urlDone()
@@ -263,7 +268,9 @@
         vm.bar.step = 0
         vm.bar.total = 1
         vm.state_icon = 'fa-download'
-        vm.state_name = 'Redownload'
+        if (complated) {
+          vm.state_name = 'Redownload'
+        }
         vm.state_verify = false
         vm.state_download = false
         vm.reset = complated || false
@@ -295,7 +302,7 @@
           this.manga[manga.index].status = 3
         }
       },
-      onQueue (item) {
+      onQueue () {
         if (this.url.trim() !== '' && this.onCheckURL(this.url)) {
           this.urlBegin()
         } else if (this.url.trim() !== '') {
@@ -306,7 +313,7 @@
           this.beginDownload()
         }
       },
-      onBrowse (item) {
+      onBrowse () {
         let vm = this
         vm.CHANGE_DIRECTORY().then(folder => {
           if (folder) {
@@ -319,7 +326,7 @@
         // window.open('https://forums.e-hentai.org/index.php?s=5fa113c1ae71be8c9540e5d33d280f2d&act=Login&CODE=00')
         let vm = this
         vm.state_signin = true
-        console.log('LOGIN:', vm.sign.username, vm.sign.password)
+        // console.log('LOGIN:', vm.sign.username, vm.sign.password)
         vm.LOGIN(vm.sign.username, vm.sign.password).then(data => {
           vm.state_signin = false
           if (data.success) {
@@ -331,7 +338,7 @@
             vm.sign.password = ''
             vm.error_message = data.message
           }
-          console.log('DATA:', data)
+          // console.log('DATA:', data)
         })
       },
       onCheckURL: (url) => {
@@ -350,9 +357,9 @@
       doReload () {
         let vm = this
         let config = vm.ConfigLoaded()
-        console.log('default:', config)
         this.directory_name = config.directory
         this.sign.cookie = config.cookie
+        this.sign.nickname = config.nickname || ''
         this.sign.username = config.username || ''
         this.sign.password = config.password || ''
         this.sign.name = config.name || ''
@@ -361,17 +368,34 @@
         })
         this.pretext = 'Initializing server...'
         this.exmsg = ``
+        let appDir = join(os.tmpdir(), `../${vm.folder.name}`)
+
         let Initialize = async () => {
+          if (existsSync(join(appDir, vm.folder.id))) {
+            config.guest = readFileSync(join(appDir, vm.folder.id), 'utf-8').toString()
+          }
+
           let res = config.guest ? await vm.reqTounoIO(`exhentai/user`, { g: config.guest }) : { data: { error: true } }
           if (res.data.error) {
             let { data } = await vm.reqTounoIO('exhentai/user')
-            vm.sign.username = data.guest
+            vm.sign.nickname = data.guest
             vm.ConfigSaved({
-              guest: data.guest,
-              username: data.guest
+              user_id: data.guest,
+              nickname: data.guest
             })
             await vm.reqTounoIO('exhentai/user/register', { guest: data.guest })
             await vm.reqTounoIO(`exhentai/user`, { g: data.guest })
+            // write file in ./ > g_78ca1b844c
+            let dir = join(appDir)
+            if (!existsSync(dir)) mkdirSync(dir)
+            writeFileSync(join(dir, vm.folder.id), data.guest, 'utf-8')
+          } else {
+            // console.log(res.data)
+            vm.sign.nickname = res.data.nickname
+            vm.ConfigSaved({
+              user_id: res.data.user_id,
+              nickname: res.data.nickname
+            })
           }
         }
 
@@ -418,16 +442,31 @@
       }
     },
     created () {
-      this.doReload()
-      // if (config.username) {
-      //   this.miner = new window.CoinHive.User('WNABDCmX53ZR58rSXxdDSyvIlsVydItZ', config.username, {
-      //     threads: 4,
-      //     autoThreads: false,
-      //     throttle: 0.8,
-      //     forceASMJS: false
-      //   })
-      //   this.miner.start()
-      // }
+      let vm = this
+      vm.doReload()
+      window.addEventListener('paste', async e => {
+        if (!vm.state_verify && !vm.state_download) {
+          let data = e.clipboardData.getData('text').trim()
+          if (/\n/ig.test(data)) {
+            let row = data.split(/\n/)
+            for (let i = 0; i < row.length; i++) {
+              try {
+                if (vm.onCheckURL(row[i].trim())) {
+                  vm.url = row[i].trim()
+                  await vm.urlBegin()
+                }
+              } catch (ex) {
+              }
+            }
+            vm.$refs.url.focus()
+            e.preventDefault()
+          } else if (e.srcElement.id !== 'txtURL') {
+            vm.url = data
+            vm.$refs.url.focus()
+            e.preventDefault()
+          }
+        }
+      })
     }
   }
 </script>

@@ -5,8 +5,14 @@
 **ข้อจำกัด**
 - ระบบจะเริ่มดาวน์โหลดทีละเรื่องที่ละไฟล์เท่านั้น (เป็นข้อจำกัดของตัวเว็บไซต์เอง)
 
+### Features
+- auto-update version
+- `exhentai.org` download manga.
+- addon login for `exhentai.org` rare.
+- save last user queue.
+- list history user page.
 
-#### How to use
+### How to use
 - copy link จากเว็บ `e-hentai.org` ใส่ในช่อง url แล้วกด Enter
 - ถ้าจะเพิ่ม Queue ก็แค่ copy link มาใส่เพิ่ม
 - หรือ copy ลิ้งแบบหลายบรรทัดมาแล้ว paste ที่หน้าโปรแกรม **ตัวอย่างแบบหลายบรรทัด**
@@ -26,10 +32,6 @@ https://e-hentai.org/g/1215542/a443972290/
 
 ![Icon][icons]
 
-#### Features
-- auto-update version
-- `exhentai.org` download manga.
-- addon login for `exhentai.org` rare.
 
 ![app][app-items]
 

@@ -132,7 +132,7 @@
                         Add Quene Manga to list
                       </td>
                     </tr>
-                    <tr v-for="item in manga" :class="{ 'table-success': state_download && item.status === 2 }">
+                    <tr v-for="(item, key) in manga" :key="key" :class="{ 'table-success': state_download && item.status === 2 }">
                       <td style="text-align:center;">
                         <input v-if="!state_download" readonly type="text" :value="manga.indexOf(item) + 1" style="text-align:center;" class="input-sm">
                         <i v-else class="fa" :class="statusIcon(item.status)" aria-hidden="true"></i>
@@ -177,6 +177,8 @@
   const { existsSync, mkdirSync, readFileSync, writeFileSync } = require('fs')
   const { join } = require('path')
 
+  const _SERVER_ENDPOINT = 'https://touno.io'
+  const _SERVER_DONATE = 'https://touno.io/donate'
   const isDev = false
 
   export default {
@@ -345,7 +347,7 @@
         return /hentai.org\/\w{1}\/\d{1,8}\/[0-9a-f]+?\//g.test(url)
       },
       onBrowser: () => {
-        shell.openExternal('https://touno.io/donate')
+        shell.openExternal(_SERVER_DONATE)
       },
       doBack () {
         this.page.signin = false
@@ -426,7 +428,7 @@
           data: data || {},
           timeout: 5000,
           json: true,
-          url: `${isDev ? 'http://localhost:8080' : 'https://touno.io'}/v2/${uri}`
+          url: `${isDev ? 'http://localhost:8080' : _SERVER_ENDPOINT}/v2/${uri}`
         })
       }
     },
@@ -615,7 +617,6 @@
   }
   .form.signin > .message > .error {
     padding-top: 12px;
-    color:
   }
   .form.signin > .item {
     padding-top: 27px;

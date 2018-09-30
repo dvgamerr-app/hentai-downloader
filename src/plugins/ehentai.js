@@ -10,10 +10,11 @@ const request = require('request-promise')
 const events = require('events')
 const em = new events.EventEmitter()
 
+const isDev = process.env.NODE_ENV === 'development'
+console.log('development:', isDev)
 const logs = (...msg) => {
-  if (process.env.NODE_ENV === 'development') console.log(...msg)
+  if (isDev) console.log(...msg)
 }
-let isDev = (process.env.NODE_ENV === 'development')
 let allCookie = []
 const jarCookieSession = () => allCookie.map(cookie => cookie.split(';')[0]).join('; ')
 

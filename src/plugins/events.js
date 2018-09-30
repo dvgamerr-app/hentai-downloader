@@ -4,7 +4,8 @@ import Q from 'q'
 
 const settings = require('electron-settings')
 const request = require('request')
-const isDev = false
+const isDev = process.env.NODE_ENV === 'development'
+console.log('development:', isDev)
 // process.env.NODE_ENV === 'development'
 
 let apiTouno = () => request.defaults({

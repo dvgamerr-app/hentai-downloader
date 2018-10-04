@@ -1,5 +1,4 @@
 'use strict'
-
 import { app, BrowserWindow } from 'electron'
 import path from 'path'
 
@@ -24,6 +23,7 @@ function createWindow () {
   /**
    * Initial window options
    */
+
   mainConfig = {
     width: 600,
     height: 360,
@@ -66,7 +66,6 @@ function createWindow () {
   // })
 
   mainWindow = new BrowserWindow(mainConfig)
-  console.log('mainWindow>::loadURL', winURL)
   mainWindow.loadURL(winURL)
   mainWindow.setMenu(null)
 

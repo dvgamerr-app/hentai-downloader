@@ -52,10 +52,10 @@
           <div v-if="!page.option" class="row" style="margin-top:4px; margin-bottom: 6px;">
             <div class="col-sm-8">
               <div v-if="!state_verify" class="form-group" :class="{ 'has-error' : error_message }" style="margin-bottom:2px">
-                <input ref="url" type="text" class="form-control input-sm" id="txtURL" placeholder="https://e-hentai.org/g/1031609/631e04b5f7/" maxlength="50" @keyup.enter="onQueue" v-model="url">
+                <input ref="url" type="text" class="form-control input-sm input-url" id="txtURL" placeholder="https://e-hentai.org/g/1031609/631e04b5f7/" maxlength="50" @keyup.enter="onQueue" v-model="url">
                 <i class="fa fa-link fa-input-left" aria-hidden="true"></i>
                 <i class="fa fa-search fa-input-right" aria-hidden="true"></i>
-                <span class="help-block text-danger" style="margin-bottom:0px;height:13px;"><b>{{error_message}}</b></span>
+                <span class="help-block text-danger text-error">{{error_message}}</span>
               </div>
               <div v-else style="margin-top: 4px;">
                 <div class="progress" style="margin-bottom:0px;border-radius:2px;">
@@ -134,19 +134,22 @@
                     </tr>
                     <tr v-for="(item, key) in manga" :key="key" :class="{ 'table-success': state_download && item.status === 2 }">
                       <td style="text-align:center;">
-                        <input v-if="!state_download" readonly type="text" :value="manga.indexOf(item) + 1" style="text-align:center;" class="input-sm">
-                        <i v-else class="fa" :class="statusIcon(item.status)" aria-hidden="true"></i>
+                        <input v-if="!state_download" readonly type="text" :value="!item.closed ? manga.indexOf(item) + 1 : 'X'" style="text-align:center;" class="input-sm">
+                        <i v-else class="fa" :class="statusIcon(!item.error ? item.status : 0)" aria-hidden="true"></i>
                       </td>
                       <td>
                         <input readonly  class="input-sm" type="text" :value="item.name">
                       </td>
-                      <td>
+                      <td v-if="item.error" colspan="3">
+                        <input readonly  class="input-sm input-error text-danger" type="text" :value="item.error">
+                      </td>
+                      <td v-if="!item.error">
                         <input readonly  class="input-sm" type="text" :value="item.page" style="text-align:center;">
                       </td>
-                      <td>
+                      <td v-if="!item.error">
                         <input readonly  class="input-sm" type="text" :value="item.language" style="text-align:center;">
                       </td>
-                      <td>
+                      <td v-if="!item.error">
                         <input readonly  class="input-sm" type="text" :value="item.size" style="text-align:right;">
                       </td>
                     </tr>
@@ -257,6 +260,13 @@
             vm.manga.push(manga)
             vm.reset = false
           } else {
+            let url1 = new URL(vm.url)
+            vm.manga.push({
+              ref: /\/\w{1}\/\d{1,8}\/[0-9a-f]+?\//ig.exec(url1.pathname)[0],
+              name: vm.url,
+              status: 0,
+              error: res.error
+            })
             vm.error_message = res.error
           }
           vm.urlDone()
@@ -293,6 +303,12 @@
         vm.state_icon = 'fa-circle-o-notch fa-spin fa-fw'
         vm.state_name = 'Loading...'
         vm.DOWNLOAD({ manga: vm.manga, directory: vm.directory_name }, vm.onWatch).then(() => vm.urlDone(true))
+      },
+      onMouseOver (key) {
+        console.log('onMouseOver', key)
+      },
+      onMouseLeave (key) {
+        console.log('onMouseLeave', key)
       },
       onWatch (e, manga) {
         this.manga[manga.index].status = 2
@@ -410,11 +426,13 @@
         })
       },
       statusIcon (status) {
+        console.log(status)
         switch (status) {
           case 1: return 'fa-clock-o'
           case 2: return 'fa-download'
           case 3: return 'fa-check'
           case 0: return 'fa-times'
+          default: return 'fa-times'
         }
       },
       reqTounoIO (uri, data) {
@@ -491,6 +509,12 @@
   .form-control, .btn {
     border-radius: 0px !important;
     box-shadow: none !important;
+  }
+  input.input-error {
+    font-weight: bold;
+  }
+  input.input-url {
+    height: calc(1.60625rem + 2px);
   }
   input.input-sm, input.input-sm:focus {
     color: #000;
@@ -631,7 +655,7 @@
     display: block;
   }
   .btn-donate, .btn-singin {
-    font-size: 10px;
+    font-size: 10px !important;
     padding: 2px 14px;
   }
   .form.signin > .form-group {
@@ -653,5 +677,13 @@
   ::-webkit-scrollbar-thumb {
       background: #000; 
   }
-  
+  .text-error {
+    margin-bottom:0px;
+    width: 418px;
+    font-weight: bold;
+    display: block;
+    overflow:hidden; 
+    white-space:nowrap; 
+    text-overflow: ellipsis;
+  }
 </style>

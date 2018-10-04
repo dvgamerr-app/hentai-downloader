@@ -2,30 +2,16 @@
 <html>
   <head>
     <meta charset="utf-8">
-    <title>Hentai Downloader 2.0</title>
+    <title>Hentai Downloader 2.1</title>
     <% if (htmlWebpackPlugin.options.nodeModules) { %>
       <!-- Add `node_modules/` to global paths so `require` works properly in development -->
       <script>
         require('module').globalPaths.push('<%= htmlWebpackPlugin.options.nodeModules.replace(/\\/g, '\\\\') %>')
       </script>
     <% } %>
-    <script src='https://www.google.com/recaptcha/api.js'></script>
   </head>
   <body style="-webkit-app-region: drag;-webkit-user-select: none;">
     <div id="app"></div>
-    <!-- Set `__static` path to static files in production -->
-    <script>
-      (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-      m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-      })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
-
-      if (process.env.NODE_ENV !== 'development') {
-        ga('create', 'UA-81630553-1', 'auto');
-        ga('send', 'pageview');
-        window.__static = require('path').join(__dirname, '/static').replace(/\\/g, '\\\\')
-      }
-    </script>
     <!-- webpack builds are automatically injected -->
   </body>
 </html>

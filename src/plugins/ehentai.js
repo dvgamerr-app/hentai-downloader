@@ -9,8 +9,11 @@ const settings = require('electron-settings')
 const request = require('request-promise')
 const events = require('events')
 const em = new events.EventEmitter()
+const { powerSaveBlocker } = require('electron')
 
+let saveBlockerId = null
 const isDev = process.env.NODE_ENV === 'development'
+
 console.log('development:', isDev)
 const logs = (...msg) => {
   if (isDev) console.log(...msg)
@@ -123,12 +126,12 @@ let getImage = (res, manga, l, index, def, directory, emit) => {
   })
 }
 em.download = (list, directory, emit) => {
-  // let checkpoint = 0
-  // checkpoint = new Date()
-  // emit('DOWNLOAD_WATCH', {})
+  saveBlockerId = powerSaveBlocker.start('prevent-display-sleep')
+
   let all = []
   for (let l = 0; l < list.length; l++) {
     let manga = list[l]
+    if (manga.error) continue
     for (let i = 0; i < manga.items.length; i++) {
       all.push(() => {
         let def = Q.defer()
@@ -141,7 +144,13 @@ em.download = (list, directory, emit) => {
   }
 
   // logs('hentai-downloader', `*downloading request* \`${all.length}\` time`)
-  return async.series(all)
+  return async.series(all).then(() => {
+    if (powerSaveBlocker.isStarted(saveBlockerId)) powerSaveBlocker.stop(saveBlockerId)
+    saveBlockerId = null
+  }).catch(ex => {
+    if (powerSaveBlocker.isStarted(saveBlockerId)) powerSaveBlocker.stop(saveBlockerId)
+    saveBlockerId = null
+  })
 }
 
 export const emiter = em

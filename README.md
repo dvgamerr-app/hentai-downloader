@@ -1,4 +1,10 @@
 # Hentai Downloader `2.0`
+
+![Travis](https://img.shields.io/travis/touno-io/hentai-downloader.svg?style=flat-square)
+![GitHub top language](https://img.shields.io/github/languages/top/badges/shields.svg?style=flat-square)
+![GitHub last commit (branch)](https://img.shields.io/github/last-commit/touno-io/hentai-downloader/master.svg?style=flat-square)
+![MIT](https://img.shields.io/dub/l/vibe-d.svg?style=flat-square)
+
 ## Overview
 โปรแกรมดาวน์โหลดมังงะจาก `e-hentai.org` ได้โดยไม่ต้องปั้ม Credits และสามารถเพิ่มคิวได้เรื่อยๆ และตรวจจับ clipboard ได้จากการ copy และ paste ที่หน้าโปรแกรม ในรูปแบบ บรรทัดละเรื่อง 
 
@@ -37,3 +43,6 @@ https://e-hentai.org/g/1215542/a443972290/
 
 [icons]: https://raw.githubusercontent.com/unhax/ghentai-downloader/master/build/icons/256x256.png
 [app-items]: https://raw.githubusercontent.com/unhax/ghentai-downloader/master/docs/app-items.png
+
+### License
+MIT © 2018 Touno™

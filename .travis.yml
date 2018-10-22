@@ -15,7 +15,7 @@ matrix:
     - source ~/.bashrc
     - yarn
   - os: linux
-    before_install: eval "${CC=clang CXX=clang++ npm_config_clang=1}"
+    # before_install: eval "${CC=clang CXX=clang++ npm_config_clang=1}"
     compiler: clang
     addons:
       apt:
@@ -29,6 +29,7 @@ matrix:
     - yarn
   - os: windows
     install:
+    - choco install nodejs-lts
     - curl -o- -L https://yarnpkg.com/install.sh | bash
     - source ~/.bashrc
     - yarn

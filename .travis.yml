@@ -1,24 +1,29 @@
-osx_image: xcode8.3
-sudo: required
-dist: trusty
-language: c
+language: bash
 matrix:
   include:
   - os: osx
+    language: c
+    addons:
+      apt:
+        packages:
+        - libgnome-keyring-dev
+        - icnsutils
   - os: linux
-    env: CC=clang CXX=clang++ npm_config_clang=1
+    env:
+      - COMPILER="CC=clang CXX=clang++ npm_config_clang=1"
+    before_install: eval "${COMPILER}"
     compiler: clang
+    addons:
+      apt:
+        packages:
+        - libgnome-keyring-dev
+        - icnsutils
   - os: windows
 cache:
   directories:
   - node_modules
   - "$HOME/.electron"
   - "$HOME/.cache"
-addons:
-  apt:
-    packages:
-    - libgnome-keyring-dev
-    - icnsutils
 install:
 - nvm install 7
 - curl -o- -L https://yarnpkg.com/install.sh | bash

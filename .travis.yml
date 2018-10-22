@@ -28,8 +28,8 @@ matrix:
     - source ~/.bashrc
     - yarn
   - os: windows
+    language: node_js
     install:
-    - choco install nodejs-lts
     - curl -o- -L https://yarnpkg.com/install.sh | bash
     - source ~/.bashrc
     - yarn

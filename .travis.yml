@@ -8,28 +8,35 @@ matrix:
         packages:
         - libgnome-keyring-dev
         - icnsutils
+        
+    install:
+    - nvm install 7
+    - curl -o- -L https://yarnpkg.com/install.sh | bash
+    - source ~/.bashrc
+    - yarn
   - os: linux
-    env:
-      - COMPILER="CC=clang CXX=clang++ npm_config_clang=1"
-    before_install: eval "${COMPILER}"
+    before_install: eval "${CC=clang CXX=clang++ npm_config_clang=1}"
     compiler: clang
     addons:
       apt:
         packages:
         - libgnome-keyring-dev
         - icnsutils
+    install:
+    - nvm install 7
+    - curl -o- -L https://yarnpkg.com/install.sh | bash
+    - source ~/.bashrc
+    - yarn
   - os: windows
+    install:
+    - curl -o- -L https://yarnpkg.com/install.sh | bash
+    - source ~/.bashrc
+    - yarn
 cache:
   directories:
   - node_modules
   - "$HOME/.electron"
   - "$HOME/.cache"
-install:
-- nvm install 7
-- curl -o- -L https://yarnpkg.com/install.sh | bash
-- source ~/.bashrc
-- npm install -g xvfb-maybe
-- yarn
 script:
 - yarn run build
 branches:

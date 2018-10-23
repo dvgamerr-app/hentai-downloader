@@ -28,12 +28,15 @@ matrix:
     - source ~/.bashrc
     - yarn
   - os: windows
+    language: node_js
+    node_js:
+    - "7"
     install:
-    - nvs add 8
     - curl -o- -L https://yarnpkg.com/install.sh | bash
     - source ~/.bashrc
     - yarn
 cache:
+  yarn: true
   directories:
   - node_modules
   - "$HOME/.electron"

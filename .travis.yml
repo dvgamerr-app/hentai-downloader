@@ -29,14 +29,13 @@ matrix:
     - yarn
   - os: windows
     language: node_js
-    node_js:
-    - "7"
-    install:
-    - curl -o- -L https://yarnpkg.com/install.sh | bash
+    node_js: lts/*
+    sudo: false
+    before_install:
+    - curl -o- -L https://yarnpkg.com/install.sh | bash -s -- --
     - source ~/.bashrc
     - yarn
 cache:
-  yarn: true
   directories:
   - node_modules
   - "$HOME/.electron"

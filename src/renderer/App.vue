@@ -180,9 +180,7 @@
   const { existsSync, mkdirSync, readFileSync, writeFileSync } = require('fs')
   const { join } = require('path')
 
-  const _SERVER_ENDPOINT = 'https://touno.io'
   const _SERVER_DONATE = 'https://touno.io/donate'
-  const isDev = false
 
   export default {
     name: 'ghentai',
@@ -393,16 +391,16 @@
             config.guest = readFileSync(join(appDir, vm.folder.id), 'utf-8').toString()
           }
 
-          let res = config.guest ? await vm.reqTounoIO(`exhentai/user`, { g: config.guest }) : { data: { error: true } }
+          let res = config.guest ? await vm.TounoIO(`exhentai/user`, { g: config.guest }) : { data: { error: true } }
           if (res.data.error) {
-            let { data } = await vm.reqTounoIO('exhentai/user')
+            let { data } = await vm.TounoIO('exhentai/user')
             vm.sign.nickname = data.guest
             vm.ConfigSaved({
               user_id: data.guest,
               nickname: data.guest
             })
-            await vm.reqTounoIO('exhentai/user/register', { guest: data.guest })
-            await vm.reqTounoIO(`exhentai/user`, { g: data.guest })
+            await vm.TounoIO('exhentai/user/register', { guest: data.guest })
+            await vm.TounoIO(`exhentai/user`, { g: data.guest })
             // write file in ./ > g_78ca1b844c
             let dir = join(appDir)
             if (!existsSync(dir)) mkdirSync(dir)
@@ -434,20 +432,6 @@
           case 0: return 'fa-times'
           default: return 'fa-times'
         }
-      },
-      reqTounoIO (uri, data) {
-        let headerTouno = {
-          'X-Token': 'JJpeNu1VAXuHk505.app-exhentai',
-          'X-Access': +new Date()
-        }
-        return this.$http({
-          method: 'POST',
-          headers: headerTouno,
-          data: data || {},
-          timeout: 5000,
-          json: true,
-          url: `${isDev ? 'http://localhost:8080' : _SERVER_ENDPOINT}/v2/${uri}`
-        })
       }
     },
     watch: {

@@ -1,4 +1,5 @@
 'use strict'
+const touno = require('./config')
 const URL = require('url-parse')
 const fs = require('fs')
 const path = require('path')
@@ -12,31 +13,18 @@ const em = new events.EventEmitter()
 const { powerSaveBlocker } = require('electron')
 
 let saveBlockerId = null
-const isDev = process.env.NODE_ENV === 'development'
 
-console.log('development:', isDev)
+console.log('development:', touno.DevMode)
 const logs = (...msg) => {
-  if (isDev) console.log(...msg)
+  if (touno.DevMode) console.log(...msg)
 }
 let allCookie = []
 const jarCookieSession = () => allCookie.map(cookie => cookie.split(';')[0]).join('; ')
 
-const exHentaiHistory = (uri, data) => {
-  let headerTouno = {
-    'X-Token': 'JJpeNu1VAXuHk505.app-exhentai',
-    'X-Access': +new Date()
-  }
-  return request({
-    method: 'POST',
-    headers: headerTouno,
-    body: data || {},
-    timeout: 5000,
-    json: true,
-    url: `${isDev ? 'http://localhost:8080' : 'https://touno.io'}/v2/${uri}`
-  }).then(data => {
-    console.log('response:', data)
-  })
-}
+const exHentaiHistory = (uri, data) => touno.api({
+  url: uri,
+  data: data
+})
 
 let getFilename = (index, total) => {
   return `${Math.pow(10, (total.toString().length - index.toString().length) + 1).toString().substr(2, 10) + index}`

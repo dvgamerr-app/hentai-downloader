@@ -28,3 +28,7 @@ build_script:
   - yarn build
 
 test: off
+
+environment:
+  GH_TOKEN:
+    secure: y97smtAJHffiwIV4gltGn41s6WuSmnZduTVckx00MFeROP1eM6r5ycn01YfjFXrg

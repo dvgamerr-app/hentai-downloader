@@ -10,7 +10,7 @@ matrix:
         - icnsutils
         
     install:
-    - nvm install 7
+    - nvm install 8
     - curl -o- -L https://yarnpkg.com/install.sh | bash
     - source ~/.bashrc
     - yarn
@@ -23,12 +23,14 @@ matrix:
         - libgnome-keyring-dev
         - icnsutils
     install:
-    - nvm install 7
+    - nvm install 8
     - curl -o- -L https://yarnpkg.com/install.sh | bash
     - source ~/.bashrc
     - yarn
   - os: windows
     language: node_js
+    node_js:
+    - "8"
     install:
     - curl -o- -L https://yarnpkg.com/install.sh | bash
     - source ~/.bashrc

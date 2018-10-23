@@ -28,13 +28,16 @@ matrix:
     - source ~/.bashrc
     - yarn
   - os: windows
-    language: node_js
-    node_js: lts
     before_install:
+    - git clone --single-branch https://github.com/jasongin/nvs $NVS_HOME
+    - source $NVS_HOME/nvs.sh
+    - export PATH=./node_modules/.bin:$PATH
+    - nvs add lts
+    - nvs use lts
+    install:
     - npm -v
     - node -v
-    install:
-    - curl -o- -L https://yarnpkg.com/install.sh | bash -s -- --
+    - curl -o- -L https://yarnpkg.com/install.sh | bash
     - source ~/.bashrc
     - yarn
 cache:

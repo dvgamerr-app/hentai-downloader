@@ -29,9 +29,11 @@ matrix:
     - yarn
   - os: windows
     language: node_js
-    node_js: lts/*
-    sudo: false
+    node_js: lts
     before_install:
+    - npm -v
+    - node -v
+    install:
     - curl -o- -L https://yarnpkg.com/install.sh | bash -s -- --
     - source ~/.bashrc
     - yarn

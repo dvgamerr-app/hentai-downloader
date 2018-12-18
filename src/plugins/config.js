@@ -7,11 +7,11 @@ export default {
   DevMode,
   endpoint,
   token,
-  api: () => request.defaults({
+  api: (data) => request.defaults({
     method: 'POST',
     baseUrl: endpoint,
     timeout: 5000,
     json: true,
     headers: { 'X-Token': token, 'X-Access': +new Date() }
-  })
+  })(data)
 }

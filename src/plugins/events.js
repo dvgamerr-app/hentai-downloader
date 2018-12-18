@@ -75,6 +75,25 @@ export const client = {
         ConfigSaved: config => {
           settings.set('config', Object.assign(settings.get('config'), config))
         },
+        TounoIO: ($http, uri, data) => {
+          const endpoint = 'https://opensource.api-v2.touno.io'
+          const token = 'JJpeNu1VAXuHk505.app-exhentai'
+          return new Promise((resolve, reject) => {
+            $http({
+              method: 'POST',
+              headers: { 'X-Token': token, 'X-Access': +new Date() },
+              data: data || {},
+              timeout: 5000,
+              json: true,
+              url: `${endpoint}${uri}`
+            }).then(data => {
+              resolve(data)
+            }).catch(ex => {
+              console.log('TounoIO:', ex.message)
+              resolve(null)
+            })
+          })
+        },
         ExUser: (data) => {
           let def = Q.defer()
           ipcRenderer.send('CHANGE_DIRECTORY')

@@ -21,10 +21,9 @@ const logs = (...msg) => {
 let allCookie = []
 const jarCookieSession = () => allCookie.map(cookie => cookie.split(';')[0]).join('; ')
 
-const exHentaiHistory = (uri, data) => touno.api({
-  url: uri,
-  data: data
-})
+const exHentaiHistory = (url, data) => {
+  // return touno.api({ url, data })
+}
 
 let getFilename = (index, total) => {
   return `${Math.pow(10, (total.toString().length - index.toString().length) + 1).toString().substr(2, 10) + index}`
@@ -217,8 +216,11 @@ export function init (link, emit) {
         })
         if (manga.items.length !== parseInt(manga.page)) throw new Error(`manga.items is '${manga.items.length}' and length is '${manga.page}'`)
         return manga
+      }).then(() => {
+        return exHentaiHistory('/exhentai', {})
       })
     } else {
+      exHentaiHistory('/exhentai', {})
       return manga
     }
   }

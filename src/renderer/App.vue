@@ -394,18 +394,26 @@
           let res = config.guest ? await vm.TounoIO(vm.$http, `exhentai/user`, { g: config.guest }) : { data: { error: true } }
           if (!res) return
           if (res.data.error) {
-            let { data } = await vm.TounoIO(vm.$http, 'exhentai/user')
-            vm.sign.nickname = data.guest
-            vm.ConfigSaved({
-              user_id: data.guest,
-              nickname: data.guest
-            })
-            await vm.TounoIO(vm.$http, 'exhentai/user/register', { guest: data.guest })
-            await vm.TounoIO(vm.$http, `exhentai/user`, { g: data.guest })
-            // write file in ./ > g_78ca1b844c
-            let dir = join(appDir)
-            if (!existsSync(dir)) mkdirSync(dir)
-            writeFileSync(join(dir, vm.folder.id), data.guest, 'utf-8')
+            let resUser = await vm.TounoIO(vm.$http, 'exhentai/user')
+            if (resUser) {
+              vm.sign.nickname = resUser.data.guest
+              vm.ConfigSaved({
+                user_id: resUser.data.guest,
+                nickname: resUser.data.guest
+              })
+              await vm.TounoIO(vm.$http, 'exhentai/user/register', { guest: resUser.data.guest })
+              await vm.TounoIO(vm.$http, `exhentai/user`, { g: resUser.data.guest })
+              // write file in ./ > g_78ca1b844c
+              let dir = join(appDir)
+              if (!existsSync(dir)) mkdirSync(dir)
+              writeFileSync(join(dir, vm.folder.id), resUser.data.guest, 'utf-8')
+            } else {
+              vm.sign.nickname = 'offline'
+              vm.ConfigSaved({
+                user_id: null,
+                nickname: 'offline'
+              })
+            }
           } else {
             // console.log(res.data)
             vm.sign.nickname = res.data.nickname
@@ -466,7 +474,7 @@
             vm.$refs.url.focus()
             e.preventDefault()
           } else if (e.srcElement.id !== 'txtURL') {
-            vm.url = data
+            vm.url = data || ''
             vm.$refs.url.focus()
             e.preventDefault()
           }

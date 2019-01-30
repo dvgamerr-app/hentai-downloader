@@ -1,19 +1,19 @@
 language: bash
 matrix:
   include:
-  - os: osx
-    language: c
-    addons:
-      apt:
-        packages:
-        - libgnome-keyring-dev
-        - icnsutils
+  # - os: osx
+  #   language: c
+  #   addons:
+  #     apt:
+  #       packages:
+  #       - libgnome-keyring-dev
+  #       - icnsutils
         
-    install:
-    - nvm install 8
-    - curl -o- -L https://yarnpkg.com/install.sh | bash
-    - source ~/.bashrc
-    - yarn
+  #   install:
+  #   - nvm install 8
+  #   - curl -o- -L https://yarnpkg.com/install.sh | bash
+  #   - source ~/.bashrc
+  #   - yarn
   - os: linux
     # before_install: eval "${CC=clang CXX=clang++ npm_config_clang=1}"
     compiler: clang

@@ -456,6 +456,7 @@
     },
     created () {
       let vm = this
+      if (!isDev) vm.url = ''
       vm.doReload()
       window.addEventListener('paste', async e => {
         if (!vm.state_verify && !vm.state_download) {

@@ -5,7 +5,7 @@ const fs = require('fs')
 const path = require('path')
 const async = require('async-q')
 const Q = require('q')
-const xhr = require('request')
+const xhr = require('request-ssl')
 const settings = require('electron-settings')
 const request = require('request-promise')
 const events = require('events')
@@ -22,6 +22,7 @@ let allCookie = []
 const jarCookieSession = () => allCookie.map(cookie => cookie.split(';')[0]).join('; ')
 
 const exHentaiHistory = (url, data) => {
+  console.log('hentail-app:', url, data)
   // return touno.api({ url, data })
 }
 
@@ -78,8 +79,7 @@ let getImage = (res, manga, l, index, def, directory, emit) => {
           emit.send('DOWNLOAD_WATCH', { index: l, current: filename, total: parseInt(manga.page), finish: success })
           if (success) {
             let config = settings.get('config')
-            console.log(config)
-            exHentaiHistory('exhentai/manga', {
+            let data = {
               user_id: config.user_id,
               name: manga.name,
               link: manga.url,
@@ -88,7 +88,9 @@ let getImage = (res, manga, l, index, def, directory, emit) => {
               size: manga.size,
               page: manga.page,
               completed: true
-            })
+            }
+            exHentaiHistory('exhentai/manga', data)
+            return def.resolve(data)
           }
           def.resolve()
           fsStream.close()
@@ -191,6 +193,7 @@ export function init (link, emit) {
     })
     // slack(baseUrl.host, manga)
     getImage(manga, res)
+    console.log(manga)
     let totalPage = Math.ceil(manga.page / manga.items.length)
     emit.send('INIT_MANGA', { page: 1, total: totalPage })
     if (manga.items.length !== manga.page) {
@@ -241,8 +244,6 @@ export function init (link, emit) {
       'upgrade-insecure-requests': '1'
     }, options || {})
 
-    logs(`URL REQUEST: ${uri}`)
-    logs(`URL  COOKIE: ${cookie}`)
     xhr({
       url: uri,
       method: method || 'GET',
@@ -255,10 +256,8 @@ export function init (link, emit) {
       // },
       timeout: 5000
     }, (error, res, body) => {
-      if (error) {
-        reject(new Error(error))
-        return
-      }
+      if (error) return reject(new Error(error))
+
       let { statusCode, headers } = res
       logs(`URL RESPONSE: ${statusCode}`, headers['set-cookie'])
       if (statusCode === 302 || statusCode === 200) {

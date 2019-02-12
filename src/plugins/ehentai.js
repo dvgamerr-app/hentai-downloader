@@ -1,23 +1,19 @@
-'use strict'
+import settings from 'electron-settings'
+import getGallery from './ex/gallery'
+import parseManga from './lib/parse-manga'
+import parseImage from './lib/parse-image'
+
 const touno = require('./config')
-const URL = require('url-parse')
 const fs = require('fs')
 const path = require('path')
 const async = require('async-q')
 const Q = require('q')
-const xhr = require('request-ssl')
-const settings = require('electron-settings')
-const request = require('request-promise')
 const events = require('events')
 const em = new events.EventEmitter()
 const { powerSaveBlocker } = require('electron')
 
 let saveBlockerId = null
 
-console.log('development:', touno.DevMode)
-const logs = (...msg) => {
-  if (touno.DevMode) console.log(...msg)
-}
 let allCookie = []
 const jarCookieSession = () => allCookie.map(cookie => cookie.split(';')[0]).join('; ')
 
@@ -143,170 +139,186 @@ em.download = (list, directory, emit) => {
 }
 
 export const emiter = em
-export function init (link, emit) {
-  let baseUrl = new URL(link.trim())
+export async function prepareManga (link, emit) {
+  emit.send('INIT_MANGA', { page: 0, total: 1 })
+  let html = await getGallery('GET', link)
+  let manga = parseManga(html)
 
-  let getImage = (manga, data) => {
-    let links = data.match(/gdtm".*?<a href="(.*?)">/ig)
-    for (var i = 0; i < links.length; i++) {
-      let link = /gdtm".*?<a href="(.*?)">/i.exec(links[i])[1]
-      manga.items.push(link)
+  const totalPage = Math.ceil(manga.page / manga.items.length)
+  emit.send('INIT_MANGA', { page: 1, total: totalPage })
+
+  if (manga.items.length < parseInt(manga.page)) {
+    for (let i = 1; i < totalPage; i++) {
+      emit.send('INIT_MANGA', { page: i + 1, total: totalPage })
+      html = await getGallery(`${manga.url}?p=${i}`)
+      manga.items = manga.items.concat(parseImage(html))
     }
+    if (manga.items.length !== parseInt(manga.page)) throw new Error(`manga fetch is '${manga.items.length}' but show is '${manga.page}'.`)
   }
+  // exHentaiHistory('/exhentai', {})
+  return manga
 
-  let getManga = res => {
-    let fixed = /\/\w{1}\/\d{1,8}\/[0-9a-f]+?\//ig.exec(baseUrl.pathname)
-    if (fixed) link = `https://${baseUrl.hostname}${fixed[0]}`
+  // let getImage = (manga, data) => {
+  //   let links = data.match(/gdtm".*?<a href="(.*?)">/ig)
+  //   for (var i = 0; i < links.length; i++) {
+  //     let link = /gdtm".*?<a href="(.*?)">/i.exec(links[i])[1]
+  //     manga.items.push(link)
+  //   }
+  // }
 
-    let name = /<div id="gd2">.*?gn">(.*?)<\/.*?gj">(.*?)<\/.*?<\/div>/ig.exec(res)
-    let language = /Language:.*?class="gdt2">(.*?)&/ig.exec(res)
-    let size = /File Size:.*?class="gdt2">(.*?)</ig.exec(res)
-    let length = /Length:.*?gdt2">(.*?).page/ig.exec(res)
-    let cover = /<div id="gleft">.*?url\((.*?)\)/ig.exec(res)
+  // let getManga = res => {
+  //   let fixed = /\/\w{1}\/\d{1,8}\/[0-9a-f]+?\//ig.exec(baseUrl.pathname)
+  //   if (fixed) link = `https://${baseUrl.hostname}${fixed[0]}`
 
-    if (!name) throw new Error('manga.name is not found')
-    if (!language) throw new Error('manga.language is not found')
-    if (!size) throw new Error('manga.size is not found')
-    if (!length) throw new Error('manga.page is not found')
-    if (!cover) throw new Error('manga.page is not found')
+  //   let name = /<div id="gd2">.*?gn">(.*?)<\/.*?gj">(.*?)<\/.*?<\/div>/ig.exec(res)
+  //   let language = /Language:.*?class="gdt2">(.*?)&/ig.exec(res)
+  //   let size = /File Size:.*?class="gdt2">(.*?)</ig.exec(res)
+  //   let length = /Length:.*?gdt2">(.*?).page/ig.exec(res)
+  //   let cover = /<div id="gleft">.*?url\((.*?)\)/ig.exec(res)
 
-    let manga = {
-      ref: fixed[0],
-      url: link,
-      name: name[1],
-      cover: cover[1],
-      language: language[1],
-      size: size[1],
-      page: length[1],
-      items: []
-    }
-    let config = settings.get('config')
-    console.log(config)
-    exHentaiHistory('exhentai/manga', {
-      user_id: config.user_id,
-      name: manga.name,
-      link: manga.url,
-      cover: manga.cover,
-      language: manga.language,
-      size: manga.size,
-      page: manga.page
-    })
-    // slack(baseUrl.host, manga)
-    getImage(manga, res)
-    console.log(manga)
-    let totalPage = Math.ceil(manga.page / manga.items.length)
-    emit.send('INIT_MANGA', { page: 1, total: totalPage })
-    if (manga.items.length !== manga.page) {
-      let all = []
-      for (let i = 1; i < totalPage; i++) {
-        all.push(() => {
-          emit.send('INIT_MANGA', { page: i + 1, total: totalPage })
-          return request(`${link}?p=${i}`).then((res) => getImage(manga, res))
-        })
-      }
-      return async.series(all).then(() => {
-        request({
-          url: link,
-          header: {
-            'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/59.0.3071.115 Safari/537.36',
-            'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
-            'accept-language': 'th-TH,th;q=0.8,en-US;q=0.6,en;q=0.4,ja;q=0.2',
-            'cache-control': 'no-cache',
-            'pragma': 'no-cache',
-            'referer': `https://${baseUrl.hostname}/`,
-            'upgrade-insecure-requests': '1'
-          }
-        })
-        if (manga.items.length !== parseInt(manga.page)) throw new Error(`manga.items is '${manga.items.length}' and length is '${manga.page}'`)
-        return manga
-      }).then(() => {
-        return exHentaiHistory('/exhentai', {})
-      })
-    } else {
-      exHentaiHistory('/exhentai', {})
-      return manga
-    }
-  }
+  //   if (!name) throw new Error('manga.name is not found')
+  //   if (!language) throw new Error('manga.language is not found')
+  //   if (!size) throw new Error('manga.size is not found')
+  //   if (!length) throw new Error('manga.page is not found')
+  //   if (!cover) throw new Error('manga.page is not found')
 
-  let reqHentai = async (uri, method, options) => new Promise((resolve, reject) => {
-    let cookie = jarCookieSession()
+  //   let manga = {
+  //     ref: fixed[0],
+  //     url: link,
+  //     name: name[1],
+  //     cover: cover[1],
+  //     language: language[1],
+  //     size: size[1],
+  //     page: length[1],
+  //     items: []
+  //   }
+  //   let config = settings.get('config')
+  //   console.log(config)
+  //   exHentaiHistory('exhentai/manga', {
+  //     user_id: config.user_id,
+  //     name: manga.name,
+  //     link: manga.url,
+  //     cover: manga.cover,
+  //     language: manga.language,
+  //     size: manga.size,
+  //     page: manga.page
+  //   })
+  //   // slack(baseUrl.host, manga)
+  //   getImage(manga, res)
+  //   console.log(manga)
+  //   let totalPage = Math.ceil(manga.page / manga.items.length)
+  //   emit.send('INIT_MANGA', { page: 1, total: totalPage })
+  //   if (manga.items.length !== manga.page) {
+  //     let all = []
+  //     for (let i = 1; i < totalPage; i++) {
+  //       all.push(() => {
+  //         emit.send('INIT_MANGA', { page: i + 1, total: totalPage })
+  //         return request(`${link}?p=${i}`).then((res) => getImage(manga, res))
+  //       })
+  //     }
+  //     return async.series(all).then(() => {
+  //       request({
+  //         url: link,
+  //         header: {
+  //           'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/59.0.3071.115 Safari/537.36',
+  //           'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
+  //           'accept-language': 'th-TH,th;q=0.8,en-US;q=0.6,en;q=0.4,ja;q=0.2',
+  //           'cache-control': 'no-cache',
+  //           'pragma': 'no-cache',
+  //           'referer': `https://${baseUrl.hostname}/`,
+  //           'upgrade-insecure-requests': '1'
+  //         }
+  //       })
+  //       if (manga.items.length !== parseInt(manga.page)) throw new Error(`manga.items is '${manga.items.length}' and length is '${manga.page}'`)
+  //       return manga
+  //     // }).then(() => {
+  //     //   return exHentaiHistory('/exhentai', {})
+  //     })
+  //   } else {
+  //     exHentaiHistory('/exhentai', {})
+  //     return manga
+  //   }
+  // }
 
-    options = Object.assign({
-      'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/59.0.3071.115 Safari/537.36',
-      'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
-      'accept-language': 'th-TH,th;q=0.8,en-US;q=0.6,en;q=0.4,ja;q=0.2',
-      'cache-control': 'no-cache',
-      'cookie': cookie === '' ? undefined : cookie,
-      'pragma': 'no-cache',
-      ':authority': 'e-hentai.org',
-      ':scheme': 'https',
-      'referer': `https://${baseUrl.hostname}/`,
-      'upgrade-insecure-requests': '1'
-    }, options || {})
+  // let reqHentai = async (uri, method, options) => new Promise((resolve, reject) => {
+  //   let cookie = jarCookieSession()
 
-    xhr({
-      url: uri,
-      method: method || 'GET',
-      header: options,
-      // strictSSL: true,
-      // agentOptions: {
-      //   passphrase: 'dvg7po8ai',
-      //   key: fs.readFileSync(path.join(__dirname, 'cert/key.pem')),
-      //   cert: fs.readFileSync(path.join(__dirname, 'cert/cert.pem'))
-      // },
-      timeout: 5000
-    }, (error, res, body) => {
-      if (error) return reject(new Error(error))
+  //   options = Object.assign({
+  //     'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/59.0.3071.115 Safari/537.36',
+  //     'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
+  //     'accept-language': 'th-TH,th;q=0.8,en-US;q=0.6,en;q=0.4,ja;q=0.2',
+  //     'cache-control': 'no-cache',
+  //     'cookie': cookie === '' ? undefined : cookie,
+  //     'pragma': 'no-cache',
+  //     ':authority': 'e-hentai.org',
+  //     ':scheme': 'https',
+  //     'referer': `https://${baseUrl.hostname}/`,
+  //     'upgrade-insecure-requests': '1'
+  //   }, options || {})
 
-      let { statusCode, headers } = res
-      logs(`URL RESPONSE: ${statusCode}`, headers['set-cookie'])
-      if (statusCode === 302 || statusCode === 200) {
-        if (headers['set-cookie']) {
-          for (let i = 0; i < headers['set-cookie'].length; i++) {
-            let c = headers['set-cookie'][i].split(';')
-            let co = allCookie.filter(item => item.split('=')[0] === c[0].split('=')[0])
-            if (co.length === 0) allCookie.push(headers['set-cookie'][i])
-          }
-        }
-        resolve(body)
-      } else {
-        reject(new Error(statusCode))
-      }
-    })
-  })
+  //   xhr({
+  //     url: uri,
+  //     method: method || 'GET',
+  //     header: options,
+  //     // strictSSL: true,
+  //     // agentOptions: {
+  //     //   passphrase: 'dvg7po8ai',
+  //     //   key: fs.readFileSync(path.join(__dirname, 'cert/key.pem')),
+  //     //   cert: fs.readFileSync(path.join(__dirname, 'cert/cert.pem'))
+  //     // },
+  //     timeout: 5000
+  //   }, (error, res, body) => {
+  //     if (error) return reject(new Error(error))
 
-  return (async () => {
-    if (!/\/\w{1}\/\d{1,8}\/[0-9a-f]+?\//ig.test(baseUrl.pathname)) {
-      throw new Error(`Key missing, or incorrect key provided.`)
-    } else {
-      let fixed = /\/\w{1}\/\d{1,8}\/[0-9a-f]+?\//ig.exec(baseUrl.pathname)
-      if (baseUrl.hostname === 'exhentai.org') baseUrl.hostname = 'e-hentai.org'
-      link = `https://${baseUrl.hostname}${fixed[0]}`
-    }
-    let res = await reqHentai(link)
-    if (!/DOCTYPE.html.PUBLIC/ig.test(res)) throw new Error(res)
-    let warnMe = /<a href="(.*?)">Never Warn Me Again/ig.exec(res)
-    if (warnMe) {
-      throw new Error('Never Warn Me Again')
-      // res = await reqHentai(warnMe[1], 'GET', {
-      //   'referer': link
-      // })
-    }
-    return getManga(res)
-  })().catch(ex => {
-    if (ex.statusCode === 404) {
-      if (ex.error) {
-        // logs('hentai-downloader', `*rare*: https://${baseUrl.hostname}${baseUrl.pathname}`)
-        throw new Error('This gallery has been removed or is unavailable.')
-      } else {
-        // logs('hentai-downloader', `*error*: ${link}\n${ex.name.toString()}`)
-        throw new Error(ex.name)
-      }
-    } else {
-      // logs('hentai-downloader', `*error*: ${link}\n${ex.toString()}`)
-      throw ex
-    }
-  })
+  //     let { statusCode, headers } = res
+  //     logs(`URL RESPONSE: ${statusCode}`, headers['set-cookie'])
+  //     if (statusCode === 302 || statusCode === 200) {
+  //       if (headers['set-cookie']) {
+  //         for (let i = 0; i < headers['set-cookie'].length; i++) {
+  //           let c = headers['set-cookie'][i].split(';')
+  //           let co = allCookie.filter(item => item.split('=')[0] === c[0].split('=')[0])
+  //           if (co.length === 0) allCookie.push(headers['set-cookie'][i])
+  //         }
+  //       }
+  //       resolve(body)
+  //     } else {
+  //       reject(new Error(statusCode))
+  //     }
+  //   })
+  // })
+
+  // return (async () => {
+  //   if (!/\/\w{1}\/\d{1,8}\/[0-9a-f]+?\//ig.test(baseUrl.pathname)) {
+  //     throw new Error(`Key missing, or incorrect key provided.`)
+  //   } else {
+  //     let fixed = /\/\w{1}\/\d{1,8}\/[0-9a-f]+?\//ig.exec(baseUrl.pathname)
+  //     if (baseUrl.hostname === 'exhentai.org') baseUrl.hostname = 'e-hentai.org'
+  //     link = `https://${baseUrl.hostname}${fixed[0]}`
+  //   }
+  //   let res = await reqHentai(link)
+  //   if (!/DOCTYPE.html.PUBLIC/ig.test(res)) throw new Error(res)
+  //   let warnMe = /<a href="(.*?)">Never Warn Me Again/ig.exec(res)
+  //   if (warnMe) {
+  //     throw new Error('Never Warn Me Again')
+  //     // res = await reqHentai(warnMe[1], 'GET', {
+  //     //   'referer': link
+  //     // })
+  //   }
+  //   return getManga(res)
+  // })().catch(ex => {
+  //   if (ex.statusCode === 404) {
+  //     if (ex.error) {
+  //       // logs('hentai-downloader', `*rare*: https://${baseUrl.hostname}${baseUrl.pathname}`)
+  //       throw new Error('This gallery has been removed or is unavailable.')
+  //     } else {
+  //       // logs('hentai-downloader', `*error*: ${link}\n${ex.name.toString()}`)
+  //       throw new Error(ex.name)
+  //     }
+  //   } else {
+  //     // logs('hentai-downloader', `*error*: ${link}\n${ex.toString()}`)
+  //     throw ex
+  //   }
+  // })
 }
 
 let httpHeader = {

@@ -8,7 +8,7 @@ xhr.addFingerprint('exhentai.org', '21:E2:AC:AA:2D:EB:32:F0:2D:39:13:8A:97:F6:78
 
 export default async (method = 'GET', uri = '', data = {}, addHeaders = {}) => {
   uri = uri.trim().replace(/&amp;/g, '&')
-  let base = new URL(uri)
+  let base = uri instanceof URL ? uri : new URL(uri)
   let referer = `https://${base.hostname}/`
   console.log(` - [exhentai] ${method}:${uri}`)
   let httpHeaders = Object.assign({

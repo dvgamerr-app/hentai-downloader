@@ -1,12 +1,9 @@
 import { app, dialog, ipcMain, ipcRenderer } from 'electron'
-import ex from './ehentai.js'
 import Q from 'q'
 
 const settings = require('electron-settings')
-const isDev = process.env.NODE_ENV === 'development'
-console.log('development:', isDev)
-// process.env.NODE_ENV === 'development'
 
+// process.env.NODE_ENV === 'development'
 let config = settings.get('config')
 if (!config || !(config || {}).directory) {
   // console.log('config:', config)
@@ -14,6 +11,14 @@ if (!config || !(config || {}).directory) {
 }
 
 export function server (mainWindow) {
+  const isDev = process.env.NODE_ENV === 'development'
+
+  const { debuger } = require('@touno-io/debuger')
+  const ex = require('./ehentai')
+  const logger = debuger.scope('electron')
+
+  console.log('development:', isDev)
+  console.log('ehentai:', ex)
   ipcMain.on('CHANGE_DIRECTORY', (e, source) => {
     dialog.showOpenDialog(mainWindow, {
       properties: ['openDirectory']
@@ -22,10 +27,14 @@ export function server (mainWindow) {
       e.sender.send('CHANGE_DIRECTORY', fileNames)
     })
   })
-  ipcMain.on('URL_VERIFY', (e, url) => {
+  ipcMain.on('URL_VERIFY', async (e, url) => {
+    logger.start('URL_VERIFY')
     ex.prepareManga(url, e.sender).then(async manga => {
+      logger.success('URL_VERIFY', manga)
       e.sender.send('URL_VERIFY', { error: false, data: manga })
     }).catch(ex => {
+      logger.error(`URL_VERIFY: ${ex.toString()}`)
+      logger.error(ex.stack)
       e.sender.send('URL_VERIFY', { error: ex.toString(), data: {} })
     })
   })

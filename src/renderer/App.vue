@@ -11,7 +11,7 @@
               <span v-if="sign.cookie == null" class="help-block">Hey <b>{{sign.nickname}}</b></span>
               <span v-else class="help-block" style="color: #616161;">Hello, You are now logged in as {{sign.name}}</span>
               <!-- sign.cookie == null && !state_verify -->
-              <button v-if="false" type="button" class="btn btn-sm btn-singin btn-warning" @click.prevent="page.signin = true">
+              <button type="button" class="btn btn-sm btn-singin btn-warning" @click.prevent="page.signin = true">
                 Login
               </button>
               <button type="button" class="btn btn-sm btn-donate btn-outline-danger" @click="onBrowser">

@@ -31,6 +31,7 @@ hotClient.subscribe(event => {
           position: absolute;
         }
       </style>
+
       <div id="dev-client">
         Compiling Main Process...
       </div>

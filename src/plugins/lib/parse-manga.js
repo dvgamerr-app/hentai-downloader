@@ -2,7 +2,7 @@ import parseImage from './parse-image'
 
 export default (uri, html) => {
   uri = uri instanceof URL ? uri : new URL(uri.trim().replace(/&amp;/g, '&'))
-  const [ , gallery ] = /\/\w{1}\/\d{1,8}\/[0-9a-f]+?\//ig.exec(uri.pathname) || []
+  const [ gallery ] = /\/\w{1}\/\d{1,8}\/[0-9a-f]+?\//ig.exec(uri.pathname) || []
   uri = new URL(`${uri.protocol}//${uri.hostname}${gallery}`)
 
   const [ , name ] = /<div id="gd2">.*?gn">(.*?)<\/.*?gj">(.*?)<\/.*?<\/div>/ig.exec(html) || []

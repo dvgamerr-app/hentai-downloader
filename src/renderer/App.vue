@@ -11,7 +11,7 @@
               <span v-if="sign.cookie == null" class="help-block">Hey <b>{{sign.nickname}}</b></span>
               <span v-else class="help-block" style="color: #616161;">Hello, You are now logged in as {{sign.name}}</span>
               <!-- sign.cookie == null && !state_verify -->
-              <button v-if="false" type="button" class="btn btn-sm btn-singin btn-warning" @click.prevent="page.signin = true">
+              <button type="button" class="btn btn-sm btn-singin btn-warning" @click.prevent="page.signin = true">
                 Login
               </button>
               <button type="button" class="btn btn-sm btn-donate btn-outline-danger" @click="onBrowser">
@@ -391,20 +391,29 @@
             config.guest = readFileSync(join(appDir, vm.folder.id), 'utf-8').toString()
           }
 
-          let res = config.guest ? await vm.TounoIO(`exhentai/user`, { g: config.guest }) : { data: { error: true } }
+          let res = config.guest ? await vm.TounoIO(vm.$http, `exhentai/user`, { g: config.guest }) : { data: { error: true } }
+          if (!res) return
           if (res.data.error) {
-            let { data } = await vm.TounoIO('exhentai/user')
-            vm.sign.nickname = data.guest
-            vm.ConfigSaved({
-              user_id: data.guest,
-              nickname: data.guest
-            })
-            await vm.TounoIO('exhentai/user/register', { guest: data.guest })
-            await vm.TounoIO(`exhentai/user`, { g: data.guest })
-            // write file in ./ > g_78ca1b844c
-            let dir = join(appDir)
-            if (!existsSync(dir)) mkdirSync(dir)
-            writeFileSync(join(dir, vm.folder.id), data.guest, 'utf-8')
+            let resUser = await vm.TounoIO(vm.$http, 'exhentai/user')
+            if (resUser) {
+              vm.sign.nickname = resUser.data.guest
+              vm.ConfigSaved({
+                user_id: resUser.data.guest,
+                nickname: resUser.data.guest
+              })
+              await vm.TounoIO(vm.$http, 'exhentai/user/register', { guest: resUser.data.guest })
+              await vm.TounoIO(vm.$http, `exhentai/user`, { g: resUser.data.guest })
+              // write file in ./ > g_78ca1b844c
+              let dir = join(appDir)
+              if (!existsSync(dir)) mkdirSync(dir)
+              writeFileSync(join(dir, vm.folder.id), resUser.data.guest, 'utf-8')
+            } else {
+              vm.sign.nickname = 'offline'
+              vm.ConfigSaved({
+                user_id: null,
+                nickname: 'offline'
+              })
+            }
           } else {
             // console.log(res.data)
             vm.sign.nickname = res.data.nickname
@@ -447,6 +456,7 @@
     },
     created () {
       let vm = this
+      vm.url = ''
       vm.doReload()
       window.addEventListener('paste', async e => {
         if (!vm.state_verify && !vm.state_download) {
@@ -465,7 +475,7 @@
             vm.$refs.url.focus()
             e.preventDefault()
           } else if (e.srcElement.id !== 'txtURL') {
-            vm.url = data
+            vm.url = data || ''
             vm.$refs.url.focus()
             e.preventDefault()
           }

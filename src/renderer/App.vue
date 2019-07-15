@@ -391,16 +391,16 @@
             config.guest = readFileSync(join(appDir, vm.folder.id), 'utf-8').toString()
           }
 
-          let res = config.guest ? await vm.TounoIO(`exhentai/user`, { g: config.guest }) : { data: { error: true } }
+          let res = config.guest ? { data: { error: true } } : { data: { error: true } }
           if (res.data.error) {
-            let { data } = await vm.TounoIO('exhentai/user')
+            let { data } = { data: {} }
             vm.sign.nickname = data.guest
             vm.ConfigSaved({
               user_id: data.guest,
               nickname: data.guest
             })
-            await vm.TounoIO('exhentai/user/register', { guest: data.guest })
-            await vm.TounoIO(`exhentai/user`, { g: data.guest })
+            // await vm.TounoIO('exhentai/user/register', { guest: data.guest })
+            // await vm.TounoIO(`exhentai/user`, { g: data.guest })
             // write file in ./ > g_78ca1b844c
             let dir = join(appDir)
             if (!existsSync(dir)) mkdirSync(dir)

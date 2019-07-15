@@ -3,7 +3,7 @@ import * as hentai from './ehentai.js'
 import Q from 'q'
 
 const settings = require('electron-settings')
-const touno = require('./config')
+// const touno = require('./config')
 const isDev = process.env.NODE_ENV === 'development'
 console.log('development:', isDev)
 // process.env.NODE_ENV === 'development'
@@ -26,10 +26,10 @@ export function server (mainWindow) {
   ipcMain.on('URL_VERIFY', function (e, url) {
     hentai.init(url, e.sender).then(async manga => {
       // Request Send Manga
-      await touno.api({
-        url: '/exhentai',
-        data: {}
-      })
+      // await touno.api({
+      //   url: '/exhentai',
+      //   data: {}
+      // })
 
       e.sender.send('URL_VERIFY', { error: false, data: manga })
     }).catch(ex => {

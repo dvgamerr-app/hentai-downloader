@@ -21,10 +21,12 @@ const logs = (...msg) => {
 let allCookie = []
 const jarCookieSession = () => allCookie.map(cookie => cookie.split(';')[0]).join('; ')
 
-const exHentaiHistory = (uri, data) => touno.api({
-  url: uri,
-  data: data
-})
+const exHentaiHistory = (uri, data) => {
+  return {
+    url: uri,
+    data: data
+  }
+}
 
 let getFilename = (index, total) => {
   return `${Math.pow(10, (total.toString().length - index.toString().length) + 1).toString().substr(2, 10) + index}`

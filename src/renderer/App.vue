@@ -180,7 +180,7 @@
   const { existsSync, mkdirSync, readFileSync, writeFileSync } = require('fs')
   const { join } = require('path')
 
-  const _SERVER_DONATE = 'https://mr.touno.io'
+  const _SERVER_DONATE = 'https://mr.touno.io/donate'
 
   export default {
     name: 'ghentai',

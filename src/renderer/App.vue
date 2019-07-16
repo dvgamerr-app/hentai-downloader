@@ -8,7 +8,7 @@
           </div>
           <div class="col-sm-5">
             <div class="text-right">
-              <span v-if="sign.cookie == null" class="help-block">Hey <b>{{sign.nickname}}</b></span>
+              <span v-if="sign.cookie == null" class="help-block"><b>Support Me❤ {{sign.nickname}}</b></span>
               <span v-else class="help-block" style="color: #616161;">Hello, You are now logged in as {{sign.name}}</span>
               <!-- sign.cookie == null && !state_verify -->
               <button v-if="false" type="button" class="btn btn-sm btn-singin btn-warning" @click.prevent="page.signin = true">
@@ -180,7 +180,7 @@
   const { existsSync, mkdirSync, readFileSync, writeFileSync } = require('fs')
   const { join } = require('path')
 
-  const _SERVER_DONATE = 'https://touno.io/donate'
+  const _SERVER_DONATE = 'https://mr.touno.io'
 
   export default {
     name: 'ghentai',
@@ -221,7 +221,7 @@
         state_msg: 'Initialize...',
         state_icon: 'fa-list',
         state_name: 'Queue',
-        url: 'https://e-hentai.org/g/1216230/a71f86495e/',
+        url: '', // https://e-hentai.org/g/1216230/a71f86495e/
         error_message: '',
         directory_name: null,
         manga: []

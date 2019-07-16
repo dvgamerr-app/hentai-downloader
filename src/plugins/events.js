@@ -1,6 +1,5 @@
 import { app, dialog, ipcMain, ipcRenderer } from 'electron'
 import * as hentai from './ehentai.js'
-import Q from 'q'
 
 const settings = require('electron-settings')
 // const touno = require('./config')
@@ -76,42 +75,42 @@ export const client = {
           settings.set('config', Object.assign(settings.get('config'), config))
         },
         ExUser: (data) => {
-          let def = Q.defer()
-          ipcRenderer.send('CHANGE_DIRECTORY')
-          ipcRenderer.once('CHANGE_DIRECTORY', (e, dir) => def.resolve(dir ? dir[0] : ''))
-          return def.promise
+          return new Promise((resolve, reject) => {
+            ipcRenderer.send('CHANGE_DIRECTORY')
+            ipcRenderer.once('CHANGE_DIRECTORY', (e, dir) => resolve(dir ? dir[0] : ''))
+          })
         },
         CHANGE_DIRECTORY: () => {
-          let def = Q.defer()
-          ipcRenderer.send('CHANGE_DIRECTORY')
-          ipcRenderer.once('CHANGE_DIRECTORY', (e, dir) => def.resolve(dir ? dir[0] : ''))
-          return def.promise
+          return new Promise((resolve, reject) => {
+            ipcRenderer.send('CHANGE_DIRECTORY')
+            ipcRenderer.once('CHANGE_DIRECTORY', (e, dir) => resolve(dir ? dir[0] : ''))
+          })
         },
         URL_VERIFY: url => {
-          let def = Q.defer()
-          ipcRenderer.once('URL_VERIFY', (e, res) => def.resolve(res))
-          ipcRenderer.send('URL_VERIFY', url)
-          return def.promise
+          return new Promise((resolve, reject) => {
+            ipcRenderer.once('URL_VERIFY', (e, res) => resolve(res))
+            ipcRenderer.send('URL_VERIFY', url)
+          })
         },
         INIT_MANGA: callback => {
           ipcRenderer.removeAllListeners('INIT_MANGA')
           ipcRenderer.on('INIT_MANGA', (e, sender) => callback(sender))
         },
         DOWNLOAD: (manga, events) => {
-          let def = Q.defer()
-          ipcRenderer.removeAllListeners('DOWNLOAD_WATCH')
-          ipcRenderer.removeAllListeners('DOWNLOAD_COMPLATE')
-          ipcRenderer.on('DOWNLOAD_WATCH', events)
-          ipcRenderer.on('DOWNLOAD_COMPLATE', (e, data) => { def.resolve() })
-          ipcRenderer.send('DOWNLOAD_BEGIN', manga)
-          return def.promise
+          return new Promise((resolve, reject) => {
+            ipcRenderer.removeAllListeners('DOWNLOAD_WATCH')
+            ipcRenderer.removeAllListeners('DOWNLOAD_COMPLATE')
+            ipcRenderer.on('DOWNLOAD_WATCH', events)
+            ipcRenderer.on('DOWNLOAD_COMPLATE', (e, data) => { resolve() })
+            ipcRenderer.send('DOWNLOAD_BEGIN', manga)
+          })
         },
         LOGIN: (user, pass) => {
-          let def = Q.defer()
-          ipcRenderer.removeAllListeners('LOGIN')
-          ipcRenderer.on('LOGIN', (e, data) => { def.resolve(data) })
-          ipcRenderer.send('LOGIN', { username: user, password: pass })
-          return def.promise
+          return new Promise((resolve, reject) => {
+            ipcRenderer.removeAllListeners('LOGIN')
+            ipcRenderer.on('LOGIN', (e, data) => { resolve(data) })
+            ipcRenderer.send('LOGIN', { username: user, password: pass })
+          })
         }
       },
       created () {

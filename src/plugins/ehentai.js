@@ -4,7 +4,6 @@ const URL = require('url-parse')
 const fs = require('fs')
 const path = require('path')
 const async = require('async-q')
-const Q = require('q')
 const xhr = require('request')
 const settings = require('electron-settings')
 const request = require('request-promise')
@@ -32,7 +31,7 @@ let getFilename = (index, total) => {
   return `${Math.pow(10, (total.toString().length - index.toString().length) + 1).toString().substr(2, 10) + index}`
 }
 
-let getImage = (res, manga, l, index, def, directory, emit) => {
+let getImage = (res, manga, l, index, resolve, directory, emit) => {
   let image = /id="img".*?src="(.*?)"/ig.exec(res)[1]
   let nl = /return nl\('(.*?)'\)/ig.exec(res)[1]
   let filename = getFilename(index + 1, manga.page)
@@ -93,15 +92,15 @@ let getImage = (res, manga, l, index, def, directory, emit) => {
               completed: true
             })
           }
-          def.resolve()
+          resolve()
           fsStream.close()
         })
       } else {
-        def.resolve()
+        resolve()
       }
     } else {
       // logs(index, '--> ', response.statusCode, response.headers['content-type'])
-      def.resolve()
+      resolve()
     }
   })
   req.on('error', err => {
@@ -112,7 +111,7 @@ let getImage = (res, manga, l, index, def, directory, emit) => {
     }
     let link = manga.items[index]
     manga.items[index] = `${link}${link.indexOf('?') > -1 ? '&' : '?'}nl=${nl}`
-    request({ url: manga.items[index] }).then(res => getImage(res, manga, l, index, def, directory, emit))
+    request({ url: manga.items[index] }).then(res => getImage(res, manga, l, index, resolve, directory, emit))
   })
 }
 em.download = (list, directory, emit) => {
@@ -123,13 +122,10 @@ em.download = (list, directory, emit) => {
     let manga = list[l]
     if (manga.error) continue
     for (let i = 0; i < manga.items.length; i++) {
-      all.push(() => {
-        let def = Q.defer()
-        request(manga.items[i]).then(async res => {
-          getImage(res, manga, l, i, def, directory, emit)
-        })
-        return def.promise
-      })
+      all.push(() => new Promise(async (resolve, reject) => {
+        let res = await request(manga.items[i])
+        getImage(res, manga, l, i, resolve, directory, emit)
+      }))
     }
   }
 

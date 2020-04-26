@@ -1,156 +1,50 @@
 {
-  "name": "exhentai-downloader",
-  "version": "2.1.1",
-  "author": "Kananek Thongkam <info.dvgamer@gmail.com>",
-  "description": "Manga Hentai in e-hentai.org and exhentai.org downloader.",
-  "license": "ISC",
-  "main": "./dist/electron/main.js",
+  "name": "hentai-downloader",
+  "version": "3.0.0",
+  "description": "An electron-nuxt project",
+  "main": "./dist/main/index.js",
   "scripts": {
-    "test": "npm run unit",
-    "unit": "karma start test/unit/karma.conf.js",
-    "build": "node .electron-vue/build.js && electron-builder",
-    "build:dir": "node .electron-vue/build.js && electron-builder --dir",
-    "build:clean": "cross-env BUILD_TARGET=clean node .electron-vue/build.js",
-    "build:web": "cross-env BUILD_TARGET=web node .electron-vue/build.js",
-    "dev": "env-cmd .env node .electron-vue/dev-runner.js",
-    "lint": "eslint --ext .js,.vue -f ./node_modules/eslint-friendly-formatter src",
-    "lint:fix": "eslint --ext .js,.vue -f ./node_modules/eslint-friendly-formatter --fix src",
-    "pack": "npm run pack:main && npm run pack:renderer",
-    "pack:main": "cross-env NODE_ENV=production webpack --progress --colors --config .electron-vue/webpack.main.config.js",
-    "pack:renderer": "cross-env NODE_ENV=production webpack --progress --colors --config .electron-vue/webpack.renderer.config.js",
-    "postinstall": "npm run lint:fix"
+    "dev": "node .electron-nuxt/check-engines.js && cross-env-shell NODE_ENV=development node .electron-nuxt/index.js",
+    "build": "node .electron-nuxt/check-engines.js && cross-env-shell NODE_ENV=production node .electron-nuxt/index.js",
+    "test": "",
+    "lint": "node_modules/.bin/eslint --ext .js,.vue -f ./node_modules/eslint-friendly-formatter ./src",
+    "lint:fix": "yarn run lint -- --fix",
+    "preinstall": "node .electron-nuxt/check-engines.js",
+    "postinstall": "electron-builder install-app-deps & yarn run lint:fix"
   },
-  "build": {
-    "productName": "exhentai-downloader",
-    "appId": "io.touno.exhentai.downloader.app",
-    "directories": {
-      "output": "build"
-    },
-    "files": [
-      "dist/electron/**/*"
-    ],
-    "dmg": {
-      "contents": [
-        {
-          "x": 410,
-          "y": 150,
-          "type": "link",
-          "path": "/Applications"
-        },
-        {
-          "x": 130,
-          "y": 150,
-          "type": "file"
-        }
-      ]
-    },
-    "mac": {
-      "icon": "build/icons/icon.icns"
-    },
-    "win": {
-      "icon": "build/icons/icon.ico"
-    },
-    "linux": {
-      "icon": "build/icons"
-    }
+  "keywords": [],
+  "author": "Kananek Thongkam <info.dvgamer@gmail.com>",
+  "license": "MIT",
+  "homepage": "https://github.com/michalzaq12/electron-nuxt/blob/master/README.md",
+  "engines": {
+    "node": ">=12.13.0"
   },
-  "dependencies": {
-    "async-q": "^0.3.1",
-    "axios": "^0.19.0",
-    "bootstrap": "^4.3.1",
-    "cookie-parser": "^1.4.4",
-    "electron-settings": "^3.2.0",
-    "jquery": "^3.4.1",
-    "moment": "^2.24.0",
-    "node-sass": "^4.12.0",
-    "numeral": "^2.0.6",
-    "popper.js": "^1.15.0",
-    "postcss-loader": "^2.1.6",
-    "request": "^2.88.0",
-    "request-promise": "^4.2.4",
-    "sass-loader": "^7.1.0",
-    "tough-cookie": "^2.5.0",
-    "url-parse": "^1.4.7",
-    "vue": "^2.6.10",
-    "vue-electron": "^1.0.6",
-    "vue-router": "^2.8.1",
-    "vuex": "^2.5.0"
+  "resolutions": {
+    "@types/node": "12.12.6"
   },
   "devDependencies": {
-    "autoprefixer": "^8.6.5",
-    "babel-core": "^6.26.3",
-    "babel-eslint": "^7.2.3",
-    "babel-loader": "^7.1.5",
-    "babel-plugin-istanbul": "^4.1.6",
-    "babel-plugin-transform-runtime": "^6.23.0",
-    "babel-preset-env": "^1.7.0",
-    "babel-preset-stage-0": "^6.24.1",
-    "babel-register": "^6.24.1",
-    "babili-webpack-plugin": "^0.1.2",
-    "cfonts": "^1.2.0",
-    "chai": "^4.2.0",
-    "chalk": "^2.4.2",
-    "copy-webpack-plugin": "^4.6.0",
-    "cross-env": "^5.2.0",
-    "css-loader": "^0.28.11",
-    "del": "^3.0.0",
-    "devtron": "^1.4.0",
-    "electron": "^3.1.12",
-    "electron-builder": "^20.44.4",
-    "electron-debug": "^1.5.0",
-    "electron-devtools-installer": "^2.2.4",
-    "env-cmd": "^8.0.2",
-    "eslint": "^4.19.1",
-    "eslint-config-standard": "^10.2.1",
-    "eslint-friendly-formatter": "^3.0.0",
-    "eslint-loader": "^1.9.0",
-    "eslint-plugin-html": "^3.2.2",
-    "eslint-plugin-import": "^2.18.0",
-    "eslint-plugin-node": "^5.2.1",
-    "eslint-plugin-promise": "^3.8.0",
-    "eslint-plugin-standard": "^3.1.0",
-    "extract-text-webpack-plugin": "^3.0.2",
-    "file-loader": "^0.11.2",
-    "html-webpack-plugin": "^2.30.1",
-    "karma": "^4.2.0",
-    "karma-chai": "^0.1.0",
-    "karma-coverage": "^1.1.2",
-    "karma-electron": "^5.3.0",
-    "karma-mocha": "^1.2.0",
-    "karma-sourcemap-loader": "^0.3.7",
-    "karma-spec-reporter": "^0.0.31",
-    "karma-webpack": "^2.0.13",
-    "mocha": "^5.2.0",
-    "multispinner": "^0.2.1",
-    "node-loader": "^0.6.0",
-    "precss": "^3.1.2",
-    "sinon": "^2.1.0",
-    "sinon-chai": "^2.14.0",
-    "style-loader": "^0.18.2",
-    "url-loader": "^1.1.2",
-    "vue-html-loader": "^1.2.4",
-    "vue-loader": "^12.2.2",
-    "vue-style-loader": "^3.1.2",
-    "vue-template-compiler": "^2.6.10",
-    "webpack": "^3.12.0",
-    "webpack-dev-server": "^3.1.11",
-    "webpack-hot-middleware": "^2.25.0",
-    "webpack-merge": "^4.2.1"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/touno-project/app.exhentai-downloader.git"
-  },
-  "keywords": [
-    "exhentai",
-    "hentai",
-    "downloader",
-    "manga",
-    "dark",
-    "doujin"
-  ],
-  "bugs": {
-    "url": "https://github.com/touno-project/app.exhentai-downloader/issues"
-  },
-  "homepage": "https://github.com/touno-project/app.exhentai-downloader#readme"
+    "@fortawesome/fontawesome-free": "5.12.0",
+    "@nuxtjs/eslint-config": "1.1.2",
+    "@xpda-dev/core": "^0.1.5",
+    "@xpda-dev/electron-builder": "^0.1.1",
+    "@xpda-dev/electron-launcher": "^0.1.1",
+    "@xpda-dev/webpack-step": "^0.1.2",
+    "babel-eslint": "10.0.3",
+    "browser-env": "3.3.0",
+    "cross-env": "7.0.0",
+    "deepmerge": "4.2.2",
+    "electron": "8.0.1",
+    "electron-builder": "22.3.2",
+    "electron-debug": "3.0.1",
+    "element-ui": "2.13.0",
+    "eslint": "5.16.0",
+    "eslint-friendly-formatter": "4.0.1",
+    "eslint-loader": "3.0.3",
+    "node-sass": "4.13.1",
+    "nuxt": "2.11.0",
+    "sass-loader": "8.0.2",
+    "vue-devtools": "5.1.3",
+    "webpack": "4.41.6",
+    "webpack-node-externals": "1.7.2"
+  }
 }

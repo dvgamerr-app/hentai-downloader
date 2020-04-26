@@ -1,14 +1,5 @@
-.DS_Store
-dist/electron/*
-dist/web/*
+.nuxt
+dist
 build/*
 !build/icons
-node_modules/
-npm-debug.log
-npm-debug.log.*
-thumbs.db
-!.gitkeep
-downloader/*
-package-lock.json
-.cookie
-test/login.txt
+node_modules

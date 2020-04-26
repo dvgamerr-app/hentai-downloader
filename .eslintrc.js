@@ -1,26 +1,39 @@
 module.exports = {
   root: true,
-  parser: 'babel-eslint',
-  parserOptions: {
-    sourceType: 'module'
-  },
   env: {
     browser: true,
     node: true
   },
-  extends: 'standard',
   globals: {
-    __static: true
+    __resources: true
   },
-  plugins: [
-    'html'
+  parserOptions: {
+    sourceType: 'module',
+    parser: 'babel-eslint'
+  },
+  extends: [
+    '@nuxtjs'
+    
   ],
-  'rules': {
-    // allow paren-less arrow functions
-    'arrow-parens': 0,
-    // allow async-await
-    'generator-star-spacing': 0,
-    // allow debugger during development
-    'no-debugger': process.env.NODE_ENV === 'production' ? 2 : 0
+  // add your custom rules here
+  rules: {
+    // StandardJS — The Rules
+        "indent": ["error", 2], // 2 spaces – for indentation
+        "max-len": ["error", { "code": 120}],
+        "no-console": "off",
+        "arrow-parens": ["error", "as-needed"],
+        "curly": ["error", "multi-line"],
+        "import/no-extraneous-dependencies": "off",
+        "require-await": 0,
+
+        "global-require": 0,
+        'import/no-unresolved': 0,
+        'import/newline-after-import': 0,
+        'no-underscore-dangle': 0,
+
+        'no-debugger': process.env.NODE_ENV === 'production' ? 2 : 0,
+
+        "vue/max-attributes-per-line": "off",
+        "vue/singleline-html-element-content-newline" : 0
   }
 }

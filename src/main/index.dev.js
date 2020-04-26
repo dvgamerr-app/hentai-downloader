@@ -1,26 +1,45 @@
-/**
- * This file is used specifically and only for development. It installs
- * `electron-debug` & `vue-devtools`. There shouldn't be any need to
- *  modify this file, but it can be used to extend your development
- *  environment.
- */
+import fs from 'fs'
+import path from 'path'
+import { ELECTRON_RELAUNCH_CODE } from '../../.electron-nuxt/config'
+import mainWinHandler from './mainWindow'
+import vueDevtools from 'vue-devtools'
+import electronDebug from 'electron-debug'
+import { Menu, MenuItem, app } from 'electron'
+process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = 'true'
 
-/* eslint-disable */
+electronDebug({
+  showDevTools: false,
+  devToolsMode: 'right'
+})
 
-// Set environment for development
-process.env.NODE_ENV = 'development'
+// work around https://github.com/MarshallOfSound/electron-devtools-installer/issues/122
+// which seems to be a result of https://github.com/electron/electron/issues/19468
+if (process.platform === 'win32') {
+  const appUserDataPath = app.getPath('userData')
+  const devToolsExtensionsPath = path.join(appUserDataPath, 'DevTools Extensions')
+  try {
+    fs.unlinkSync(devToolsExtensionsPath)
+  } catch (_) {
+    // don't complain if the file doesn't exist
+  }
+}
 
-// Install `electron-debug` with `devtron`
-require('electron-debug')({ showDevTools: true })
+app.on('ready', () => {
+  vueDevtools.install()
+  const menu = Menu.getApplicationMenu()
+  const refreshButton = new MenuItem({
+    label: 'Relaunch electron',
+    accelerator: 'CommandOrControl+E',
+    click: () => {
+      app.exit(ELECTRON_RELAUNCH_CODE)
+    }
+  })
+  menu.append(refreshButton)
+  Menu.setApplicationMenu(menu)
+})
 
-// Install `vue-devtools`
-require('electron').app.on('ready', () => {
-  let installExtension = require('electron-devtools-installer')
-  installExtension.default(installExtension.VUEJS_DEVTOOLS)
-    .then(() => {})
-    .catch(err => {
-      console.log('Unable to install `vue-devtools`: \n', err)
-    })
+mainWinHandler.onCreated(browserWindow => {
+  browserWindow.webContents.openDevTools()
 })
 
 // Require `main` process to boot app

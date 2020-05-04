@@ -23,10 +23,10 @@ matrix:
         - libgnome-keyring-dev
         - icnsutils
     install:
-    - nvm install 8
+    - nvm install 10.20.1
     - curl -o- -L https://yarnpkg.com/install.sh | bash
     - source ~/.bashrc
-    - yarn
+    - npm i
   # - os: windows
   #   before_install:
   #   - export NVS_HOME="$HOME/.nvs"
@@ -47,7 +47,7 @@ cache:
   - "$HOME/.electron"
   - "$HOME/.cache"
 script:
-- yarn run build
+- npm run build
 branches:
   only:
   - master

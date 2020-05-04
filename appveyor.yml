@@ -25,6 +25,13 @@ build_script:
 
 test: off
 
+artifacts:
+  - path: 'build\*.exe'
+  
+environment:
+  GH_TOKEN:
+    secure: y97smtAJHffiwIV4gltGn41s6WuSmnZduTVckx00MFeROP1eM6r5ycn01YfjFXrg
+
 deploy:
   - provider: GitHub
     auth_token:

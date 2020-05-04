@@ -2,9 +2,8 @@ import { setCookie, getCookie } from './cookie'
 
 const xhr = require('request-ssl')
 
-xhr.addFingerprint('forums.e-hentai.org', 'FD:2C:52:EF:D8:67:EC:B3:E7:99:46:C6:96:68:53:6A:39:64:6B:F9')
-xhr.addFingerprint('e-hentai.org', '40:6B:8C:E8:B0:FE:F5:50:DE:94:6B:35:D3:71:A9:89:23:ED:55:25')
-xhr.addFingerprint('exhentai.org', '21:E2:AC:AA:2D:EB:32:F0:2D:39:13:8A:97:F6:78:23:D9:A5:8C:8E')
+xhr.addFingerprint('*.e-hentai.org', 'FD:2C:52:EF:D8:67:EC:B3:E7:99:46:C6:96:68:53:6A:39:64:6B:F9')
+xhr.addFingerprint('exhentai.org', '5C:34:6F:01:86:34:5E:29:74:9E:5D:55:13:5C:E0:11:69:E3:9F:70')
 
 export default async (method = 'GET', uri = '', data = {}, addHeaders = {}) => {
   uri = uri.trim().replace(/&amp;/g, '&')

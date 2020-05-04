@@ -1,10 +1,10 @@
 'use strict'
-const touno = require('./config')
 const URL = require('url-parse')
 const fs = require('fs')
 const path = require('path')
 const async = require('async-q')
 const xhr = require('request')
+const moment = require('moment')
 const settings = require('electron-settings')
 const request = require('request-promise')
 const events = require('events')
@@ -13,9 +13,12 @@ const { powerSaveBlocker } = require('electron')
 
 let saveBlockerId = null
 
-console.log('development:', touno.DevMode)
-const logs = (...msg) => {
-  if (touno.DevMode) console.log(...msg)
+// console.log('development:', touno.DevMode)
+const wError = (...msg) => {
+  fs.appendFileSync(`./_hen-${moment().format('YYYY-MM-DD')}-error.log`, `${moment().format('HH:mm:ss.SSS')} ${msg.join(' ')}\n`)
+}
+const wLog = (...msg) => {
+  fs.appendFileSync(`./_hen-${moment().format('YYYY-MM-DD')}.log`, `${moment().format('HH:mm:ss.SSS')} ${msg.join(' ')}\n`)
 }
 let allCookie = []
 const jarCookieSession = () => allCookie.map(cookie => cookie.split(';')[0]).join('; ')
@@ -36,9 +39,9 @@ let getImage = (res, manga, l, index, resolve, directory, emit) => {
   let nl = /return nl\('(.*?)'\)/ig.exec(res)[1]
   let filename = getFilename(index + 1, manga.page)
 
-  emit.send('DOWNLOAD_WATCH', { index: l, current: filename, total: parseInt(manga.page), finish: false, error: false })
-  // let msg = `Downloading...  -- '${(index + 1)}.jpg' of ${manga.page} files -->`
-  // logs(msg)
+  emit.send('DOWNLOAD_WATCH', { index: l, current: filename, total: parseInt(manga.page) })
+  let msg = `Downloading...  -- '${(index + 1)}.jpg' of ${manga.page} files -->`
+  wLog(msg)
 
   let req = xhr({
     method: 'GET',
@@ -56,6 +59,7 @@ let getImage = (res, manga, l, index, resolve, directory, emit) => {
     if (response.statusCode === 200) {
       let extensions = null
       switch (response.headers['content-type']) {
+        case 'jpg':
         case 'image/jpg':
         case 'image/jpeg':
           extensions = 'jpg'
@@ -74,13 +78,22 @@ let getImage = (res, manga, l, index, resolve, directory, emit) => {
         if (!fs.existsSync(dir)) fs.mkdirSync(dir)
         let fsStream = fs.createWriteStream(`${dir}/${filename}.${extensions}`)
         req.pipe(fsStream)
+        fsStream.on('error', (ex) => {
+          wError(`${dir}/${filename}.${extensions}`)
+          wError(ex)
+          resolve()
+          fsStream.close()
+        })
 
         fsStream.on('finish', () => {
           let success = parseInt(manga.page) === index + 1
           emit.send('DOWNLOAD_WATCH', { index: l, current: filename, total: parseInt(manga.page), finish: success })
           if (success) {
             let config = settings.get('config')
-            console.log(config)
+            let items = fs.readdirSync(dir)
+            wLog('Complate -- Read', manga.page, 'files, and in directory', items.length, 'files')
+            wLog('---------------------')
+
             exHentaiHistory('exhentai/manga', {
               user_id: config.user_id,
               name: manga.name,
@@ -96,22 +109,35 @@ let getImage = (res, manga, l, index, resolve, directory, emit) => {
           fsStream.close()
         })
       } else {
+        wLog(index + 1, '--> ', response.statusCode, response.headers['content-type'])
         resolve()
       }
     } else {
-      // logs(index, '--> ', response.statusCode, response.headers['content-type'])
+      wLog(index + 1, '--> ', response.statusCode, response.headers['content-type'])
       resolve()
     }
   })
-  req.on('error', err => {
-    // process.stdout.cursorTo(msg.length + 1)
-    // logs(` ${err.message}`)
-    if (process.env.NODE_ENV === 'development') {
-      logs(' not found -->', index, err.message)
-    }
+  req.on('error', async ex => {
     let link = manga.items[index]
-    manga.items[index] = `${link}${link.indexOf('?') > -1 ? '&' : '?'}nl=${nl}`
-    request({ url: manga.items[index] }).then(res => getImage(res, manga, l, index, resolve, directory, emit))
+    wError(link, ex.message)
+    wError(link, ex.stack)
+    wLog('Retry::')
+    let nRetry = 0
+    let isSuccess = false
+    do {
+      try {
+        manga.items[index] = `${link}${link.indexOf('?') > -1 ? '&' : '?'}nl=${nl}`
+        const res = await request({ url: manga.items[index] })
+        nl = /return nl\('(.*?)'\)/ig.exec(res)[1]
+        await getImage(res, manga, l, index, resolve, directory, emit)
+        isSuccess = true
+      } catch (ex) {
+        nRetry++
+        wError(manga.items[index], ex.message)
+        wError(manga.items[index], ex.stack)
+        wLog('Retry::', manga.items[index])
+      }
+    } while (nRetry < 3 && !isSuccess)
   })
 }
 em.download = (list, directory, emit) => {
@@ -129,7 +155,7 @@ em.download = (list, directory, emit) => {
     }
   }
 
-  // logs('hentai-downloader', `*downloading request* \`${all.length}\` time`)
+  wLog('hentai-downloader', `*downloading request* \`${all.length}\` time`)
   return async.series(all).then(() => {
     if (powerSaveBlocker.isStarted(saveBlockerId)) powerSaveBlocker.stop(saveBlockerId)
     saveBlockerId = null
@@ -178,7 +204,7 @@ export function init (link, emit) {
       items: []
     }
     let config = settings.get('config')
-    console.log(config)
+    // console.log(config)
     exHentaiHistory('exhentai/manga', {
       user_id: config.user_id,
       name: manga.name,
@@ -237,8 +263,7 @@ export function init (link, emit) {
       'upgrade-insecure-requests': '1'
     }, options || {})
 
-    logs(`URL REQUEST: ${uri}`)
-    logs(`URL  COOKIE: ${cookie}`)
+    wLog(`URL REQUEST: ${uri}`)
     xhr({
       url: uri,
       method: method || 'GET',
@@ -256,7 +281,7 @@ export function init (link, emit) {
         return
       }
       let { statusCode, headers } = res
-      logs(`URL RESPONSE: ${statusCode}`, headers['set-cookie'])
+      wLog(`URL RESPONSE: ${statusCode}`)
       if (statusCode === 302 || statusCode === 200) {
         if (headers['set-cookie']) {
           for (let i = 0; i < headers['set-cookie'].length; i++) {
@@ -293,14 +318,14 @@ export function init (link, emit) {
   })().catch(ex => {
     if (ex.statusCode === 404) {
       if (ex.error) {
-        // logs('hentai-downloader', `*rare*: https://${baseUrl.hostname}${baseUrl.pathname}`)
+        wLog(`*rare*: https://${baseUrl.hostname}${baseUrl.pathname}`)
         throw new Error('This gallery has been removed or is unavailable.')
       } else {
-        // logs('hentai-downloader', `*error*: ${link}\n${ex.name.toString()}`)
+        wError(`*error*: ${link}\n${ex.name.toString()}`)
         throw new Error(ex.name)
       }
     } else {
-      // logs('hentai-downloader', `*error*: ${link}\n${ex.toString()}`)
+      wError(`*error*: ${link}\n${ex.toString()}`)
       throw ex
     }
   })

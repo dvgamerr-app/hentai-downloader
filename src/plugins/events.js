@@ -3,13 +3,12 @@ import * as hentai from './ehentai.js'
 
 const settings = require('electron-settings')
 // const touno = require('./config')
-const isDev = process.env.NODE_ENV === 'development'
-console.log('development:', isDev)
+// const isDev = process.env.NODE_ENV === 'development'
 // process.env.NODE_ENV === 'development'
 
 let config = settings.get('config')
 if (!config || !(config || {}).directory) {
-  // console.log('config:', config)
+  console.log('config:', config)
   settings.set('config', { directory: app.getPath('downloads') })
 }
 
@@ -39,16 +38,16 @@ export function server (mainWindow) {
     hentai.emiter.download(sender.manga, sender.directory, e.sender).then(() => {
       e.sender.send('DOWNLOAD_COMPLATE')
     }).catch(e => {
-      // console.log('DOWNLOAD_COMPLATE', e)
+      console.log('DOWNLOAD_COMPLATE', e)
     })
   })
   ipcMain.on('LOGIN', function (e, account) {
     if (account.username.trim() !== '' || account.password.trim() !== '') {
-      // console.log('LOGIN', account)
+      console.log('LOGIN', account)
       hentai.login(account.username.trim(), account.password.trim()).then(raw => {
         let getName = /You are now logged in as:(.*?)<br/ig.exec(raw.body)
         if (getName) {
-          // console.log(`Login: ${getName[1]}`)
+          console.log(`Login: ${getName[1]}`)
           settings.set('config', { username: account.username, password: account.password, name: getName[1], cookie: raw.headers['set-cookie'] })
           e.sender.send('LOGIN', { success: true, name: getName[1], cookie: raw.headers['set-cookie'] })
         } else {
@@ -69,39 +68,75 @@ export const client = {
     Vue.mixin({
       methods: {
         ConfigLoaded: () => {
-          return settings.get('config')
+          const config = settings.get('config')
+          console.log('ConfigLoaded :: ', config)
+          return config
         },
         ConfigSaved: config => {
+          console.log('ConfigSaved :: ', config)
           settings.set('config', Object.assign(settings.get('config'), config))
         },
         ExUser: (data) => {
           return new Promise((resolve, reject) => {
+            console.log('ipc-send::CHANGE_DIRECTORY')
             ipcRenderer.send('CHANGE_DIRECTORY')
-            ipcRenderer.once('CHANGE_DIRECTORY', (e, dir) => resolve(dir ? dir[0] : ''))
+            ipcRenderer.once('CHANGE_DIRECTORY', (e, dir) => {
+              console.log('ipc-once::CHANGE_DIRECTORY:', dir)
+              resolve(dir ? dir[0] : '')
+            })
+          })
+        },
+        CANCEL: () => {
+          return new Promise((resolve, reject) => {
+            console.log('ipc-remove::CANCEL')
+            ipcRenderer.removeAllListeners('INIT_MANGA')
+            ipcRenderer.removeAllListeners('URL_VERIFY')
+            ipcRenderer.removeAllListeners('DOWNLOAD_WATCH')
+            ipcRenderer.removeAllListeners('DOWNLOAD_COMPLATE')
+            ipcRenderer.removeAllListeners('LOGIN')
+            resolve()
           })
         },
         CHANGE_DIRECTORY: () => {
           return new Promise((resolve, reject) => {
+            console.log('ipc-send::CHANGE_DIRECTORY')
             ipcRenderer.send('CHANGE_DIRECTORY')
-            ipcRenderer.once('CHANGE_DIRECTORY', (e, dir) => resolve(dir ? dir[0] : ''))
+            ipcRenderer.once('CHANGE_DIRECTORY', (e, dir) => {
+              console.log('ipc-once::CHANGE_DIRECTORY:', dir)
+              resolve(dir ? dir[0] : '')
+            })
           })
         },
         URL_VERIFY: url => {
           return new Promise((resolve, reject) => {
-            ipcRenderer.once('URL_VERIFY', (e, res) => resolve(res))
+            ipcRenderer.once('URL_VERIFY', (e, res) => {
+              console.log('ipc-once::URL_VERIFY:', res)
+              resolve(res)
+            })
+            console.log('ipc-send::URL_VERIFY:', url)
             ipcRenderer.send('URL_VERIFY', url)
           })
         },
         INIT_MANGA: callback => {
           ipcRenderer.removeAllListeners('INIT_MANGA')
-          ipcRenderer.on('INIT_MANGA', (e, sender) => callback(sender))
+          ipcRenderer.on('INIT_MANGA', (e, sender) => {
+            console.log('ipc-on::INIT_MANGA', sender)
+            callback(sender)
+          })
         },
         DOWNLOAD: (manga, events) => {
           return new Promise((resolve, reject) => {
             ipcRenderer.removeAllListeners('DOWNLOAD_WATCH')
             ipcRenderer.removeAllListeners('DOWNLOAD_COMPLATE')
-            ipcRenderer.on('DOWNLOAD_WATCH', events)
-            ipcRenderer.on('DOWNLOAD_COMPLATE', (e, data) => { resolve() })
+            ipcRenderer.on('DOWNLOAD_WATCH', (e, manga) => {
+              console.log('ipc-on::DOWNLOAD_WATCH:', manga)
+              return events(e, manga)
+            })
+            ipcRenderer.on('DOWNLOAD_COMPLATE', (e, data) => {
+              console.log('ipc-on::DOWNLOAD_COMPLATE')
+              resolve()
+            })
+            console.log('ipc-send::DOWNLOAD_BEGIN:', manga)
             ipcRenderer.send('DOWNLOAD_BEGIN', manga)
           })
         },
@@ -115,7 +150,7 @@ export const client = {
       },
       created () {
         // ipcRenderer.send('LOGIN')
-        console.log('created `vue-mbos.js`mixin.')
+        // console.log('created `vue-mbos.js`mixin.')
       }
     })
   }

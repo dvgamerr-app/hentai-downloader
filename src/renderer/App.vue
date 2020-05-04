@@ -17,6 +17,9 @@
               <button type="button" class="btn btn-sm btn-donate btn-outline-danger" @click="onBrowser">
                 Donate
               </button>
+              <button type="button" class="btn btn-sm btn-refresh btn-outline-info" @click="onRefresh">
+                <i class="fa fa-refresh"></i>
+              </button>
             </div>
           </div>
         </div>
@@ -74,8 +77,8 @@
                   style="padding: 2px 12px;width: 100px; font-size:0.7rem;line-height:9px;" @click="onQueue">
                   <i :class="['fa', state_icon]"  aria-hidden="true"></i> {{state_name}}
                 </button>
-                <button :disabled="state_verify" type="button" class="btn btn-default" style="padding: 5px 11px;" @click="page.option = true">
-                  <i class="fa fa-gear" aria-hidden="true"></i>
+                <button :disabled="state_verify && state_name !== 'Loading...'" type="button" class="btn btn-default" :class="[state_name === 'Loading...' ? 'text-danger' : '']" style="padding: 5px 11px;" @click="onCancel">
+                  <i :class="['fa', state_name !== 'Loading...' ? 'fa-gear' : 'fa-times']" aria-hidden="true"></i>
                 </button>
               </div>
             </div>
@@ -117,8 +120,8 @@
           <tbody>
             <tr>
               <td colspan="6" style="padding: 0px !important;">
-                <div style="height:224px;overflow-x:hidden;overflow-y:scroll;">
-                <table class="table table-striped manga-items" style="padding:0px;margin:0px;margin-bottom: 16px !important;">
+                <div style="height:210px;overflow-x:hidden;overflow-y:scroll;">
+                <table class="table table-striped manga-items" style="padding:0px;margin:0px;margin-bottom: 0px !important;">
                   <colgroup>
                     <col style="width:6%;">
                     <col style="width:55%;">
@@ -303,10 +306,10 @@
         vm.DOWNLOAD({ manga: vm.manga, directory: vm.directory_name }, vm.onWatch).then(() => vm.urlDone(true))
       },
       onMouseOver (key) {
-        console.log('onMouseOver', key)
+        // console.log('onMouseOver', key)
       },
       onMouseLeave (key) {
-        console.log('onMouseLeave', key)
+        // console.log('onMouseLeave', key)
       },
       onWatch (e, manga) {
         this.manga[manga.index].status = 2
@@ -337,6 +340,23 @@
             vm.page.option = false
           }
         })
+      },
+      onRefresh: () => {
+        window.history.go()
+      },
+      onCancel () {
+        let vm = this
+        if (vm.state_name !== 'Loading...') {
+          vm.page.option = true
+        } else {
+          vm.CANCEL().then(() => {
+            vm.error_message = ''
+            vm.state_verify = false
+            vm.state_download = false
+            vm.state_icon = 'fa-download'
+            vm.state_name = 'Download'
+          })
+        }
       },
       onSignIn () {
         // window.open('https://forums.e-hentai.org/index.php?s=5fa113c1ae71be8c9540e5d33d280f2d&act=Login&CODE=00')
@@ -424,7 +444,7 @@
         })
       },
       statusIcon (status) {
-        console.log(status)
+        // console.log('')
         switch (status) {
           case 1: return 'fa-clock-o'
           case 2: return 'fa-download'
@@ -641,6 +661,10 @@
   .btn-donate, .btn-singin {
     font-size: 10px !important;
     padding: 2px 14px;
+  }
+  .btn-refresh {
+    font-size: 10px !important;
+    padding: 2px 5px;
   }
   .form.signin > .form-group {
     margin-bottom: 0px !important;

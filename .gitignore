@@ -12,3 +12,4 @@ downloader/*
 package-lock.json
 .cookie
 test/login.txt
+*.log

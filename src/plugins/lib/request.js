@@ -1,4 +1,4 @@
-import { setCookie, getCookie } from './cookie'
+// import { setCookie, getCookie } from './cookie'
 
 const xhr = require('request-ssl')
 
@@ -9,7 +9,6 @@ export default async (method = 'GET', uri = '', data = {}, addHeaders = {}) => {
   uri = uri.trim().replace(/&amp;/g, '&')
   let base = uri instanceof URL ? uri : new URL(uri)
   let referer = `https://${base.hostname}/`
-  console.log(` - [exhentai] ${method}:${uri}`)
   let httpHeaders = Object.assign({
     'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/59.0.3071.115 Safari/537.36',
     'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
@@ -20,19 +19,18 @@ export default async (method = 'GET', uri = '', data = {}, addHeaders = {}) => {
     ':scheme': 'https',
     'referer': referer
   }, addHeaders)
-  let request = xhr.defaults({ timeout: 5000, jar: getCookie() })
+  // let request = xhr.defaults({ timeout: 5000, jar: getCookie() })
+  let request = xhr.defaults({ timeout: 5000 })
 
   return new Promise((resolve, reject) => {
     const callback = (error, res, body) => {
       if (error) {
-        console.log(` - [exhentai] response error:`, error)
         return reject(error)
       }
       const { statusCode, headers } = res
-      console.log(` - [exhentai] response code: ${statusCode} body: ${body.length} length`)
       if (([ 200, 302 ]).indexOf(statusCode) < 0) return reject(statusCode)
 
-      setCookie(referer, headers)
+      // setCookie(referer, headers)
       resolve(body)
     }
 

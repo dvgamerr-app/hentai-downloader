@@ -6,18 +6,27 @@ const settings = require('electron-settings')
 // const isDev = process.env.NODE_ENV === 'development'
 // process.env.NODE_ENV === 'development'
 
-let config = settings.get('config')
-if (!config || !(config || {}).directory) {
-  console.log('config:', config)
-  settings.set('config', { directory: app.getPath('downloads') })
+let config = settings.get('directory')
+if (!settings.get('directory')) {
+  console.log('directory:', config)
+  settings.set('directory', app.getPath('downloads'))
 }
 
 export function server (mainWindow) {
+  // settings.delete('config')
+  ipcMain.on('SESSION', function (e) {
+    hentai.cookie('ipb_member_id').then(data => {
+      e.sender.send('SESSION', data ? data.value : null)
+    }).catch(ex => {
+      console.log(ex)
+      e.sender.send('SESSION', null)
+    })
+  })
   ipcMain.on('CHANGE_DIRECTORY', function (e, source) {
     dialog.showOpenDialog(mainWindow, {
       properties: ['openDirectory']
     }, fileNames => {
-      if (fileNames) settings.set('config', { directory: fileNames[0] })
+      if (fileNames) settings.set('directory', fileNames[0])
       e.sender.send('CHANGE_DIRECTORY', fileNames)
     })
   })
@@ -48,13 +57,20 @@ export function server (mainWindow) {
         let getName = /You are now logged in as:(.*?)<br/ig.exec(raw.body)
         if (getName) {
           console.log(`Login: ${getName[1]}`)
-          settings.set('config', { username: account.username, password: account.password, name: getName[1], cookie: raw.headers['set-cookie'] })
-          e.sender.send('LOGIN', { success: true, name: getName[1], cookie: raw.headers['set-cookie'] })
+          settings.set('config', { username: account.username, password: account.password, name: getName[1], cookie: true })
+          // hentai.cookie('ipb_member_id').then(data => {
+          //   e.sender.send('SESSION', data)
+          // }).catch(ex => {
+          //   console.log(ex)
+          //   e.sender.send('SESSION', null)
+          // })
+          e.sender.send('LOGIN', { success: true, name: getName[1], cookie: true })
         } else {
           let message = /"errorwrap"[\w\W]*?<p>(.*?)</ig.exec(raw.body)[1]
           e.sender.send('LOGIN', { success: false, message: message })
         }
       }).catch(ex => {
+        console.log(ex)
         e.sender.send('LOGIN', { success: false, message: ex.message })
       })
     } else {
@@ -68,9 +84,11 @@ export const client = {
     Vue.mixin({
       methods: {
         ConfigLoaded: () => {
-          const config = settings.get('config')
-          console.log('ConfigLoaded :: ', config)
-          return config
+          const config = settings.get('config') || {}
+          const directory = settings.get('directory')
+          console.log('Config :: ', config)
+          console.log('Config :: ', directory)
+          return Object.assign(config, { directory })
         },
         ConfigSaved: config => {
           console.log('ConfigSaved :: ', config)
@@ -143,8 +161,23 @@ export const client = {
         LOGIN: (user, pass) => {
           return new Promise((resolve, reject) => {
             ipcRenderer.removeAllListeners('LOGIN')
-            ipcRenderer.on('LOGIN', (e, data) => { resolve(data) })
+            ipcRenderer.on('LOGIN', (e, data) => {
+              console.log('ipc-on::LOGIN')
+              resolve(data)
+            })
+            console.log('ipc-send::LOGIN')
             ipcRenderer.send('LOGIN', { username: user, password: pass })
+          })
+        },
+        SESSION: () => {
+          return new Promise((resolve, reject) => {
+            ipcRenderer.removeAllListeners('SESSION')
+            console.log('ipc-send::SESSION')
+            ipcRenderer.send('SESSION')
+            ipcRenderer.on('SESSION', (e, data) => {
+              console.log('ipc-on::SESSION')
+              resolve(data)
+            })
           })
         }
       },

@@ -1,4 +1,4 @@
-# Hentai Downloader `2.1.4`
+# Hentai Downloader `2.2.0`
 
 ![Travis](https://img.shields.io/travis/touno-io/hentai-downloader.svg?style=flat-square)
 ![GitHub top language](https://img.shields.io/github/languages/top/badges/shields.svg?style=flat-square)

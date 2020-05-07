@@ -10,18 +10,83 @@ const request = require('request-promise')
 const events = require('events')
 const em = new events.EventEmitter()
 const { powerSaveBlocker } = require('electron')
+const cfg = require('./lib/config')
 
 let saveBlockerId = null
+const blockCookie = (path, name, ex = false) => new Promise((resolve, reject) => {
+  const jar = jarCookie._jar
+  if (jar && jar.store) {
+    jar.store.removeCookie(!ex ? 'e-hentai.org' : 'exhentai.org', path, name, (err) => {
+      if (err) reject(err)
+      resolve()
+    })
+  } else {
+    resolve()
+  }
+})
 
+const getCookie = (name, ex = false) => new Promise((resolve, reject) => {
+  const jar = jarCookie._jar
+  if (jar && jar.store) {
+    jar.store.findCookie(!ex ? 'e-hentai.org' : 'exhentai.org', '/', name, (err, cookie) => {
+      if (err) reject(err)
+      resolve(cookie)
+    })
+  } else {
+    resolve(null)
+  }
+})
+
+const pushCookie = (cookie) => new Promise((resolve, reject) => {
+  const jar = jarCookie._jar
+  if (cookie && jar && jar.store) {
+    jar.store.putCookie(cookie, (err) => {
+      if (err) reject(err)
+      resolve()
+    })
+  } else {
+    resolve()
+  }
+})
+
+const jarCookieCheck = async () => {
+  const jar = jarCookie._jar
+  await blockCookie('/s/', 'skipserver')
+
+  if (await getCookie('ipb_member_id')) {
+    const userId = await getCookie('ipb_member_id', true)
+    if (!userId) {
+      let memberId = await getCookie('ipb_member_id')
+      let passHash = await getCookie('ipb_pass_hash')
+      let sk = await getCookie('sk')
+
+      memberId = memberId.clone()
+      passHash = passHash.clone()
+
+      memberId.domain = 'exhentai.org'
+      passHash.domain = 'exhentai.org'
+      sk.domain = 'exhentai.org'
+
+      pushCookie(memberId)
+      pushCookie(passHash)
+      pushCookie(sk)
+    }
+  }
+
+  cfg.saveCookie(jar)
+  jarCookie._jar = cfg.loadCookie()
+  console.log(jarCookie._jar.store)
+}
+const defaultJar = cfg.loadCookie()
+let jarCookie = request.jar()
+if (defaultJar) jarCookie._jar = defaultJar
 // console.log('development:', touno.DevMode)
 const wError = (...msg) => {
-  fs.appendFileSync(`./_hen-${moment().format('YYYY-MM-DD')}-error.log`, `${moment().format('HH:mm:ss.SSS')} ${msg.join(' ')}\n`)
+  fs.appendFileSync(`./${moment().format('YYYY-MM-DD')}-error.log`, `${moment().format('HH:mm:ss.SSS')} ${msg.join(' ')}\n`)
 }
 const wLog = (...msg) => {
-  fs.appendFileSync(`./_hen-${moment().format('YYYY-MM-DD')}.log`, `${moment().format('HH:mm:ss.SSS')} ${msg.join(' ')}\n`)
+  fs.appendFileSync(`./${moment().format('YYYY-MM-DD')}.log`, `${moment().format('HH:mm:ss.SSS')} ${msg.join(' ')}\n`)
 }
-let allCookie = []
-const jarCookieSession = () => allCookie.map(cookie => cookie.split(';')[0]).join('; ')
 
 const exHentaiHistory = (uri, data) => {
   return {
@@ -39,6 +104,9 @@ let getImage = (res, manga, l, index, resolve, directory, emit) => {
   let nl = /return nl\('(.*?)'\)/ig.exec(res)[1]
   let filename = getFilename(index + 1, manga.page)
 
+  let name = manga.name.replace(/[/\\|.:?<>"]/ig, '')
+  let dir = path.join(directory, name)
+
   emit.send('DOWNLOAD_WATCH', { index: l, current: filename, total: parseInt(manga.page) })
   let msg = `Downloading...  -- '${(index + 1)}.jpg' of ${manga.page} files -->`
   wLog(msg)
@@ -52,10 +120,11 @@ let getImage = (res, manga, l, index, resolve, directory, emit) => {
       'Accept-Language': 'th-TH,th;q=0.8,en-US;q=0.6,en;q=0.4,ja;q=0.2',
       'referer': 'https://e-hentai.org/'
     },
+    jar: jarCookie,
     url: image,
     timeout: 5000
   })
-  req.on('response', response => {
+  req.on('response', async response => {
     if (response.statusCode === 200) {
       let extensions = null
       switch (response.headers['content-type']) {
@@ -72,9 +141,6 @@ let getImage = (res, manga, l, index, resolve, directory, emit) => {
           break
       }
       if (extensions) {
-        let name = manga.name.replace(/[/\\|.:?<>"]/ig, '')
-        let dir = path.join(directory, name)
-
         if (!fs.existsSync(dir)) fs.mkdirSync(dir)
         let fsStream = fs.createWriteStream(`${dir}/${filename}.${extensions}`)
         req.pipe(fsStream)
@@ -89,7 +155,7 @@ let getImage = (res, manga, l, index, resolve, directory, emit) => {
           let success = parseInt(manga.page) === index + 1
           emit.send('DOWNLOAD_WATCH', { index: l, current: filename, total: parseInt(manga.page), finish: success })
           if (success) {
-            let config = settings.get('config')
+            let config = settings.get('config') || { user_id: 'guest' }
             let items = fs.readdirSync(dir)
             wLog('Complate -- Read', manga.page, 'files, and in directory', items.length, 'files')
             wLog('---------------------')
@@ -127,7 +193,8 @@ let getImage = (res, manga, l, index, resolve, directory, emit) => {
     do {
       try {
         manga.items[index] = `${link}${link.indexOf('?') > -1 ? '&' : '?'}nl=${nl}`
-        const res = await request({ url: manga.items[index] })
+        const res = await request({ url: manga.items[index], jar: jarCookie })
+        await jarCookieCheck()
         nl = /return nl\('(.*?)'\)/ig.exec(res)[1]
         await getImage(res, manga, l, index, resolve, directory, emit)
         isSuccess = true
@@ -148,10 +215,18 @@ em.download = (list, directory, emit) => {
     let manga = list[l]
     if (manga.error) continue
     for (let i = 0; i < manga.items.length; i++) {
-      all.push(() => new Promise(async (resolve, reject) => {
-        let res = await request(manga.items[i])
-        getImage(res, manga, l, i, resolve, directory, emit)
-      }))
+      let filename = getFilename(i + 1, manga.page)
+      let name = manga.name.replace(/[/\\|.:?<>"]/ig, '')
+      let dir = path.join(directory, name)
+      if (!fs.existsSync(`${dir}/${filename}.jpg`) && !fs.existsSync(`${dir}/${filename}.png`) && !fs.existsSync(`${dir}/${filename}.gif`)) {
+        all.push(() => new Promise(async (resolve, reject) => {
+          let res = await request(manga.items[i], { jar: jarCookie })
+          await jarCookieCheck()
+          await getImage(res, manga, l, i, resolve, directory, emit)
+        }))
+      } else {
+        emit.send('DOWNLOAD_WATCH', { index: l, current: filename, total: parseInt(manga.page), finish: parseInt(manga.page) === i + 1 })
+      }
     }
   }
 
@@ -203,7 +278,7 @@ export function init (link, emit) {
       page: length[1],
       items: []
     }
-    let config = settings.get('config')
+    let config = settings.get('config') || { user_id: 'guest' }
     // console.log(config)
     exHentaiHistory('exhentai/manga', {
       user_id: config.user_id,
@@ -223,22 +298,26 @@ export function init (link, emit) {
       for (let i = 1; i < totalPage; i++) {
         all.push(() => {
           emit.send('INIT_MANGA', { page: i + 1, total: totalPage })
-          return request(`${link}?p=${i}`).then((res) => getImage(manga, res))
+          return request(`${link}?p=${i}`, { jar: jarCookie }).then(async (res) => {
+            await jarCookieCheck()
+            return getImage(manga, res)
+          })
         })
       }
       return async.series(all).then(() => {
-        request({
-          url: link,
-          header: {
-            'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/59.0.3071.115 Safari/537.36',
-            'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
-            'accept-language': 'th-TH,th;q=0.8,en-US;q=0.6,en;q=0.4,ja;q=0.2',
-            'cache-control': 'no-cache',
-            'pragma': 'no-cache',
-            'referer': `https://${baseUrl.hostname}/`,
-            'upgrade-insecure-requests': '1'
-          }
-        })
+        // request({
+        //   url: link,
+        //   jar: jarCookie,
+        //   header: {
+        //     'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/59.0.3071.115 Safari/537.36',
+        //     'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
+        //     'accept-language': 'th-TH,th;q=0.8,en-US;q=0.6,en;q=0.4,ja;q=0.2',
+        //     'cache-control': 'no-cache',
+        //     'pragma': 'no-cache',
+        //     'referer': `https://${baseUrl.hostname}/`,
+        //     'upgrade-insecure-requests': '1'
+        //   }
+        // })
         if (manga.items.length !== parseInt(manga.page)) throw new Error(`manga.items is '${manga.items.length}' and length is '${manga.page}'`)
         return manga
       })
@@ -248,14 +327,11 @@ export function init (link, emit) {
   }
 
   let reqHentai = async (uri, method, options) => new Promise((resolve, reject) => {
-    let cookie = jarCookieSession()
-
     options = Object.assign({
       'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/59.0.3071.115 Safari/537.36',
       'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
       'accept-language': 'th-TH,th;q=0.8,en-US;q=0.6,en;q=0.4,ja;q=0.2',
       'cache-control': 'no-cache',
-      'cookie': cookie === '' ? undefined : cookie,
       'pragma': 'no-cache',
       ':authority': 'e-hentai.org',
       ':scheme': 'https',
@@ -268,6 +344,7 @@ export function init (link, emit) {
       url: uri,
       method: method || 'GET',
       header: options,
+      jar: jarCookie,
       // strictSSL: true,
       // agentOptions: {
       //   passphrase: 'dvg7po8ai',
@@ -275,21 +352,17 @@ export function init (link, emit) {
       //   cert: fs.readFileSync(path.join(__dirname, 'cert/cert.pem'))
       // },
       timeout: 5000
-    }, (error, res, body) => {
+    }, async (error, res, body) => {
+      await jarCookieCheck()
       if (error) {
         reject(new Error(error))
         return
       }
-      let { statusCode, headers } = res
+      let { statusCode } = res
       wLog(`URL RESPONSE: ${statusCode}`)
+      console.log('error', error)
+      console.log('body', body.length)
       if (statusCode === 302 || statusCode === 200) {
-        if (headers['set-cookie']) {
-          for (let i = 0; i < headers['set-cookie'].length; i++) {
-            let c = headers['set-cookie'][i].split(';')
-            let co = allCookie.filter(item => item.split('=')[0] === c[0].split('=')[0])
-            if (co.length === 0) allCookie.push(headers['set-cookie'][i])
-          }
-        }
         resolve(body)
       } else {
         reject(new Error(statusCode))
@@ -302,7 +375,9 @@ export function init (link, emit) {
       throw new Error(`Key missing, or incorrect key provided.`)
     } else {
       let fixed = /\/\w{1}\/\d{1,8}\/[0-9a-f]+?\//ig.exec(baseUrl.pathname)
-      if (baseUrl.hostname === 'exhentai.org') baseUrl.hostname = 'e-hentai.org'
+      const userId = await getCookie('ipb_member_id')
+      console.log('recheck', userId)
+      // if (baseUrl.hostname === 'exhentai.org' && !userId) baseUrl.hostname = 'e-hentai.org'
       link = `https://${baseUrl.hostname}${fixed[0]}`
     }
     let res = await reqHentai(link)
@@ -338,6 +413,7 @@ let httpHeader = {
   'cache-control': 'no-cache',
   'upgrade-insecure-requests': '1'
 }
+
 export async function login (username, password) {
   let res1 = await request({
     url: `https://forums.e-hentai.org/index.php?act=Login&CODE=01`,
@@ -345,6 +421,7 @@ export async function login (username, password) {
     header: Object.assign(httpHeader, {
       'referer': 'https://forums.e-hentai.org/index.php'
     }),
+    jar: jarCookie,
     form: {
       referer: 'https://forums.e-hentai.org/index.php',
       CookieDate: 1,
@@ -356,5 +433,8 @@ export async function login (username, password) {
     },
     resolveWithFullResponse: true
   })
+  await jarCookieCheck()
   return res1
 }
+
+export const cookie = getCookie

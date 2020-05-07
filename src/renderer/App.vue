@@ -3,19 +3,19 @@
     <div v-if="!landing">
       <div class="header" style="height: 85px;">
         <div v-if="!page.signin" class="row">
-          <div class="col-sm-7">
-            <span class="help-block"><b>Save as directory:</b> {{directory_name}}</span>
+          <div class="col-sm-6">
+            <span class="help-block pt-1 d-block"><b>Save as directory:</b> {{directory_name}}</span>
           </div>
-          <div class="col-sm-5">
+          <div class="col-sm-6">
             <div class="text-right">
               <span v-if="sign.cookie == null" class="help-block"><b>Support Me❤ {{sign.nickname}}</b></span>
-              <span v-else class="help-block" style="color: #616161;">Hello, You are now logged in as {{sign.name}}</span>
+              <span v-else class="help-block" style="color: #616161;">Hello, <b>{{sign.name}}</b></span>
               <!-- sign.cookie == null && !state_verify -->
-              <button v-if="false" type="button" class="btn btn-sm btn-singin btn-warning" @click.prevent="page.signin = true">
-                Login
-              </button>
-              <button type="button" class="btn btn-sm btn-donate btn-outline-danger" @click="onBrowser">
+              <button type="button" class="btn btn-sm btn-donate btn-outline-danger mr-2" @click="onBrowser">
                 Donate
+              </button>
+              <button v-if="sign.cookie == null" type="button" class="btn btn-sm btn-singin btn-info" @click.prevent="page.signin = true">
+                Login
               </button>
               <button type="button" class="btn btn-sm btn-refresh btn-outline-info" @click="onRefresh">
                 <i class="fa fa-refresh"></i>
@@ -29,7 +29,7 @@
               <div class="col-sm-5 message">
                 <p v-if="error_message == ''">
                   <label class="text-danger">Readme</label><br>
-                  How to use <b>exhentai.org</b>, search in google.<br>
+                 <b>exhentai.org</b>, search in google.<br>
                   วิธีเข้าใช้งานเว็บแพนด้า กรุณาหาเองในกูเกิล
                 </p>
                 <p v-else class="error text-danger">
@@ -72,7 +72,7 @@
             </div>
             <div class="col-sm-4" style="text-align:right;">
               <div class="btn-group" role="group">
-                <button :disabled="state_verify || (!directory_name && state_name === 'Download')" type="button" class="btn" 
+                <button :disabled="state_verify || (!directory_name && state_name === 'Download')" type="button" class="btn btn-sm" 
                   :class="!state_verify ? 'btn-success' : 'btn-default'" 
                   style="padding: 2px 12px;width: 100px; font-size:0.7rem;line-height:9px;" @click="onQueue">
                   <i :class="['fa', state_icon]"  aria-hidden="true"></i> {{state_name}}
@@ -180,7 +180,7 @@
   const { shell, remote } = require('electron')
   const URL = require('url-parse')
   const os = require('os')
-  const { existsSync, mkdirSync, readFileSync, writeFileSync } = require('fs')
+  // const { existsSync, mkdirSync, readFileSync, writeFileSync } = require('fs')
   const { join } = require('path')
 
   const _SERVER_DONATE = 'https://mr.touno.io/donate'
@@ -195,8 +195,8 @@
         sign: {
           header: '',
           cookie: null,
-          username: '',
-          password: '',
+          username: 'hentai-dlll',
+          password: 'asdasdasd',
           nickname: ''
         },
         page: {
@@ -214,7 +214,7 @@
           SUCCESS: 3
         },
         folder: {
-          name: 'exHentai',
+          name: 'hentai-downloader',
           id: '_id.exh'
         },
         reset: false,
@@ -282,7 +282,7 @@
         vm.bar.total = 1
         vm.state_icon = 'fa-download'
         if (complated) {
-          vm.state_name = 'Redownload'
+          vm.state_name = 'Download'
         }
         vm.state_verify = false
         vm.state_download = false
@@ -406,33 +406,36 @@
         this.exmsg = ``
         let appDir = join(os.tmpdir(), `../${vm.folder.name}`)
 
+        console.log('appDir', appDir)
         let Initialize = async () => {
-          if (existsSync(join(appDir, vm.folder.id))) {
-            config.guest = readFileSync(join(appDir, vm.folder.id), 'utf-8').toString()
-          }
+          const data = await vm.SESSION()
+          console.log('SESSION', data)
+          // if (existsSync(join(appDir, vm.folder.id))) {
+          //   config.guest = readFileSync(join(appDir, vm.folder.id), 'utf-8').toString()
+          // }
 
-          let res = config.guest ? { data: { error: true } } : { data: { error: true } }
-          if (res.data.error) {
-            let { data } = { data: {} }
-            vm.sign.nickname = data.guest
-            vm.ConfigSaved({
-              user_id: data.guest,
-              nickname: data.guest
-            })
-            // await vm.TounoIO('exhentai/user/register', { guest: data.guest })
-            // await vm.TounoIO(`exhentai/user`, { g: data.guest })
-            // write file in ./ > g_78ca1b844c
-            let dir = join(appDir)
-            if (!existsSync(dir)) mkdirSync(dir)
-            writeFileSync(join(dir, vm.folder.id), data.guest, 'utf-8')
-          } else {
-            // console.log(res.data)
-            vm.sign.nickname = res.data.nickname
-            vm.ConfigSaved({
-              user_id: res.data.user_id,
-              nickname: res.data.nickname
-            })
-          }
+          // let res = config.guest ? { data: { error: true } } : { data: { error: true } }
+          // if (res.data.error) {
+          //   let { data } = { data: {} }
+          //   vm.sign.nickname = data.guest
+          //   vm.ConfigSaved({
+          //     user_id: data.guest,
+          //     nickname: data.guest
+          //   })
+          //   // await vm.TounoIO('exhentai/user/register', { guest: data.guest })
+          //   // await vm.TounoIO(`exhentai/user`, { g: data.guest })
+          //   // write file in ./ > g_78ca1b844c
+          //   let dir = join(appDir)
+          //   if (!existsSync(dir)) mkdirSync(dir)
+          //   writeFileSync(join(dir, vm.folder.id), data.guest, 'utf-8')
+          // } else {
+          //   console.log(res.data)
+          //   vm.sign.nickname = res.data.nickname
+          //   vm.ConfigSaved({
+          //     user_id: res.data.user_id,
+          //     nickname: res.data.nickname
+          //   })
+          // }
         }
 
         Initialize().then(() => {
@@ -509,6 +512,9 @@
   }
   .help-block {
     font-size: 0.65rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
   }
   .form-control, .btn {
     border-radius: 0px !important;

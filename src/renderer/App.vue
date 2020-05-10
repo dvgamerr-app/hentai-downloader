@@ -89,8 +89,8 @@
                 <input type="text" readonly class="form-control input-sm" placeholder="Directory for..." maxlength="50" v-model="directory_name"
                   style="padding: 7px;height:auto">
                 <span class="input-group-btn">
-                  <button class="btn btn-info" type="button" style="padding: 0.38em 1.5em;" @click="onBrowse">Browse</button>
-                  <button class="btn btn-default" type="button" style="padding: 0.38em 0.85em" @click="page.option = false">
+                  <button class="btn btn-info" type="button" style="padding: 0.44em 1.5em;" @click="onBrowse">Browse</button>
+                  <button class="btn btn-default" type="button" style="padding: 0.44em 0.85em" @click="page.option = false">
                     <i class="fa fa-arrow-circle-left" aria-hidden="true"></i>
                   </button>
                 </span>
@@ -470,7 +470,9 @@
     },
     created () {
       let vm = this
+      vm.setIgneous('cf1734bd9')
       vm.doReload()
+      console.log('igneous', vm.getIgneous())
       window.addEventListener('paste', async e => {
         if (!vm.state_verify && !vm.state_download) {
           let data = e.clipboardData.getData('text').trim()
@@ -504,7 +506,17 @@
     padding: 0;
   }
   html,
-  body { height: 100%; }
+  body {
+    margin: 0;
+    font-family: "Segoe UI","Segoe UI Emoji","Segoe UI Symbol";
+    font-size: .95rem;
+    font-weight: 400;
+    line-height: 1.5;
+    color: #212529;
+    text-align: left;
+    background-color: #FFF;
+    height: 100%;
+  }
   #app { 
     width: 100%;
     height: 100%;

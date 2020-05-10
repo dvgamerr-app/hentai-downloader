@@ -15,7 +15,9 @@ if (!settings.get('directory')) {
 export function server (mainWindow) {
   // settings.delete('config')
   ipcMain.on('SESSION', function (e) {
-    hentai.cookie('ipb_member_id').then(data => {
+    hentai.reload().then(() => {
+      return hentai.cookie('ipb_member_id')
+    }).then(data => {
       e.sender.send('SESSION', data ? data.value : null)
     }).catch(ex => {
       console.log(ex)
@@ -83,6 +85,12 @@ export const client = {
   install: Vue => {
     Vue.mixin({
       methods: {
+        getIgneous: () => {
+          return settings.get('igneous')
+        },
+        setIgneous: (igneous) => {
+          return settings.set('igneous', igneous)
+        },
         ConfigLoaded: () => {
           const config = settings.get('config') || {}
           const directory = settings.get('directory')

@@ -94,6 +94,38 @@ app.on('activate', () => {
   }
 })
 
+const express = require('express')
+const router = express()
+const cors = require('cors')
+const bodyParser = require('body-parser')
+const hentai = require('../plugins/ehentai.js')
+
+router.use(cors())
+router.use(bodyParser.json())
+router.use(bodyParser.urlencoded({ extended: false }))
+
+router.post('/token', async (req, res) => {
+  try {
+    if (req.body) {
+      const { cookie } = req.body
+      console.log('TOKEN:', cookie)
+      console.log('setCookie:', hentai.setCookie)
+      res.json({ token: true })
+    } else {
+      res.json({ token: false })
+    }
+  } catch (ex) {
+    console.log(ex)
+    res.status(404)
+  } finally {
+    res.end()
+  }
+})
+
+router.listen(34841, '127.0.0.1', () => {
+  console.log('listen port 34841 ready.')
+})
+
 /**
  * Auto Updater
  *

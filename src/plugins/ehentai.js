@@ -48,34 +48,59 @@ const pushCookie = (cookie) => new Promise((resolve, reject) => {
     resolve()
   }
 })
+export const setCookie = (path, value, domain = 'e-hentai.org') => new Promise((resolve, reject) => {
+  const jar = jarCookie._jar
+  if (jar && jar.store) {
+    jar.setCookie(`${value}; path=${path}; domain=${domain}`, `http://${domain}/`, {}, (err) => {
+      if (err) return reject(err)
+      resolve()
+    })
+  }
+})
+const jarCookieBuild = async () => {
+  let memberId = await getCookie('ipb_member_id')
+  if (memberId) {
+    memberId = memberId.clone()
+    memberId.domain = 'exhentai.org'
+    pushCookie(memberId)
+  } else {
+    settings.set('config', {})
+  }
+
+  let passHash = await getCookie('ipb_pass_hash')
+  if (passHash) {
+    passHash = passHash.clone()
+    passHash.domain = 'exhentai.org'
+    pushCookie(passHash)
+  }
+  const igneous = await getCookie('igneous', true)
+  console.log('igneous', igneous)
+  if (!igneous && settings.get('igneous')) {
+    console.log('set igneous', settings.get('igneous'))
+    await setCookie('/', `igneous=${settings.get('igneous')}`)
+  }
+}
 
 const jarCookieCheck = async () => {
   const jar = jarCookie._jar
   await blockCookie('/s/', 'skipserver')
-
-  if (await getCookie('ipb_member_id')) {
-    const userId = await getCookie('ipb_member_id', true)
-    if (!userId) {
-      let memberId = await getCookie('ipb_member_id')
-      let passHash = await getCookie('ipb_pass_hash')
-      let sk = await getCookie('sk')
-
-      memberId = memberId.clone()
-      passHash = passHash.clone()
-
-      memberId.domain = 'exhentai.org'
-      passHash.domain = 'exhentai.org'
-      sk.domain = 'exhentai.org'
-
-      pushCookie(memberId)
-      pushCookie(passHash)
-      pushCookie(sk)
-    }
-  }
+  await blockCookie('/', 'yay', true)
 
   cfg.saveCookie(jar)
   jarCookie._jar = cfg.loadCookie()
-  console.log(jarCookie._jar.store)
+
+  const idx = jarCookie._jar.store.idx
+  if (Object.keys(idx).length > 0) {
+    console.log('[Cookie] -------------------------------------------')
+    for (const domain in idx) {
+      for (const router in idx[domain]) {
+        for (const cookie in idx[domain][router]) {
+          console.log('  ', domain, cookie, ':', idx[domain][router][cookie].value)
+        }
+      }
+    }
+    console.log('[Cookie] -------------------------------------------')
+  }
 }
 const defaultJar = cfg.loadCookie()
 let jarCookie = request.jar()
@@ -193,6 +218,7 @@ let getImage = (res, manga, l, index, resolve, directory, emit) => {
     do {
       try {
         manga.items[index] = `${link}${link.indexOf('?') > -1 ? '&' : '?'}nl=${nl}`
+        await jarCookieBuild()
         const res = await request({ url: manga.items[index], jar: jarCookie })
         await jarCookieCheck()
         nl = /return nl\('(.*?)'\)/ig.exec(res)[1]
@@ -220,6 +246,7 @@ em.download = (list, directory, emit) => {
       let dir = path.join(directory, name)
       if (!fs.existsSync(`${dir}/${filename}.jpg`) && !fs.existsSync(`${dir}/${filename}.png`) && !fs.existsSync(`${dir}/${filename}.gif`)) {
         all.push(() => new Promise(async (resolve, reject) => {
+          await jarCookieBuild()
           let res = await request(manga.items[i], { jar: jarCookie })
           await jarCookieCheck()
           await getImage(res, manga, l, i, resolve, directory, emit)
@@ -245,9 +272,9 @@ export function init (link, emit) {
   let baseUrl = new URL(link.trim())
 
   let getImage = (manga, data) => {
-    let links = data.match(/gdtm".*?<a href="(.*?)">/ig)
+    let links = data.match(/(gdtm|gdtl)".*?<a href="(.*?)">/ig)
     for (var i = 0; i < links.length; i++) {
-      let link = /gdtm".*?<a href="(.*?)">/i.exec(links[i])[1]
+      let link = /(gdtm|gdtl)".*?<a href="(.*?)">/i.exec(links[i])[1]
       manga.items.push(link)
     }
   }
@@ -298,7 +325,8 @@ export function init (link, emit) {
       for (let i = 1; i < totalPage; i++) {
         all.push(() => {
           emit.send('INIT_MANGA', { page: i + 1, total: totalPage })
-          return request(`${link}?p=${i}`, { jar: jarCookie }).then(async (res) => {
+          return jarCookieBuild().then(async () => {
+            const res = await request(`${link}?p=${i}`, { jar: jarCookie })
             await jarCookieCheck()
             return getImage(manga, res)
           })
@@ -361,7 +389,7 @@ export function init (link, emit) {
       let { statusCode } = res
       wLog(`URL RESPONSE: ${statusCode}`)
       console.log('error', error)
-      console.log('body', body.length)
+      console.log('body', body)
       if (statusCode === 302 || statusCode === 200) {
         resolve(body)
       } else {
@@ -379,16 +407,13 @@ export function init (link, emit) {
       console.log('recheck', userId)
       // if (baseUrl.hostname === 'exhentai.org' && !userId) baseUrl.hostname = 'e-hentai.org'
       link = `https://${baseUrl.hostname}${fixed[0]}`
+      if (!await getCookie('nw')) await setCookie('/', 'nw=1')
     }
+    await jarCookieBuild()
     let res = await reqHentai(link)
     if (!/DOCTYPE.html.PUBLIC/ig.test(res)) throw new Error(res)
     let warnMe = /<a href="(.*?)">Never Warn Me Again/ig.exec(res)
-    if (warnMe) {
-      throw new Error('Never Warn Me Again')
-      // res = await reqHentai(warnMe[1], 'GET', {
-      //   'referer': link
-      // })
-    }
+    if (warnMe) throw new Error('Never Warn Me Again')
     return getManga(res)
   })().catch(ex => {
     if (ex.statusCode === 404) {
@@ -438,3 +463,4 @@ export async function login (username, password) {
 }
 
 export const cookie = getCookie
+export const reload = jarCookieCheck

@@ -27,7 +27,7 @@ export default async (method = 'GET', uri = '', data = {}, addHeaders = {}) => {
       if (error) {
         return reject(error)
       }
-      const { statusCode, headers } = res
+      const { statusCode } = res
       if (([ 200, 302 ]).indexOf(statusCode) < 0) return reject(statusCode)
 
       // setCookie(referer, headers)

@@ -33,7 +33,7 @@ function createWindow () {
     maxHeight: 360,
     'node-integration': false,
     title: app.getName(),
-    icon: path.join(__dirname, 'src/renderer/assets/touno.ico'),
+    icon: path.join(__dirname, '../../build/icons/icon.ico'),
     show: true,
     // frame: false,
     movable: true,

@@ -83,6 +83,9 @@ const jarCookieBuild = async () => {
 
 const jarCookieCheck = async () => {
   const jar = jarCookie._jar
+  await blockCookie('/', 'sk')
+  await blockCookie('/', 'sk', true)
+
   await blockCookie('/s/', 'skipserver')
   await blockCookie('/', 'yay', true)
 
@@ -91,15 +94,13 @@ const jarCookieCheck = async () => {
 
   const idx = jarCookie._jar.store.idx
   if (Object.keys(idx).length > 0) {
-    console.log('[Cookie] -------------------------------------------')
-    for (const domain in idx) {
-      for (const router in idx[domain]) {
-        for (const cookie in idx[domain][router]) {
-          console.log('  ', domain, cookie, ':', idx[domain][router][cookie].value)
-        }
-      }
-    }
-    console.log('[Cookie] -------------------------------------------')
+    // for (const domain in idx) {
+    //   for (const router in idx[domain]) {
+    //     for (const cookie in idx[domain][router]) {
+    //       console.log('  ', domain, cookie, ':', idx[domain][router][cookie].value)
+    //     }
+    //   }
+    // }
   }
 }
 const defaultJar = cfg.loadCookie()

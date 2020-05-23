@@ -116,9 +116,7 @@ function startMain () {
 function startElectron () {
   electronProcess = spawn(electron, ['--inspect=5858', path.join(__dirname, '../dist/electron/main.js')])
 
-  electronProcess.stdout.on('data', data => {
-    electronLog(data, 'blue')
-  })
+  electronProcess.stdout.on('data', data => process.stdout.write(data.toString()))
   electronProcess.stderr.on('data', data => {
     electronLog(data, 'red')
   })
@@ -135,7 +133,7 @@ function electronLog (data, color) {
     log += `  ${line}\n`
   })
   if (/[0-9A-z]+/.test(log)) {
-    console.log(
+    console.log('\n' + 
       chalk[color].bold('┏ Electron -------------------') +
       '\n\n' +
       log +
@@ -163,16 +161,6 @@ function greeting () {
   console.log(chalk.blue('  getting ready...') + '\n')
 }
 
-function init () {
-  greeting()
-
-  Promise.all([startRenderer(), startMain()])
-    .then(() => {
-      startElectron()
-    })
-    .catch(err => {
-      console.error(err)
-    })
-}
-
-init()
+Promise.all([startRenderer(), startMain()]).then(() => {
+  startElectron()
+}).catch(console.error)

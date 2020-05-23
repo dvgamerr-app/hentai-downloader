@@ -1,23 +1,21 @@
-'use strict'
-import { app, BrowserWindow } from 'electron'
+import { app, BrowserWindow, Tray } from 'electron'
+import express from 'express'
+import cors from 'cors'
+import bodyParser from 'body-parser'
 import path from 'path'
 
+import hentai from '../plugins/ehentai.js'
 import * as vEvents from '../plugins/events'
-
-/**
- * Set `__static` path to static files in production
- * https://simulatedgreg.gitbooks.io/electron-vue/content/en/using-static-assets.html
- */
-if (process.env.NODE_ENV !== 'development') {
-  global.__static = path.join(__dirname, '/static').replace(/\\/g, '\\\\')
-}
 
 // let appIcon
 let mainWindow
 let mainConfig
-const winURL = process.env.NODE_ENV === 'development'
-  ? `http://localhost:9080`
-  : `file://${__dirname}/index.html`
+const router = express()
+const winURL = process.env.NODE_ENV === 'development' ? `http://localhost:9080` : `file://${__dirname}/index.html`
+
+if (process.env.NODE_ENV !== 'development') {
+  global.__static = path.join(__dirname, '/static').replace(/\\/g, '\\\\')
+}
 
 function createWindow () {
   /**
@@ -48,33 +46,33 @@ function createWindow () {
   // mainConfig.x = screenSize.width - mainConfig.width - padding
   // mainConfig.y = screenSize.height - mainConfig.height - padding
 
-  // appIcon = new Tray(path.join(__dirname, '../renderer/assets/stats/icon-offline.png'))
-  // var contextMenu = Menu.buildFromTemplate([
-  //   {
-  //     label: 'Close',
-  //     click: () => {
-  //       mainWindow.close()
-  //     }
-  //   }
-  // ])
-
-  // appIcon.setToolTip(mainConfig.title)
-  // appIcon.setContextMenu(contextMenu)
-
-  // appIcon.on('click', (e, bounds) => {
-  //   mainWindow.show()
-  // })
-
   mainWindow = new BrowserWindow(mainConfig)
   mainWindow.loadURL(winURL)
   mainWindow.setMenu(null)
 
-  mainWindow.on('closed', () => {
-    mainWindow = null
+  let appIcon = new Tray(path.join(__dirname, '../../build/icons/16x16.png'))
+  let hideWindow = false
+
+  appIcon.setToolTip('Hentai Downloader 2.2.0')
+  appIcon.on('click', (e) => {
+    if (hideWindow) {
+      mainWindow.show()
+    } else {
+      mainWindow.hide()
+    }
   })
 
-  mainWindow.on('blur', () => {
-    // mainWindow.hide()
+  mainWindow.on('show', () => {
+    hideWindow = !hideWindow
+  })
+
+  mainWindow.on('hide', () => {
+    hideWindow = !hideWindow
+  })
+
+  mainWindow.on('closed', () => {
+    appIcon.destroy()
+    mainWindow = null
   })
 
   vEvents.server(mainWindow)
@@ -93,12 +91,6 @@ app.on('activate', () => {
     createWindow()
   }
 })
-
-const express = require('express')
-const router = express()
-const cors = require('cors')
-const bodyParser = require('body-parser')
-const hentai = require('../plugins/ehentai.js')
 
 router.use(cors())
 router.use(bodyParser.json())

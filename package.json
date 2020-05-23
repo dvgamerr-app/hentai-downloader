@@ -120,6 +120,7 @@
     "precss": "^3.1.2",
     "sinon": "^2.1.0",
     "sinon-chai": "^2.14.0",
+    "spinnies": "^0.5.1",
     "style-loader": "^0.18.2",
     "url-loader": "^1.1.1",
     "vue-html-loader": "^1.2.4",

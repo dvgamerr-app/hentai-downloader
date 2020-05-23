@@ -1,13 +1,10 @@
-'use strict'
-
 process.env.NODE_ENV = 'production'
 
 const { say } = require('cfonts')
 const chalk = require('chalk')
 const del = require('del')
-const { spawn } = require('child_process')
 const webpack = require('webpack')
-// const Multispinner = require('multispinner')
+const Spinnies = require('spinnies')
 
 
 const mainConfig = require('./webpack.main.config')
@@ -19,82 +16,16 @@ const errorLog = chalk.bgRed.white(' ERROR ') + ' '
 const okayLog = chalk.bgBlue.white(' OKAY ') + ' '
 const isCI = process.env.CI || false
 
-if (process.env.BUILD_TARGET === 'clean') clean()
-else if (process.env.BUILD_TARGET === 'web') web()
-else build()
+switch (process.env.BUILD_TARGET) {
+  case 'clean': clean(); break
+  case 'web': web(); break
+  default: build(); break
+}
 
 function clean () {
   del.sync(['build/*', '!build/icons', '!build/icons/icon.*'])
   console.log(`\n${doneLog}\n`)
   process.exit()
-}
-
-function build () {
-  greeting()
-
-  del.sync(['dist/electron/*', '!.gitkeep'])
-
-  const tasks = ['main', 'renderer']
-  // const m = new Multispinner(tasks, {
-  //   preText: 'building',
-  //   postText: 'process'
-  // })
-
-  let results = ''
-
-  // m.on('success', () => {
-  //   process.stdout.write('\x1B[2J\x1B[0f')
-  //   console.log(`\n\n${results}`)
-  //   console.log(`${okayLog}take it away ${chalk.yellow('`electron-builder`')}\n`)
-  //   process.exit()
-  // })
-
-  pack(mainConfig).then(result => {
-    results += result + '\n\n'
-    // m.success('main')
-  }).catch(err => {
-    // m.error('main')
-    console.log(`\n  ${errorLog}failed to build main process`)
-    console.error(`\n${err}\n`)
-    process.exit(1)
-  })
-
-  pack(rendererConfig).then(result => {
-    results += result + '\n\n'
-    // m.success('renderer')
-  }).catch(err => {
-    // m.error('renderer')
-    console.log(`\n  ${errorLog}failed to build renderer process`)
-    console.error(`\n${err}\n`)
-    process.exit(1)
-  })
-}
-
-function pack (config) {
-  return new Promise((resolve, reject) => {
-    webpack(config, (err, stats) => {
-      if (err) reject(err.stack || err)
-      else if (stats.hasErrors()) {
-        let err = ''
-
-        stats.toString({
-          chunks: false,
-          colors: true
-        })
-        .split(/\r?\n/)
-        .forEach(line => {
-          err += `    ${line}\n`
-        })
-
-        reject(err)
-      } else {
-        resolve(stats.toString({
-          chunks: false,
-          colors: true
-        }))
-      }
-    })
-  })
 }
 
 function web () {
@@ -121,10 +52,58 @@ function greeting () {
 
   if (text && !isCI) {
     say(text, {
-      colors: ['yellow'],
+      colors: ['yellow','green'],
       font: 'simple3d',
       space: false
     })
   } else console.log(chalk.yellow.bold('\n  lets-build'))
   console.log()
+}
+
+
+function build () {
+  greeting()
+  del.sync(['dist/electron/*', '!.gitkeep'])
+
+  const spinner = { interval: 80, frames: ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'] }
+  const spin = new Spinnies({ color: 'blue', succeedColor: 'green', spinner })
+  spin.add('electron', { text: 'building main process' });
+  spin.add('renderer', { text: 'building renderer process' });
+
+  const pack = (config) => new Promise((resolve, reject) => {
+    webpack(config, (err, stats) => {
+      if (err) reject(err.stack || err)
+      else if (stats.hasErrors()) {
+        reject(stats.toString({ chunks: false, colors: true }).split(/\r?\n/).map(line => {
+          return `    ${line}`
+        }).join('\n'))
+      } else {
+        resolve(stats.toString({ chunks: false, colors: true }))
+      }
+    })
+  })
+  let results = ''
+  Promise.all([
+    pack(mainConfig).then((result) => {
+      results += result + '\n\n'
+      spin.succeed('electron', { text: 'Success!' });
+    }).catch(() => {
+      spin.fail('electron', { text: 'Fail :(' });
+    }),
+    pack(rendererConfig).then((result) => {
+      results += result + '\n\n'
+      spin.succeed('renderer', { text: 'Success!' });
+    }).catch(() => {
+      spin.fail('renderer', { text: 'Fail :(' });
+    })
+  ]).catch(ex => {
+    console.log(`\n  ${errorLog}failed to build renderer process`)
+    console.error(`\n${ex}\n`)
+    process.exit(1)
+  }).finally(() => {
+    process.stdout.write('\x1B[2J\x1B[0f')
+    console.log(`\n\n${results}`)
+    console.log(`${okayLog}take it away ${chalk.yellow('`electron-builder`')}\n`)
+    process.exit()
+  })
 }

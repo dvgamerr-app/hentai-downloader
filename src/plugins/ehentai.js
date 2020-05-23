@@ -60,9 +60,15 @@ export const setCookie = (path, value, domain = 'e-hentai.org') => new Promise((
 const jarCookieBuild = async () => {
   let memberId = await getCookie('ipb_member_id')
   if (memberId) {
-    memberId = memberId.clone()
-    memberId.domain = 'exhentai.org'
-    pushCookie(memberId)
+    const exMemberId = await getCookie('ipb_member_id', true)
+    if (!exMemberId) {
+      memberId = memberId.clone()
+      memberId.domain = 'exhentai.org'
+      pushCookie(memberId)
+    }
+    if (!settings.get('igneous')) {
+      throw new Error('Please join your browser session.')
+    }
   } else {
     settings.set('config', {})
   }
@@ -269,157 +275,145 @@ em.download = (list, directory, emit) => {
 }
 
 export const emiter = em
-export function init (link, emit) {
-  let baseUrl = new URL(link.trim())
-
-  let getImage = (manga, data) => {
-    let links = data.match(/(gdtm|gdtl)".*?<a href="(.*?)">/ig)
-    for (var i = 0; i < links.length; i++) {
-      let link = /(gdtm|gdtl)".*?<a href="(.*?)">/i.exec(links[i])[1]
-      manga.items.push(link)
-    }
+const validateURL = (link) => {
+  const baseUrl = new URL(link.trim())
+  if (!/\/\w{1}\/\d{1,8}\/[0-9a-f]+?\//ig.test(baseUrl.pathname)) {
+    throw new Error(`Key missing, or incorrect key provided.`)
+  } else {
+    let [fixed] = /\/\w{1}\/\d{1,8}\/[0-9a-f]+?\//ig.exec(baseUrl.pathname)
+    return `https://${baseUrl.hostname}${fixed}`
   }
+}
 
-  let getManga = res => {
-    let fixed = /\/\w{1}\/\d{1,8}\/[0-9a-f]+?\//ig.exec(baseUrl.pathname)
-    if (fixed) link = `https://${baseUrl.hostname}${fixed[0]}`
-
-    let name = /<div id="gd2">.*?gn">(.*?)<\/.*?gj">(.*?)<\/.*?<\/div>/ig.exec(res)
-    let language = /Language:.*?class="gdt2">(.*?)&/ig.exec(res)
-    let size = /File Size:.*?class="gdt2">(.*?)</ig.exec(res)
-    let length = /Length:.*?gdt2">(.*?).page/ig.exec(res)
-    let cover = /<div id="gleft">.*?url\((.*?)\)/ig.exec(res)
-
-    if (!name) throw new Error('manga.name is not found')
-    if (!language) throw new Error('manga.language is not found')
-    if (!size) throw new Error('manga.size is not found')
-    if (!length) throw new Error('manga.page is not found')
-    if (!cover) throw new Error('manga.page is not found')
-
-    let manga = {
-      ref: fixed[0],
-      url: link,
-      name: name[1],
-      cover: cover[1],
-      language: language[1],
-      size: size[1],
-      page: length[1],
-      items: []
-    }
-    let config = settings.get('config') || { user_id: 'guest' }
-    // console.log(config)
-    exHentaiHistory('exhentai/manga', {
-      user_id: config.user_id,
-      name: manga.name,
-      link: manga.url,
-      cover: manga.cover,
-      language: manga.language,
-      size: manga.size,
-      page: manga.page
-    })
-    // slack(baseUrl.host, manga)
-    getImage(manga, res)
-    let totalPage = Math.ceil(manga.page / manga.items.length)
-    emit.send('INIT_MANGA', { page: 1, total: totalPage })
-    if (manga.items.length !== manga.page) {
-      let all = []
-      for (let i = 1; i < totalPage; i++) {
-        all.push(() => {
-          emit.send('INIT_MANGA', { page: i + 1, total: totalPage })
-          return jarCookieBuild().then(async () => {
-            const res = await request(`${link}?p=${i}`, { jar: jarCookie })
-            await jarCookieCheck()
-            return getImage(manga, res)
-          })
-        })
-      }
-      return async.series(all).then(() => {
-        // request({
-        //   url: link,
-        //   jar: jarCookie,
-        //   header: {
-        //     'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/59.0.3071.115 Safari/537.36',
-        //     'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
-        //     'accept-language': 'th-TH,th;q=0.8,en-US;q=0.6,en;q=0.4,ja;q=0.2',
-        //     'cache-control': 'no-cache',
-        //     'pragma': 'no-cache',
-        //     'referer': `https://${baseUrl.hostname}/`,
-        //     'upgrade-insecure-requests': '1'
-        //   }
-        // })
-        if (manga.items.length !== parseInt(manga.page)) throw new Error(`manga.items is '${manga.items.length}' and length is '${manga.page}'`)
-        return manga
-      })
-    } else {
-      return manga
-    }
+const fetchImage = (manga, raw) => {
+  for (const gdt of raw.match(/(gdtm|gdtl)".*?<a href="(.*?)">/ig)) {
+    let [ , , link ] = /(gdtm|gdtl)".*?<a href="(.*?)">/i.exec(gdt)
+    manga.items.push(link)
   }
+}
 
-  let reqHentai = async (uri, method, options) => new Promise((resolve, reject) => {
-    options = Object.assign({
-      'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/59.0.3071.115 Safari/537.36',
-      'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
-      'accept-language': 'th-TH,th;q=0.8,en-US;q=0.6,en;q=0.4,ja;q=0.2',
-      'cache-control': 'no-cache',
-      'pragma': 'no-cache',
-      ':authority': 'e-hentai.org',
-      ':scheme': 'https',
-      'referer': `https://${baseUrl.hostname}/`,
-      'upgrade-insecure-requests': '1'
-    }, options || {})
+let getManga = (link, raw, emit) => {
+  const baseUrl = new URL(link)
+  let fixed = /\/\w{1}\/\d{1,8}\/[0-9a-f]+?\//ig.exec(baseUrl.pathname)
+  if (fixed) link = `https://${baseUrl.hostname}${fixed[0]}`
 
-    wLog(`URL REQUEST: ${uri}`)
-    xhr({
-      url: uri,
-      method: method || 'GET',
-      header: options,
-      jar: jarCookie,
-      // strictSSL: true,
-      // agentOptions: {
-      //   passphrase: 'dvg7po8ai',
-      //   key: fs.readFileSync(path.join(__dirname, 'cert/key.pem')),
-      //   cert: fs.readFileSync(path.join(__dirname, 'cert/cert.pem'))
-      // },
-      timeout: 5000
-    }, async (error, res, body) => {
-      await jarCookieCheck()
-      if (error) {
-        reject(new Error(error))
-        return
-      }
-      let { statusCode } = res
-      wLog(`URL RESPONSE: ${statusCode}`)
-      console.log('error', error)
-      console.log('body', body)
-      if (statusCode === 302 || statusCode === 200) {
-        resolve(body)
-      } else {
-        reject(new Error(statusCode))
-      }
-    })
+  let name = /<div id="gd2">.*?gn">(.*?)<\/.*?gj">(.*?)<\/.*?<\/div>/ig.exec(raw)
+  let language = /Language:.*?class="gdt2">(.*?)&/ig.exec(raw)
+  let size = /File Size:.*?class="gdt2">(.*?)</ig.exec(raw)
+  let length = /Length:.*?gdt2">(.*?).page/ig.exec(raw)
+  let cover = /<div id="gleft">.*?url\((.*?)\)/ig.exec(raw)
+
+  if (!name) throw new Error('manga.name is not found')
+  if (!language) throw new Error('manga.language is not found')
+  if (!size) throw new Error('manga.size is not found')
+  if (!length) throw new Error('manga.page is not found')
+  if (!cover) throw new Error('manga.page is not found')
+
+  let manga = {
+    ref: fixed[0],
+    url: link,
+    name: name[1],
+    cover: cover[1],
+    language: language[1],
+    size: size[1],
+    page: length[1],
+    items: []
+  }
+  let config = settings.get('config') || { user_id: 'guest' }
+  // console.log(config)
+  exHentaiHistory('exhentai/manga', {
+    user_id: config.user_id,
+    name: manga.name,
+    link: manga.url,
+    cover: manga.cover,
+    language: manga.language,
+    size: manga.size,
+    page: manga.page
   })
-
-  return (async () => {
-    if (!/\/\w{1}\/\d{1,8}\/[0-9a-f]+?\//ig.test(baseUrl.pathname)) {
-      throw new Error(`Key missing, or incorrect key provided.`)
-    } else {
-      let fixed = /\/\w{1}\/\d{1,8}\/[0-9a-f]+?\//ig.exec(baseUrl.pathname)
-      const userId = await getCookie('ipb_member_id')
-      console.log('recheck', userId)
-      // if (baseUrl.hostname === 'exhentai.org' && !userId) baseUrl.hostname = 'e-hentai.org'
-      link = `https://${baseUrl.hostname}${fixed[0]}`
-      if (!await getCookie('nw')) await setCookie('/', 'nw=1')
+  // slack(baseUrl.host, manga)
+  fetchImage(manga, raw)
+  let totalPage = Math.ceil(manga.page / manga.items.length)
+  emit.send('INIT_MANGA', { page: 1, total: totalPage })
+  if (manga.items.length !== manga.page) {
+    let all = []
+    for (let i = 1; i < totalPage; i++) {
+      all.push(() => {
+        emit.send('INIT_MANGA', { page: i + 1, total: totalPage })
+        return jarCookieBuild().then(async () => {
+          const raw = await request(`${link}?p=${i}`, { jar: jarCookie })
+          await jarCookieCheck()
+          return fetchImage(manga, raw)
+        })
+      })
     }
+    return async.series(all).then(() => {
+      if (manga.items.length !== parseInt(manga.page)) throw new Error(`manga.items is '${manga.items.length}' and length is '${manga.page}'`)
+      return manga
+    })
+  } else {
+    return manga
+  }
+}
+
+let reqHentai = async (link, method, options) => new Promise((resolve, reject) => {
+  const baseUrl = new URL(link)
+  options = Object.assign({
+    'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/59.0.3071.115 Safari/537.36',
+    'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
+    'accept-language': 'th-TH,th;q=0.8,en-US;q=0.6,en;q=0.4,ja;q=0.2',
+    'cache-control': 'no-cache',
+    'pragma': 'no-cache',
+    ':authority': 'e-hentai.org',
+    ':scheme': 'https',
+    'referer': `https://${baseUrl.hostname}/`,
+    'upgrade-insecure-requests': '1'
+  }, options || {})
+
+  wLog(`URL REQUEST: ${link}`)
+  xhr({
+    url: link,
+    method: method || 'GET',
+    header: options,
+    jar: jarCookie,
+    // strictSSL: true,
+    // agentOptions: {
+    //   passphrase: 'dvg7po8ai',
+    //   key: fs.readFileSync(path.join(__dirname, 'cert/key.pem')),
+    //   cert: fs.readFileSync(path.join(__dirname, 'cert/cert.pem'))
+    // },
+    timeout: 5000
+  }, async (error, res, body) => {
+    await jarCookieCheck()
+    if (error) {
+      reject(new Error(error))
+      return
+    }
+    let { statusCode } = res
+    wLog(`URL RESPONSE: ${statusCode}`)
+    if (statusCode === 302 || statusCode === 200) {
+      resolve(body)
+    } else {
+      reject(new Error(statusCode))
+    }
+  })
+})
+
+export function parseHentai (link, emit) {
+  return (async () => {
+    link = validateURL(link)
+    if (!await getCookie('nw')) await setCookie('/', 'nw=1')
     await jarCookieBuild()
+
     let res = await reqHentai(link)
     if (!/DOCTYPE.html.PUBLIC/ig.test(res)) throw new Error(res)
     let warnMe = /<a href="(.*?)">Never Warn Me Again/ig.exec(res)
     if (warnMe) throw new Error('Never Warn Me Again')
-    return getManga(res)
+    return getManga(link, res, emit)
   })().catch(ex => {
     if (ex.statusCode === 404) {
       if (ex.error) {
-        wLog(`*rare*: https://${baseUrl.hostname}${baseUrl.pathname}`)
+        const baseUrl = new URL(link.trim())
+        wLog(`This gallery has been removed: https://${baseUrl.hostname}${baseUrl.pathname}`)
         throw new Error('This gallery has been removed or is unavailable.')
       } else {
         wError(`*error*: ${link}\n${ex.name.toString()}`)
@@ -432,19 +426,17 @@ export function init (link, emit) {
   })
 }
 
-let httpHeader = {
-  'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/59.0.3071.115 Safari/537.36',
-  'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
-  'accept-language': 'th-TH,th;q=0.8,en-US;q=0.6,en;q=0.4,ja;q=0.2',
-  'cache-control': 'no-cache',
-  'upgrade-insecure-requests': '1'
-}
-
 export async function login (username, password) {
   let res1 = await request({
     url: `https://forums.e-hentai.org/index.php?act=Login&CODE=01`,
     method: 'POST',
-    header: Object.assign(httpHeader, {
+    header: Object.assign({
+      'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/59.0.3071.115 Safari/537.36',
+      'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
+      'accept-language': 'th-TH,th;q=0.8,en-US;q=0.6,en;q=0.4,ja;q=0.2',
+      'cache-control': 'no-cache',
+      'upgrade-insecure-requests': '1'
+    }, {
       'referer': 'https://forums.e-hentai.org/index.php'
     }),
     jar: jarCookie,

@@ -33,7 +33,7 @@ export function server (mainWindow) {
     })
   })
   ipcMain.on('URL_VERIFY', function (e, url) {
-    hentai.init(url, e.sender).then(async manga => {
+    hentai.parseHentai(url, e.sender).then(async manga => {
       // Request Send Manga
       // await touno.api({
       //   url: '/exhentai',

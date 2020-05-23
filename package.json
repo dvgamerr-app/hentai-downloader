@@ -92,7 +92,7 @@
     "cfonts": "^1.2.0",
     "chai": "^4.2.0",
     "chalk": "^2.4.1",
-    "copy-webpack-plugin": "^4.5.2",
+    "copy-webpack-plugin": "^5.1.1",
     "cross-env": "^5.2.1",
     "css-loader": "^1.0.1",
     "del": "^3.0.0",

@@ -436,6 +436,12 @@
           //     nickname: res.data.nickname
           //   })
           // }
+          return new Promise((resolve) => {
+            const delay = setTimeout(() => {
+              clearTimeout(delay)
+              resolve()
+            }, 1500)
+          })
         }
 
         Initialize().then(() => {
@@ -470,9 +476,8 @@
     },
     created () {
       let vm = this
-      vm.setIgneous('cf1734bd9')
       vm.doReload()
-      console.log('igneous', vm.getIgneous())
+
       window.addEventListener('paste', async e => {
         if (!vm.state_verify && !vm.state_download) {
           let data = e.clipboardData.getData('text').trim()

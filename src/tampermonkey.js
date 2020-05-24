@@ -52,7 +52,9 @@
       if (token) {
         addDownloadIcon()
       }
-    } catch (ex) {}
+    } catch (ex) {
+      //
+    }
   }
   script.src = 'https://use.fontawesome.com/abbe6cd72d.js'
   document.getElementsByTagName('head')[0].appendChild(script)

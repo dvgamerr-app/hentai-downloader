@@ -41,9 +41,15 @@ function createWindow () {
     const padding = 10
     if (settings.get('ontop', false)) {
       const screenSize = screen.getPrimaryDisplay().workAreaSize
+      let width = 600
+      let height = 345
+      if (mainWindow) {
+        [ width, height ] = mainWindow.getSize()
+        console.log('screenSize', screenSize, 'width', width, 'height', height)
+      }
       return {
-        x: screenSize.width - mainConfig.width - padding,
-        y: screenSize.height - mainConfig.height - padding + 40
+        x: screenSize.width - width - padding,
+        y: screenSize.height - height - padding
       }
     } else {
       return settings.get('position')
@@ -73,9 +79,8 @@ function createWindow () {
       }
     },
     { type: 'separator' },
-    { label: 'Watch Clipboard', type: 'checkbox', role: 'toggle-clipboard', checked: false, click: onClick },
+    { label: 'Watch Clipboard', type: 'checkbox', role: 'toggle-clipboard', checked: settings.get('clipboard', false), click: onClick },
     { label: 'Auto Download', type: 'checkbox', role: 'auto-dl', visible: false, checked: false, click: onClick },
-    { type: 'separator' },
     { label: 'Exit', role: 'quit' }
   ])
 
@@ -90,7 +95,13 @@ function createWindow () {
   })
 
   const savePosition = () => {
-    const [ x, y ] = mainWindow.getPosition()
+    let [ x, y ] = mainWindow.getPosition()
+    const { width, height } = screen.getPrimaryDisplay().workAreaSize
+    const [ winWidth, winHeight ] = mainWindow.getSize()
+    if (x < 0) x = 0
+    if (x > (width - winWidth)) x = (width - winWidth)
+    if (y < 0) y = 0
+    if (y > (height - winHeight)) y = (height - winHeight)
     settings.set('position', { x, y })
     console.log({ x, y })
   }

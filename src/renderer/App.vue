@@ -17,9 +17,6 @@
               <button v-if="sign.cookie == null" type="button" class="btn btn-sm btn-singin btn-info" @click.prevent="page.signin = true">
                 Login
               </button>
-              <button type="button" class="btn btn-sm btn-refresh btn-outline-info" @click="onRefresh">
-                <i class="fa fa-refresh"></i>
-              </button>
             </div>
           </div>
         </div>
@@ -382,6 +379,7 @@
       },
       onBrowser: () => {
         shell.openExternal(_SERVER_DONATE)
+        // https://www.tampermonkey.net/?ext=dhdg&browser=chrome
       },
       doBack () {
         this.page.signin = false

@@ -1,17 +1,32 @@
-const URL = require('url-parse')
-const fs = require('fs')
-const path = require('path')
-const moment = require('moment')
-const settings = require('electron-settings')
-const axios = require('axios')
-const { default: cookieSupport } = require('axios-cookiejar-support')
-cookieSupport(axios)
+import { clipboard, powerSaveBlocker } from 'electron'
+import URL from 'url-parse'
+import fs from 'fs'
+import path from 'path'
+import moment from 'moment'
+import settings from 'electron-settings'
+import axios from 'axios'
+import cookieSupport from 'axios-cookiejar-support'
+import * as cfg from './lib/config'
 
-const { powerSaveBlocker } = require('electron')
-const cfg = require('./lib/config')
+cookieSupport(axios)
 
 let saveBlockerId = null
 let jarCookie = cfg.loadCookie()
+let timeClip = null
+export const onWatchClipboard = () => {
+  if (settings.get('clipboard', false)) {
+    let data = null
+    timeClip = setInterval(() => {
+      const text = clipboard.readText()
+      if (data !== text) {
+        console.log('clipboard-watch', text)
+        data = text
+      }
+    }, 300)
+  } else if (timeClip) {
+    clearInterval(timeClip)
+  }
+}
 
 const reqHentai = async (link, method, options = {}) => {
   options.header = Object.assign({
@@ -425,7 +440,7 @@ export const download = async (list, directory, emit) => {
           let res = await reqHentai(imageUrl)
           await getImage(res, manga, iManga, iImage, directory, emit)
         } else {
-          await delay(300)
+          await delay(100)
           emit.send('DOWNLOAD_WATCH', { index: iManga, current: filename, total: parseInt(manga.page), finish: parseInt(manga.page) === iImage + 1 })
         }
         iImage++

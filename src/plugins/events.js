@@ -1,23 +1,23 @@
-import { app, clipboard, dialog, ipcMain, ipcRenderer } from 'electron'
+import { app, dialog, ipcMain, ipcRenderer } from 'electron'
+import settings from 'electron-settings'
 import * as hentai from './ehentai.js'
-
-const settings = require('electron-settings')
-// const touno = require('./config')
-// const isDev = process.env.NODE_ENV === 'development'
-// process.env.NODE_ENV === 'development'
 
 let config = settings.get('directory')
 if (!settings.get('directory')) {
   console.log('directory:', config)
   settings.set('directory', app.getPath('downloads'))
 }
-export function onClick (menuItem) {
-  console.log(menuItem)
-}
-export function initMain (mainWindow, appIcon) {
-  const text = clipboard.readText()
-  console.log(text, appIcon)
 
+export function onClick (menuItem) {
+  if (menuItem.role === 'toggle-clipboard') {
+    settings.set('clipboard', menuItem.checked)
+    hentai.onWatchClipboard()
+  }
+}
+
+export function initMain (mainWindow, appIcon) {
+  hentai.onWatchClipboard()
+  console.log(appIcon)
   // settings.delete('config')
   ipcMain.on('SESSION', function (e) {
     hentai.reload().then(() => {
@@ -27,6 +27,7 @@ export function initMain (mainWindow, appIcon) {
         settings.delete('igneous')
         settings.delete('config')
       }
+      
       if (!settings.get('ontop', false)) {
         mainWindow.setAlwaysOnTop(false)
         mainWindow.setMovable(true)

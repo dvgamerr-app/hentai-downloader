@@ -12,7 +12,11 @@ export const saveCookie = (jar) => {
 }
 
 export const loadCookie = () => {
-  return fs.existsSync(fileCookie) ? tough.CookieJar.deserializeSync(JSON.parse(fs.readFileSync(fileCookie))) : null
+  const cookie = new tough.CookieJar()
+  if (fs.existsSync(fileCookie)) {
+    cookie.jar = tough.CookieJar.deserializeSync(JSON.parse(fs.readFileSync(fileCookie)))
+  }
+  return cookie
 }
 
 export const loadToken = () => {

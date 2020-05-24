@@ -1,11 +1,12 @@
-import { app, BrowserWindow, Tray } from 'electron'
+import { app, BrowserWindow, Tray, Menu, screen } from 'electron'
 import express from 'express'
 import cors from 'cors'
+import settings from 'electron-settings'
 import bodyParser from 'body-parser'
 import path from 'path'
 
-import hentai from '../plugins/ehentai.js'
-import * as vEvents from '../plugins/events'
+// import hentai from '../plugins/ehentai.js'
+import { initMain, onClick } from '../plugins/events'
 
 // let appIcon
 let mainWindow
@@ -18,48 +19,91 @@ if (process.env.NODE_ENV !== 'development') {
 }
 
 function createWindow () {
-  /**
-   * Initial window options
-   */
-
   mainConfig = {
     width: 600,
-    height: 360,
+    height: 385,
     minWidth: 600,
-    minHeight: 360,
+    minHeight: 385,
     maxWidth: 600,
-    maxHeight: 360,
+    maxHeight: 385,
     'node-integration': false,
     title: app.getName(),
     icon: path.join(__dirname, '../../build/icons/icon.ico'),
     show: true,
     // frame: false,
-    movable: true,
+    movable: false,
     resizable: false,
-    alwaysOnTop: false,
+    alwaysOnTop: true,
     skipTaskbar: false,
     transparent: false
   }
+  const getPosition = () => {
+    const padding = 10
+    if (settings.get('ontop', false)) {
+      const screenSize = screen.getPrimaryDisplay().workAreaSize
+      return {
+        x: screenSize.width - mainConfig.width - padding,
+        y: screenSize.height - mainConfig.height - padding + 40
+      }
+    } else {
+      return settings.get('position')
+    }
+  }
 
-  // const padding = 10
-  // var screenSize = screen.getPrimaryDisplay().workAreaSize
-  // mainConfig.x = screenSize.width - mainConfig.width - padding
-  // mainConfig.y = screenSize.height - mainConfig.height - padding
-
-  mainWindow = new BrowserWindow(mainConfig)
+  mainWindow = new BrowserWindow(Object.assign(mainConfig, getPosition()))
   mainWindow.loadURL(winURL)
   mainWindow.setMenu(null)
-
-  let appIcon = new Tray(path.join(__dirname, '../../build/icons/16x16.png'))
+  mainWindow.setSkipTaskbar(settings.get('ontop', false))
+  let appIcon = new Tray(path.join(__dirname, process.env.NODE_ENV === 'development' ? '../../static/16x16.png' :'static/16x16.png' ))
   let hideWindow = false
 
+  const contextMenu = Menu.buildFromTemplate([
+    {
+      label: 'Always On Top',
+      sublabel: 'and lock window mode.',
+      type: 'checkbox',
+      checked: settings.get('ontop', false),
+      click: (menuItem) => {
+        settings.set('ontop', menuItem.checked)
+        mainWindow.setAlwaysOnTop(menuItem.checked)
+        mainWindow.setMovable(!menuItem.checked)
+        mainWindow.setSkipTaskbar(menuItem.checked)
+        const position = getPosition()
+        if (position) mainWindow.setPosition(position.x, position.y)
+      }
+    },
+    { type: 'separator' },
+    { label: 'Watch Clipboard', type: 'checkbox', role: 'toggle-clipboard', checked: false, click: onClick },
+    { label: 'Auto Download', type: 'checkbox', role: 'auto-dl', visible: false, checked: false, click: onClick },
+    { type: 'separator' },
+    { label: 'Exit', role: 'quit' }
+  ])
+
+  appIcon.setContextMenu(contextMenu)
   appIcon.setToolTip('Hentai Downloader 2.2.0')
-  appIcon.on('click', (e) => {
+  appIcon.on('click', () => {
     if (hideWindow) {
       mainWindow.show()
     } else {
       mainWindow.hide()
     }
+  })
+
+  const savePosition = () => {
+    const [ x, y ] = mainWindow.getPosition()
+    settings.set('position', { x, y })
+    console.log({ x, y })
+  }
+  let moveId = null
+  mainWindow.on('moved', () => {
+    if (settings.get('ontop', false)) return
+    if (moveId) clearTimeout(moveId)
+    moveId = setTimeout(savePosition, 200)
+  })
+  mainWindow.on('move', () => {
+    if (settings.get('ontop', false)) return
+    if (moveId) clearTimeout(moveId)
+    moveId = setTimeout(savePosition, 200)
   })
 
   mainWindow.on('show', () => {
@@ -75,10 +119,10 @@ function createWindow () {
     mainWindow = null
   })
 
-  vEvents.server(mainWindow)
+  initMain(mainWindow, appIcon)
 }
 
-app.on('ready', createWindow)
+app.on('ready', () => createWindow())
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
@@ -87,9 +131,7 @@ app.on('window-all-closed', () => {
 })
 
 app.on('activate', () => {
-  if (mainWindow === null) {
-    createWindow()
-  }
+  if (mainWindow === null) createWindow()
 })
 
 router.use(cors())
@@ -99,9 +141,9 @@ router.use(bodyParser.urlencoded({ extended: false }))
 router.post('/token', async (req, res) => {
   try {
     if (req.body) {
-      const { cookie } = req.body
-      console.log('TOKEN:', cookie)
-      console.log('setCookie:', hentai.setCookie)
+      // const { cookie } = req.body
+      // console.log('TOKEN:', cookie)
+      // console.log('setCookie:', hentai.setCookie)
       res.json({ token: true })
     } else {
       res.json({ token: false })

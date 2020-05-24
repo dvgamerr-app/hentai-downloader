@@ -1,6 +1,6 @@
 import request from '../lib/request'
 
-export default async (step03) => {
+export default async () => {
   if (!global._appToken.step03) return
 
   console.log(`[FORUMS] logout-get: ${global._appToken.step03}`)

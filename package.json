@@ -7,8 +7,6 @@
   "license": "ISC",
   "main": "./dist/electron/main.js",
   "scripts": {
-    "test": "npm run unit",
-    "unit": "karma start test/unit/karma.conf.js",
     "build": "node .electron-vue/build.js && electron-builder",
     "build:dir": "node .electron-vue/build.js && electron-builder --dir",
     "build:clean": "cross-env BUILD_TARGET=clean node .electron-vue/build.js",
@@ -58,6 +56,7 @@
   "dependencies": {
     "async-q": "^0.3.1",
     "axios": "^0.19.2",
+    "axios-cookiejar-support": "^1.0.0",
     "body-parser": "^1.19.0",
     "bootstrap": "^4.5.0",
     "cors": "^2.8.5",
@@ -115,7 +114,6 @@
     "extract-text-webpack-plugin": "^3.0.2",
     "file-loader": "^0.11.2",
     "html-webpack-plugin": "^2.30.1",
-    "karma-chai": "^0.1.0",
     "karma-sourcemap-loader": "^0.3.7",
     "node-loader": "^0.6.0",
     "precss": "^3.1.2",

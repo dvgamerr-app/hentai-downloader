@@ -1,4 +1,4 @@
-import { app, dialog, ipcMain, ipcRenderer } from 'electron'
+import { app, clipboard, dialog, ipcMain, ipcRenderer } from 'electron'
 import * as hentai from './ehentai.js'
 
 const settings = require('electron-settings')
@@ -14,7 +14,10 @@ if (!settings.get('directory')) {
 export function onClick (menuItem) {
   console.log(menuItem)
 }
-export function initMain (mainWindow) {
+export function initMain (mainWindow, appIcon) {
+  const text = clipboard.readText()
+  console.log(text, appIcon)
+
   // settings.delete('config')
   ipcMain.on('SESSION', function (e) {
     hentai.reload().then(() => {
@@ -23,6 +26,10 @@ export function initMain (mainWindow) {
       if (!data) {
         settings.delete('igneous')
         settings.delete('config')
+      }
+      if (!settings.get('ontop', false)) {
+        mainWindow.setAlwaysOnTop(false)
+        mainWindow.setMovable(true)
       }
       e.sender.send('SESSION', data ? data.value : null)
     }).catch(ex => {

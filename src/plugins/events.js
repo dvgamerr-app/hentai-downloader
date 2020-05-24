@@ -11,20 +11,26 @@ if (!settings.get('directory')) {
   console.log('directory:', config)
   settings.set('directory', app.getPath('downloads'))
 }
-
-export function server (mainWindow) {
+export function onClick (menuItem) {
+  console.log(menuItem)
+}
+export function initMain (mainWindow) {
   // settings.delete('config')
   ipcMain.on('SESSION', function (e) {
     hentai.reload().then(() => {
       return hentai.cookie('ipb_member_id')
     }).then(data => {
+      if (!data) {
+        settings.delete('igneous')
+        settings.delete('config')
+      }
       e.sender.send('SESSION', data ? data.value : null)
     }).catch(ex => {
       console.log(ex)
       e.sender.send('SESSION', null)
     })
   })
-  ipcMain.on('CHANGE_DIRECTORY', function (e, source) {
+  ipcMain.on('CHANGE_DIRECTORY', function (e) {
     dialog.showOpenDialog(mainWindow, {
       properties: ['openDirectory']
     }, fileNames => {
@@ -46,7 +52,7 @@ export function server (mainWindow) {
     })
   })
   ipcMain.on('DOWNLOAD_BEGIN', function (e, sender) {
-    hentai.emiter.download(sender.manga, sender.directory, e.sender).then(() => {
+    hentai.download(sender.manga, sender.directory, e.sender).then(() => {
       e.sender.send('DOWNLOAD_COMPLATE')
     }).catch(e => {
       console.log('DOWNLOAD_COMPLATE', e)
@@ -102,8 +108,8 @@ export const client = {
           console.log('ConfigSaved :: ', config)
           settings.set('config', Object.assign(settings.get('config'), config))
         },
-        ExUser: (data) => {
-          return new Promise((resolve, reject) => {
+        ExUser: () => {
+          return new Promise((resolve) => {
             console.log('ipc-send::CHANGE_DIRECTORY')
             ipcRenderer.send('CHANGE_DIRECTORY')
             ipcRenderer.once('CHANGE_DIRECTORY', (e, dir) => {
@@ -113,7 +119,7 @@ export const client = {
           })
         },
         CANCEL: () => {
-          return new Promise((resolve, reject) => {
+          return new Promise((resolve) => {
             console.log('ipc-remove::CANCEL')
             ipcRenderer.removeAllListeners('INIT_MANGA')
             ipcRenderer.removeAllListeners('URL_VERIFY')
@@ -124,7 +130,7 @@ export const client = {
           })
         },
         CHANGE_DIRECTORY: () => {
-          return new Promise((resolve, reject) => {
+          return new Promise((resolve) => {
             console.log('ipc-send::CHANGE_DIRECTORY')
             ipcRenderer.send('CHANGE_DIRECTORY')
             ipcRenderer.once('CHANGE_DIRECTORY', (e, dir) => {
@@ -134,7 +140,7 @@ export const client = {
           })
         },
         URL_VERIFY: url => {
-          return new Promise((resolve, reject) => {
+          return new Promise((resolve) => {
             ipcRenderer.once('URL_VERIFY', (e, res) => {
               console.log('ipc-once::URL_VERIFY:', res)
               resolve(res)
@@ -151,14 +157,14 @@ export const client = {
           })
         },
         DOWNLOAD: (manga, events) => {
-          return new Promise((resolve, reject) => {
+          return new Promise((resolve) => {
             ipcRenderer.removeAllListeners('DOWNLOAD_WATCH')
             ipcRenderer.removeAllListeners('DOWNLOAD_COMPLATE')
             ipcRenderer.on('DOWNLOAD_WATCH', (e, manga) => {
               console.log('ipc-on::DOWNLOAD_WATCH:', manga)
               return events(e, manga)
             })
-            ipcRenderer.on('DOWNLOAD_COMPLATE', (e, data) => {
+            ipcRenderer.on('DOWNLOAD_COMPLATE', () => {
               console.log('ipc-on::DOWNLOAD_COMPLATE')
               resolve()
             })
@@ -167,7 +173,7 @@ export const client = {
           })
         },
         LOGIN: (user, pass) => {
-          return new Promise((resolve, reject) => {
+          return new Promise((resolve) => {
             ipcRenderer.removeAllListeners('LOGIN')
             ipcRenderer.on('LOGIN', (e, data) => {
               console.log('ipc-on::LOGIN')
@@ -178,7 +184,7 @@ export const client = {
           })
         },
         SESSION: () => {
-          return new Promise((resolve, reject) => {
+          return new Promise((resolve) => {
             ipcRenderer.removeAllListeners('SESSION')
             console.log('ipc-send::SESSION')
             ipcRenderer.send('SESSION')

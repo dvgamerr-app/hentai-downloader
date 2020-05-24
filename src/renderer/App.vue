@@ -305,10 +305,10 @@
         vm.state_name = 'Loading...'
         vm.DOWNLOAD({ manga: vm.manga, directory: vm.directory_name }, vm.onWatch).then(() => vm.urlDone(true))
       },
-      onMouseOver (key) {
+      onMouseOver () {
         // console.log('onMouseOver', key)
       },
-      onMouseLeave (key) {
+      onMouseLeave () {
         // console.log('onMouseLeave', key)
       },
       onWatch (e, manga) {
@@ -485,6 +485,7 @@
                   await vm.urlBegin()
                 }
               } catch (ex) {
+                console.warn(ex)
               }
             }
             vm.$refs.url.focus()

@@ -87,13 +87,15 @@ function build () {
     pack(mainConfig).then((result) => {
       results += result + '\n\n'
       spin.succeed('electron', { text: 'Success!' });
-    }).catch(() => {
+    }).catch((ex) => {
+      console.error(`\n${ex}\n`)
       spin.fail('electron', { text: 'Fail :(' });
     }),
     pack(rendererConfig).then((result) => {
       results += result + '\n\n'
       spin.succeed('renderer', { text: 'Success!' });
-    }).catch(() => {
+    }).catch((ex) => {
+      console.error(`\n${ex}\n`)
       spin.fail('renderer', { text: 'Fail :(' });
     })
   ]).catch(ex => {
@@ -101,8 +103,8 @@ function build () {
     console.error(`\n${ex}\n`)
     process.exit(1)
   }).finally(() => {
+    // console.log(`\n\n${results}`)
     process.stdout.write('\x1B[2J\x1B[0f')
-    console.log(`\n\n${results}`)
     console.log(`${okayLog}take it away ${chalk.yellow('`electron-builder`')}\n`)
     process.exit()
   })

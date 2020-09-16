@@ -17,15 +17,17 @@ const winURL = process.env.NODE_ENV === 'development' ? `http://localhost:9080` 
 if (process.env.NODE_ENV !== 'development') {
   global.__static = path.join(__dirname, '/static').replace(/\\/g, '\\\\')
 }
+let width = 600
+let height = (process.env.NODE_ENV !== 'development') ? 345 : 385
 
 function createWindow () {
   mainConfig = {
-    width: 600,
-    height: 385,
-    minWidth: 600,
-    minHeight: 385,
-    maxWidth: 600,
-    maxHeight: 385,
+    width: width,
+    height: height,
+    minWidth: width,
+    minHeight: height,
+    maxWidth: width,
+    maxHeight: height,
     'node-integration': false,
     title: app.getName(),
     icon: path.join(__dirname, '../../build/icons/icon.ico'),
@@ -41,8 +43,6 @@ function createWindow () {
     const padding = 10
     if (settings.get('ontop', false)) {
       const screenSize = screen.getPrimaryDisplay().workAreaSize
-      let width = 600
-      let height = 385
       if (mainWindow) {
         [ width, height ] = mainWindow.getSize()
         console.log('screenSize', screenSize, 'width', width, 'height', height)

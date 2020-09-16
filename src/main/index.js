@@ -42,7 +42,7 @@ function createWindow () {
     if (settings.get('ontop', false)) {
       const screenSize = screen.getPrimaryDisplay().workAreaSize
       let width = 600
-      let height = 345
+      let height = 385
       if (mainWindow) {
         [ width, height ] = mainWindow.getSize()
         console.log('screenSize', screenSize, 'width', width, 'height', height)
@@ -74,6 +74,7 @@ function createWindow () {
         mainWindow.setAlwaysOnTop(menuItem.checked)
         mainWindow.setMovable(!menuItem.checked)
         mainWindow.setSkipTaskbar(menuItem.checked)
+        // mainWindow.set
         const position = getPosition()
         if (position) mainWindow.setPosition(position.x, position.y)
       }

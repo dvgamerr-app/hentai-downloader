@@ -70,7 +70,7 @@ export function initMain (mainWindow, appIcon) {
     if (account.username.trim() !== '' || account.password.trim() !== '') {
       console.log('LOGIN', account)
       hentai.login(account.username.trim(), account.password.trim()).then(raw => {
-        let getName = /You are now logged in as:(.*?)<br/ig.exec(raw.body)
+        let getName = /You are now logged in as:(.*?)<br/ig.exec(raw)
         if (getName) {
           console.log(`Login: ${getName[1]}`)
           settings.set('config', { username: account.username, password: account.password, name: getName[1], cookie: true })
@@ -82,7 +82,7 @@ export function initMain (mainWindow, appIcon) {
           // })
           e.sender.send('LOGIN', { success: true, name: getName[1], cookie: true })
         } else {
-          let message = /"errorwrap"[\w\W]*?<p>(.*?)</ig.exec(raw.body)[1]
+          let message = /"errorwrap"[\w\W]*?<p>(.*?)</ig.exec(raw)[1]
           e.sender.send('LOGIN', { success: false, message: message })
         }
       }).catch(ex => {
@@ -180,7 +180,7 @@ export const client = {
             ipcRenderer.send('DOWNLOAD_BEGIN', manga)
           })
         },
-        LOGIN: (user, pass) => {
+        LOGIN: (igneous, member, hash) => {
           return new Promise((resolve) => {
             ipcRenderer.removeAllListeners('LOGIN')
             ipcRenderer.on('LOGIN', (e, data) => {
@@ -188,7 +188,7 @@ export const client = {
               resolve(data)
             })
             console.log('ipc-send::LOGIN')
-            ipcRenderer.send('LOGIN', { username: user, password: pass })
+            ipcRenderer.send('LOGIN', { igneous, member, hash })
           })
         },
         SESSION: () => {

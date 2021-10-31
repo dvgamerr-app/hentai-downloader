@@ -34,9 +34,10 @@
                 </p>
               </div>
               <div v-if="!state_signin" class="col-sm-4 form-group">
-                <label for="txtUsername" style="margin-bottom: 0px;">Sign-In exhentai.org</label>
-                <input type="text" class="form-control" id="txtUsername" placeholder="Username" v-model="sign.username">
-                <input type="text" class="form-control" id="txtPassword" placeholder="Password" v-model="sign.password">
+                <label for="txtUsername" style="margin-bottom: 0px;">Your cookie config.</label>
+                <input type="text" class="form-control" id="txtUsername" placeholder="Username" v-model="sign.member">
+                <input type="text" class="form-control" id="txtPassword" placeholder="Password" v-model="sign.hash">
+                <input type="text" class="form-control" id="txtIgneous" placeholder="Igneous" v-model="sign.igneous">
               </div>
               <div v-if="!state_signin" class="col-sm-3 item">
                 <button type="submit" class="btn btn-sm btn-success"><i class="fa fa-sign-in"></i> Sign-In</button>
@@ -192,8 +193,9 @@
         sign: {
           header: '',
           cookie: null,
-          username: 'hentai-dlll',
-          password: 'asdasdasd',
+          igneous: '',
+          member: 'hentai-dlll',
+          hash: 'asdasdasd',
           nickname: ''
         },
         page: {
@@ -359,16 +361,16 @@
         // window.open('https://forums.e-hentai.org/index.php?s=5fa113c1ae71be8c9540e5d33d280f2d&act=Login&CODE=00')
         let vm = this
         vm.state_signin = true
-        // console.log('LOGIN:', vm.sign.username, vm.sign.password)
-        vm.LOGIN(vm.sign.username, vm.sign.password).then(data => {
+        // console.log('LOGIN:', vm.sign.member, vm.sign.hash)
+        vm.LOGIN(vm.sign.igneous, vm.sign.member, vm.sign.hash).then(data => {
           vm.state_signin = false
           if (data.success) {
             vm.sign.cookie = data.cookie
             vm.sign.name = data.name
             vm.page.signin = false
           } else {
-            vm.sign.username = ''
-            vm.sign.password = ''
+            vm.sign.member = ''
+            vm.sign.hash = ''
             vm.error_message = data.message
           }
           // console.log('DATA:', data)
@@ -394,8 +396,8 @@
         this.directory_name = config.directory
         this.sign.cookie = config.cookie
         this.sign.nickname = config.nickname || ''
-        this.sign.username = config.username || ''
-        this.sign.password = config.password || ''
+        this.sign.member = config.username || ''
+        this.sign.hash = config.password || ''
         this.sign.name = config.name || ''
         this.$nextTick(() => {
           if (!vm.page.option && !vm.landing) vm.$refs.url.focus()
@@ -691,7 +693,7 @@
   .form.signin > .form-group {
     margin-bottom: 0px !important;
   }
-  #txtUsername, #txtPassword {
+  #txtIgneous, #txtUsername, #txtPassword {
     padding: 4px;
     height: 20px;
     font-size: 10px;

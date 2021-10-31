@@ -1,6 +1,6 @@
 import { clipboard, powerSaveBlocker } from 'electron'
 import URL from 'url-parse'
-import fs from 'fs'
+import fs, { existsSync } from 'fs'
 import path from 'path'
 import moment from 'moment'
 import settings from 'electron-settings'
@@ -235,7 +235,7 @@ let getImage = async (res, manga, l, index, directory, emit) => {
         url: image,
         method: 'GET',
         responseType: 'stream',
-        jar: cookie,
+        // jar: cookie,
         withCredentials: true,
         timeout: 10000,
         headers: {
@@ -251,7 +251,7 @@ let getImage = async (res, manga, l, index, directory, emit) => {
           'Server': 'cloudflare'
         }
       })
-      console.log('response', response)
+      // console.log('response', response)
       isSuccess = true
       resImage = response.data
       // // clearTimeout(cancelTime)
@@ -261,26 +261,26 @@ let getImage = async (res, manga, l, index, directory, emit) => {
       const asyncWriterImage = (timeout = 30) => new Promise((resolve, reject) => {
         let cancelTime = setTimeout(() => {
           writer.close()
-          resImage.close()
+          // resImage.close()
           reject(new Error('Operation canceled.'))
         }, timeout * 1000)
         resImage.on('error', ex => {
           clearTimeout(cancelTime)
           writer.close()
-          resImage.close()
+          // resImage.close()
           reject(new Error(`Download:: ${ex.toString()}`))
         })
         writer.on('error', (ex) => {
           clearTimeout(cancelTime)
           writer.close()
-          resImage.close()
+          // resImage.close()
           reject(new Error(`Writer:: ${ex.toString()}`))
         })
 
         writer.on('finish', () => {
           clearTimeout(cancelTime)
           writer.close()
-          resImage.close()
+          // resImage.close()
           resolve()
         })
       })
@@ -435,7 +435,7 @@ export const download = async (list, directory, emit) => {
       for await (const imageUrl of manga.items) {
         const filename = getFilename(iImage + 1, manga.page)
         const name = manga.name.replace(/[/\\|.:?<>"]/ig, '')
-        const exisFile = ext => `${path.join(directory, name)}/${filename}.${ext}`
+        const exisFile = ext => existsSync(`${path.join(directory, name)}/${filename}.${ext}`)
         if (!exisFile('jpg') && !exisFile('png') && !exisFile('gif')) {
           let res = await reqHentai(imageUrl)
           await getImage(res, manga, iManga, iImage, directory, emit)
@@ -551,7 +551,8 @@ export function parseHentai (link, emit) {
   return (async () => {
     link = validateURL(link)
     console.log('validateURL', link)
-    if (!await getCookie('nw')) await setCookie('/', 'nw=1')
+    let memberId = await getCookie('ipb_member_id')
+    if (memberId && !await getCookie('nw')) await setCookie('/', 'nw=1')
     console.log('getCookie')
 
     console.log('reqHentai', link)

@@ -35,8 +35,8 @@
               </div>
               <div v-if="!state_signin" class="col-sm-4 form-group">
                 <label for="txtUsername" style="margin-bottom: 0px;">Your cookie config.</label>
-                <input type="text" class="form-control" id="txtUsername" placeholder="Username" v-model="sign.member">
-                <input type="text" class="form-control" id="txtPassword" placeholder="Password" v-model="sign.hash">
+                <!-- <input type="text" class="form-control" id="txtUsername" placeholder="Username" v-model="sign.member"> -->
+                <!-- <input type="text" class="form-control" id="txtPassword" placeholder="Password" v-model="sign.hash"> -->
                 <input type="text" class="form-control" id="txtIgneous" placeholder="Igneous" v-model="sign.igneous">
               </div>
               <div v-if="!state_signin" class="col-sm-3 item">

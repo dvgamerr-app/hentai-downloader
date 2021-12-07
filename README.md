@@ -5,6 +5,10 @@
 ![GitHub last commit (branch)](https://img.shields.io/github/last-commit/touno-io/hentai-downloader/master.svg?style=flat-square)
 ![MIT](https://img.shields.io/dub/l/vibe-d.svg?style=flat-square)
 
+## Community
+- [Discord](https://discord.gg/4GSnfVCqYb)
+
+
 ## Overview
 โปรแกรมดาวน์โหลดมังงะจาก `e-hentai.org` ได้โดยไม่ต้องปั้ม Credits และสามารถเพิ่มคิวได้เรื่อยๆ และตรวจจับ clipboard ได้จากการ copy และ paste ที่หน้าโปรแกรม ในรูปแบบ บรรทัดละเรื่อง 
 

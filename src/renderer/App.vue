@@ -69,14 +69,17 @@
               </div>
             </div>
             <div class="col-sm-4" style="text-align:right;">
-              <div class="btn-group" role="group">
+              <div class="btn-group" role="group" style="margin-bottom:2px">
                 <button :disabled="state_verify || (!directory_name && state_name === 'Download')" type="button" class="btn btn-sm" 
                   :class="!state_verify ? 'btn-success' : 'btn-default'" 
-                  style="padding: 2px 12px;width: 100px; font-size:0.7rem;line-height:9px;" @click="onQueue">
+                  style="width: 100px;height: 29.98px;" @click="onQueue">
                   <i :class="['fa', state_icon]"  aria-hidden="true"></i> {{state_name}}
                 </button>
                 <button :disabled="state_verify && state_name !== 'Loading...'" type="button" class="btn btn-default" :class="[state_name === 'Loading...' ? 'text-danger' : '']" style="padding: 5px 11px;" @click="onCancel">
                   <i :class="['fa', state_name !== 'Loading...' ? 'fa-gear' : 'fa-times']" aria-hidden="true"></i>
+                </button>
+                <button :disabled="state_verify && state_name !== 'Loading...'" type="button" class="btn btn-default" :class="[state_name === 'Loading...' ? 'text-danger' : '']" style="padding: 5px 11px; margin-left: 5px;" @click="onCancel">
+                  <i :class="['fa', state_name !== 'Loading...' ? 'fa-history' : 'fa-times']" aria-hidden="true"></i>
                 </button>
               </div>
             </div>
@@ -542,7 +545,7 @@
     font-weight: bold;
   }
   input.input-url {
-    height: calc(1.60625rem + 2px);
+    /* height: calc(1.60625rem + 2px); */
   }
   input.input-sm, input.input-sm:focus {
     color: #000;
@@ -552,7 +555,7 @@
   }
   .fa-input-left, .fa-input-right {
     position: absolute;
-    top: 0px;
+    top: 1px;
   }
   .fa-input-left {
     font-size: 0.8rem;

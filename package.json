@@ -134,7 +134,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/touno-project/app.exhentai-downloader.git"
+    "url": "git+https://github.com/touno-io/hentai-downloader.git"
   },
   "keywords": [
     "exhentai",
@@ -145,7 +145,7 @@
     "doujin"
   ],
   "bugs": {
-    "url": "https://github.com/touno-project/app.exhentai-downloader/issues"
+    "url": "https://github.com/touno-io/hentai-downloader/issues"
   },
-  "homepage": "https://github.com/touno-project/app.exhentai-downloader#readme"
+  "homepage": "https://github.com/touno-io/hentai-downloader#readme"
 }

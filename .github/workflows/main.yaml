@@ -40,4 +40,3 @@ jobs:
           node-version: '10.20.1'
       - run: npm i
       - run: npm run build
-      - run: ls -al ./build

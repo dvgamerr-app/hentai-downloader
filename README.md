@@ -1,8 +1,7 @@
 # Hentai Downloader ![Version](https://img.shields.io/github/package-json/v/touno-io/hentai-downloader?label=latest&style=flat-square)
 
 ![Build](https://img.shields.io/github/workflow/status/touno-io/hentai-downloader/Multiplatform%20Build?style=flat-square)
-![GitHub top language](https://img.shields.io/github/languages/top/badges/shields.svg?style=flat-square)
-![GitHub last commit (branch)](https://img.shields.io/github/last-commit/touno-io/hentai-downloader/master.svg?style=flat-square)
+![GitHub last commit (branch)](https://img.shields.io/github/last-commit/touno-io/hentai-downloader/main.svg?style=flat-square)
 ![MIT](https://img.shields.io/dub/l/vibe-d.svg?style=flat-square)
 ![Node](https://img.shields.io/badge/node-10.20.1-green?style=flat-square)
 

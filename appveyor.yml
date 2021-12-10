@@ -23,8 +23,6 @@ install:
 build_script:
   - npm run build
 
-test: off
-
 artifacts:
   - path: 'build\*.exe'
   

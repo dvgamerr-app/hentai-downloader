@@ -23,6 +23,7 @@ env:
 jobs:
   win64:
     name: 'Windows 64-bit'
+    runs-on: 'windows-latest'
     env:
       WINDOWS_DEPS_VERSION: '2019'
       WINDOWS_DEPS_CACHE_VERSION: '2'
@@ -43,6 +44,7 @@ jobs:
 
   win32:
     name: 'Windows 32-bit'
+    runs-on: 'windows-latest'
     env:
       WINDOWS_DEPS_VERSION: '2019'
       WINDOWS_DEPS_CACHE_VERSION: '2'

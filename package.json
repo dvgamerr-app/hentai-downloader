@@ -1,5 +1,5 @@
 {
-  "name": "exhentai-downloader",
+  "name": "hentai-downloader",
   "title": "Hentai Downloader",
   "version": "2.2.0",
   "author": "Kananek Thongkam <info.dvgamer@gmail.com>",
@@ -22,7 +22,7 @@
   },
   "build": {
     "productName": "Hentai Downloader",
-    "appId": "io.touno.exhentai.downloader.app",
+    "appId": "io.touno.hentai.downloader.app",
     "directories": {
       "output": "build"
     },
@@ -138,6 +138,7 @@
   },
   "keywords": [
     "exhentai",
+    "e-hentai",
     "hentai",
     "downloader",
     "manga",

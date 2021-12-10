@@ -25,6 +25,7 @@ jobs:
     name: 'Windows 32-bit'
     runs-on: 'windows-latest'
     env:
+      GH_TOKEN: ${{secrets.gh_token}}
       WINDOWS_DEPS_VERSION: '2019'
       WINDOWS_DEPS_CACHE_VERSION: '2'
     steps:

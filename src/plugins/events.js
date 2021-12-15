@@ -20,23 +20,23 @@ export function initMain (mainWindow, appIcon) {
   console.log(appIcon)
   // settings.delete('config')
   ipcMain.on('SESSION', function (e) {
-    hentai.reload().then(() => {
-      return hentai.cookie('ipb_member_id')
-    }).then(data => {
-      if (!data) {
-        settings.delete('igneous')
-        settings.delete('config')
-      }
+    // hentai.reload().then(() => {
+    //   return hentai.cookie('ipb_member_id')
+    // }).then(data => {
+    //   if (!data) {
+    //     settings.delete('igneous')
+    //     settings.delete('config')
+    //   }
       
-      if (!settings.get('ontop', false)) {
-        mainWindow.setAlwaysOnTop(false)
-        mainWindow.setMovable(true)
-      }
-      e.sender.send('SESSION', data ? data.value : null)
-    }).catch(ex => {
-      console.log(ex)
+    //   if (!settings.get('ontop', false)) {
+    //     mainWindow.setAlwaysOnTop(false)
+    //     mainWindow.setMovable(true)
+    //   }
       e.sender.send('SESSION', null)
-    })
+    // }).catch(ex => {
+    //   console.log(ex)
+    //   e.sender.send('SESSION', null)
+    // })
   })
   ipcMain.on('CHANGE_DIRECTORY', function (e) {
     dialog.showOpenDialog(mainWindow, {
@@ -66,32 +66,67 @@ export function initMain (mainWindow, appIcon) {
       console.log('DOWNLOAD_COMPLATE', e)
     })
   })
-  ipcMain.on('LOGIN', function (e, account) {
-    if (account.username.trim() !== '' || account.password.trim() !== '') {
-      console.log('LOGIN', account)
-      hentai.login(account.username.trim(), account.password.trim()).then(raw => {
-        let getName = /You are now logged in as:(.*?)<br/ig.exec(raw)
-        if (getName) {
-          console.log(`Login: ${getName[1]}`)
-          settings.set('config', { username: account.username, password: account.password, name: getName[1], cookie: true })
-          // hentai.cookie('ipb_member_id').then(data => {
-          //   e.sender.send('SESSION', data)
-          // }).catch(ex => {
-          //   console.log(ex)
-          //   e.sender.send('SESSION', null)
-          // })
-          e.sender.send('LOGIN', { success: true, name: getName[1], cookie: true })
-        } else {
-          let message = /"errorwrap"[\w\W]*?<p>(.*?)</ig.exec(raw)[1]
-          e.sender.send('LOGIN', { success: false, message: message })
-        }
-      }).catch(ex => {
-        console.log(ex)
-        e.sender.send('LOGIN', { success: false, message: ex.message })
-      })
-    } else {
-      e.sender.send('LOGIN', { success: false, message: 'This field is empty.' })
+  ipcMain.on('LOGIN', function (e, cookieString) {
+    settings.set('cookie', cookieString)
+    console.log(`Login: ${cookieString}`)
+    const result = {
+      success: true,
+      igneous: null,
+      ipb_member_id: null,
+      ipb_pass_hash: null
     }
+
+    settings.delete('igneous')
+    settings.delete('ipb_member_id')
+    settings.delete('ipb_pass_hash')
+
+    for (const cookie of cookieString.split(';')) {
+      const [ key, value ] = cookie.split('=')
+
+      if (key.trim() == 'igneous') {
+        result.igneous = value.trim()
+        settings.set('igneous', value.trim())
+      }
+      
+      else if (key.trim() == 'ipb_member_id') {
+        result.ipb_member_id = value.trim()
+        settings.set('ipb_member_id', value.trim())
+      }
+      
+      else if (key.trim() == 'ipb_pass_hash') {
+        result.ipb_pass_hash = value.trim()
+        settings.set('ipb_pass_hash', value.trim())
+      }
+    }
+
+    e.sender.send('LOGIN', result)
+    
+    // if (igneous !== '') {
+    //   console.log('igneous', igneous)
+    //   hentai.login(igneous).then(() => {
+    //     // let getName = /You are now logged in as:(.*?)<br/ig.exec(raw)
+    //     // if (getName) {
+    //     console.log(`Login: ${igneous}`)
+    //     settings.set('igneous', igneous)
+    //     // settings.set('config', { username: igneous.username, password: igneous.password, igneous: igneous, cookie: true })
+    //     // hentai.cookie('ipb_member_id').then(data => {
+    //     //   e.sender.send('SESSION', data)
+    //     // }).catch(ex => {
+    //     //   console.log(ex)
+    //     //   e.sender.send('SESSION', null)
+    //     // })
+    //     e.sender.send('LOGIN', { success: true, igneous })
+    //   // } else {
+    //     //   let message = /"errorwrap"[\w\W]*?<p>(.*?)</ig.exec(raw)[1]
+    //     //   e.sender.send('LOGIN', { success: false, message: message })
+    //     // }
+    //   }).catch(ex => {
+    //     console.log(ex)
+    //     e.sender.send('LOGIN', { success: false, message: ex.message })
+    //   })
+    // } else {
+    //   e.sender.send('LOGIN', { success: false, message: 'This field is empty.' })
+    // }
   })
 }
 export const client = {
@@ -99,18 +134,18 @@ export const client = {
   install: Vue => {
     Vue.mixin({
       methods: {
-        getIgneous: () => {
-          return settings.get('igneous')
-        },
-        setIgneous: (igneous) => {
-          return settings.set('igneous', igneous)
+        clearCookie: () => {
+          settings.delete('cookie')
+          settings.delete('igneous')
+          settings.delete('ipb_member_id')
+          settings.delete('ipb_pass_hash')
         },
         ConfigLoaded: () => {
-          const config = settings.get('config') || {}
-          const directory = settings.get('directory')
-          console.log('Config :: ', config)
-          console.log('Config :: ', directory)
-          return Object.assign(config, { directory })
+          return Object.assign(settings.get('config') || {}, {
+            directory: settings.get('directory'),
+            igneous: settings.get('igneous'),
+            cookie: settings.get('cookie')
+          })
         },
         ConfigSaved: config => {
           console.log('ConfigSaved :: ', config)
@@ -180,7 +215,7 @@ export const client = {
             ipcRenderer.send('DOWNLOAD_BEGIN', manga)
           })
         },
-        LOGIN: (igneous, member, hash) => {
+        LOGIN: (cookie) => {
           return new Promise((resolve) => {
             ipcRenderer.removeAllListeners('LOGIN')
             ipcRenderer.on('LOGIN', (e, data) => {
@@ -188,7 +223,7 @@ export const client = {
               resolve(data)
             })
             console.log('ipc-send::LOGIN')
-            ipcRenderer.send('LOGIN', { igneous, member, hash })
+            ipcRenderer.send('LOGIN', cookie)
           })
         },
         SESSION: () => {

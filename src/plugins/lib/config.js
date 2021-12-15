@@ -13,9 +13,9 @@ export const saveCookie = (jar) => {
 
 export const loadCookie = () => {
   const cookie = new tough.CookieJar()
-  if (fs.existsSync(fileCookie)) {
-    cookie.jar = tough.CookieJar.deserializeSync(JSON.parse(fs.readFileSync(fileCookie)))
-  }
+  // if (fs.existsSync(fileCookie)) {
+  //   cookie.jar = tough.CookieJar.deserializeSync(JSON.parse(fs.readFileSync(fileCookie)))
+  // }
   return cookie
 }
 

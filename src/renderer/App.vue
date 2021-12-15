@@ -8,17 +8,17 @@
           </div>
           <div class="col-sm-6">
             <div class="text-right">
-              <span v-if="sign.cookie == null" class="help-block"><b>{{sign.nickname}}</b></span>
+              <span v-if="sign.name == null" class="help-block"><b>{{sign.name}}</b></span>
               <span v-else class="help-block" style="color: #616161;">Hello, <b>{{sign.name}}</b></span>
               <!-- sign.cookie == null && !state_verify -->
-              <button type="button" class="btn btn-sm btn-community btn-outline-info" @click="onDiscord">
+              <button v-tooltip.right="'Join Discord Community'" type="button" class="btn btn-sm btn-community btn-outline-info" @click="onDiscord">
                 <i class="fa fa-comments-o"></i>
               </button>
-              <button type="button" class="btn btn-sm btn-donate btn-outline-danger mr-2" alt="Donate to support me ❤" @click="onDonate">
+              <button v-tooltip.right="'Donate to support me ❤'" type="button" class="btn btn-sm btn-donate btn-outline-danger mr-2" @click="onDonate">
                 <i class="fa fa-credit-card"></i>
               </button>
-              <button v-if="sign.cookie == null" type="button" class="btn btn-sm btn-singin btn-info" @click.prevent="page.signin = true">
-                Login
+              <button type="button" class="btn btn-sm btn-singin btn-outline-warning" @click.prevent="page.signin = true">
+                Cookie
               </button>
             </div>
           </div>
@@ -29,21 +29,20 @@
               <div class="col-sm-5 message">
                 <p v-if="error_message == ''">
                   <label class="text-danger">Readme</label><br>
-                 <b>exhentai.org</b>, search in google.<br>
-                  วิธีเข้าใช้งานเว็บแพนด้า กรุณาหาเองในกูเกิล
+                  วิธีเข้าใช้งานเว็บแพนด้า <b>exhentai.org</b> กรุณาหาเองในกูเกิล
                 </p>
                 <p v-else class="error text-danger">
                   <b>{{error_message}}</b>
                 </p>
               </div>
               <div v-if="!state_signin" class="col-sm-4 form-group">
-                <label for="txtUsername" style="margin-bottom: 0px;">Your cookie config.</label>
+                <label for="txtUsername" style="margin-bottom: 0px;">cookie:</label>
                 <!-- <input type="text" class="form-control" id="txtUsername" placeholder="Username" v-model="sign.member"> -->
                 <!-- <input type="text" class="form-control" id="txtPassword" placeholder="Password" v-model="sign.hash"> -->
-                <input type="text" class="form-control" id="txtIgneous" placeholder="Igneous" v-model="sign.igneous">
+                <input type="text" class="form-control" id="txtCookie" placeholder="document.cookie" v-model="sign.cookie">
               </div>
               <div v-if="!state_signin" class="col-sm-3 item">
-                <button type="submit" class="btn btn-sm btn-success"><i class="fa fa-sign-in"></i> Sign-In</button>
+                <button type="submit" class="btn btn-sm btn-success"><i class="fa fa-floppy-o"></i> Save</button>
                 <button type="button" class="btn btn-sm btn-default" @click.prevent="doBack"><i class="fa fa-close"></i></button>
               </div>
               <div v-if="state_signin" class="col-sm-7 preload">
@@ -75,7 +74,7 @@
               <div class="btn-group" role="group" style="margin-bottom:2px">
                 <button :disabled="state_verify || (!directory_name && state_name === 'Download')" type="button" class="btn btn-sm" 
                   :class="!state_verify ? 'btn-success' : 'btn-default'" 
-                  style="width: 100px;height: 29.98px;" @click="onQueue">
+                  style="width: 100px;padding:7px;" @click="onQueue">
                   <i :class="['fa', state_icon]"  aria-hidden="true"></i> {{state_name}}
                 </button>
                 <button :disabled="state_verify && state_name !== 'Loading...'" type="button" class="btn btn-default" :class="[state_name === 'Loading...' ? 'text-danger' : '']" style="padding: 5px 11px;" @click="onCancel">
@@ -198,12 +197,8 @@
         exmsg: '',
         landing: true,
         sign: {
-          header: '',
-          cookie: null,
           igneous: '',
-          member: 'hentai-dlll',
-          hash: 'asdasdasd',
-          nickname: ''
+          name: null,
         },
         page: {
           signin: false,
@@ -365,22 +360,30 @@
         }
       },
       onSignIn () {
-        // window.open('https://forums.e-hentai.org/index.php?s=5fa113c1ae71be8c9540e5d33d280f2d&act=Login&CODE=00')
         let vm = this
+        console.log('sign:', vm.sign)
+        if (vm.sign.cookie.trim() == '') {
+          this.page.signin = false
+          vm.sign.name = null
+          vm.sign.cookie = ''
+          vm.clearCookie()
+          return
+        }
         vm.state_signin = true
-        // console.log('LOGIN:', vm.sign.member, vm.sign.hash)
-        vm.LOGIN(vm.sign.igneous, vm.sign.member, vm.sign.hash).then(data => {
-          vm.state_signin = false
-          if (data.success) {
-            vm.sign.cookie = data.cookie
-            vm.sign.name = data.name
-            vm.page.signin = false
-          } else {
-            vm.sign.member = ''
-            vm.sign.hash = ''
-            vm.error_message = data.message
-          }
+        vm.LOGIN(vm.sign.cookie.trim()).then((data) => {
+          // if (data.success) {
+          vm.sign.name = data.igneous
+          // } else {
+          //   vm.sign.member = ''
+          //   vm.sign.hash = ''
+          //   vm.error_message = data.message
+          // }
           // console.log('DATA:', data)
+          vm.state_signin = false
+          vm.page.signin = false
+        }).catch(() => {
+          vm.state_signin = false
+          vm.page.signin = false
         })
       },
       onCheckURL: (url) => {
@@ -402,14 +405,12 @@
         remote.getCurrentWindow().close()
       },
       doReload () {
-        let vm = this
-        let config = vm.ConfigLoaded()
+        const vm = this
+        const config = vm.ConfigLoaded()
+        console.log('ConfigLoaded::', config)
         this.directory_name = config.directory
-        this.sign.cookie = config.cookie
-        this.sign.nickname = config.nickname || ''
-        this.sign.member = config.username || ''
-        this.sign.hash = config.password || ''
-        this.sign.name = config.name || ''
+        this.sign.cookie = config.cookie || ''
+        this.sign.name = config.igneous
         this.$nextTick(() => {
           if (!vm.page.option && !vm.landing) vm.$refs.url.focus()
         })
@@ -417,7 +418,7 @@
         this.exmsg = ``
         let appDir = join(os.tmpdir(), `../${vm.folder.name}`)
 
-        console.log('appDir', appDir)
+        console.log('appDir::', appDir)
         let Initialize = async () => {
           const data = await vm.SESSION()
           console.log('SESSION', data)
@@ -490,7 +491,7 @@
       vm.doReload()
 
       window.addEventListener('paste', async e => {
-        if (!vm.state_verify && !vm.state_download) {
+        if (!vm.state_verify && !vm.state_download && !vm.page.signin) {
           let data = e.clipboardData.getData('text').trim()
           if (/\n/ig.test(data)) {
             let row = data.split(/\n/)
@@ -506,7 +507,7 @@
             }
             vm.$refs.url.focus()
             e.preventDefault()
-          } else if (e.srcElement.id !== 'txtURL') {
+          } else if (e.id !== 'txtURL') {
             vm.url = data
             vm.$refs.url.focus()
             e.preventDefault()
@@ -553,7 +554,8 @@
     font-weight: bold;
   }
   input.input-url {
-    /* height: calc(1.60625rem + 2px); */
+    padding: 7px;
+    height: auto;
   }
   input.input-sm, input.input-sm:focus {
     color: #000;
@@ -563,7 +565,7 @@
   }
   .fa-input-left, .fa-input-right {
     position: absolute;
-    top: 1px;
+    top: 2px;
   }
   .fa-input-left {
     font-size: 0.8rem;
@@ -682,7 +684,7 @@
     padding-top: 12px;
   }
   .form.signin > .item {
-    padding-top: 27px;
+    padding-top: 18px;
   }
   .form.signin > .preload {
     padding: 22px 0 0 64px;
@@ -712,7 +714,7 @@
   .form.signin > .form-group {
     margin-bottom: 0px !important;
   }
-  #txtIgneous, #txtUsername, #txtPassword {
+  #txtCookie, #txtUsername, #txtPassword {
     padding: 4px;
     height: 20px;
     font-size: 10px;
@@ -736,5 +738,9 @@
     overflow:hidden; 
     white-space:nowrap; 
     text-overflow: ellipsis;
+  }
+  .v-popper--theme-tooltip .v-popper__inner {
+    font-size: 0.7rem !important;
+    padding: 4px 8px !important;
   }
 </style>

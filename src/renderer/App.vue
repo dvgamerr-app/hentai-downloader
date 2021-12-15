@@ -8,11 +8,14 @@
           </div>
           <div class="col-sm-6">
             <div class="text-right">
-              <span v-if="sign.cookie == null" class="help-block"><b>Support Me❤ {{sign.nickname}}</b></span>
+              <span v-if="sign.cookie == null" class="help-block"><b>{{sign.nickname}}</b></span>
               <span v-else class="help-block" style="color: #616161;">Hello, <b>{{sign.name}}</b></span>
               <!-- sign.cookie == null && !state_verify -->
-              <button type="button" class="btn btn-sm btn-donate btn-outline-danger mr-2" @click="onBrowser">
-                Donate
+              <button type="button" class="btn btn-sm btn-community btn-outline-info" @click="onDiscord">
+                <i class="fa fa-comments-o"></i>
+              </button>
+              <button type="button" class="btn btn-sm btn-donate btn-outline-danger mr-2" alt="Donate to support me ❤" @click="onDonate">
+                <i class="fa fa-credit-card"></i>
               </button>
               <button v-if="sign.cookie == null" type="button" class="btn btn-sm btn-singin btn-info" @click.prevent="page.signin = true">
                 Login
@@ -78,8 +81,8 @@
                 <button :disabled="state_verify && state_name !== 'Loading...'" type="button" class="btn btn-default" :class="[state_name === 'Loading...' ? 'text-danger' : '']" style="padding: 5px 11px;" @click="onCancel">
                   <i :class="['fa', state_name !== 'Loading...' ? 'fa-gear' : 'fa-times']" aria-hidden="true"></i>
                 </button>
-                <button :disabled="state_verify && state_name !== 'Loading...'" type="button" class="btn btn-default" :class="[state_name === 'Loading...' ? 'text-danger' : '']" style="padding: 5px 11px; margin-left: 5px;" @click="onCancel">
-                  <i :class="['fa', state_name !== 'Loading...' ? 'fa-history' : 'fa-times']" aria-hidden="true"></i>
+                <button :disabled="state_name === 'Loading...'" type="button" class="btn btn-default" :class="[state_name === 'Loading...' ? 'text-muted' : '']" style="padding: 5px 11px; margin-left: 5px;" @click="onCancel">
+                  <i :class="['fa', 'fa-history']" aria-hidden="true"></i>
                 </button>
               </div>
             </div>
@@ -184,7 +187,8 @@
   // const { existsSync, mkdirSync, readFileSync, writeFileSync } = require('fs')
   const { join } = require('path')
 
-  const _SERVER_DONATE = 'https://mr.touno.io/donate'
+  const _SERVER_DONATE = 'https://touno.io/s/8jal'
+  const _SERVER_COMUNITY = 'https://touno.io/s/ixj7'
 
   export default {
     name: 'ghentai',
@@ -382,8 +386,12 @@
       onCheckURL: (url) => {
         return /hentai.org\/\w{1}\/\d{1,8}\/[0-9a-f]+?\//g.test(url)
       },
-      onBrowser: () => {
+      onDonate: () => {
         shell.openExternal(_SERVER_DONATE)
+        // https://www.tampermonkey.net/?ext=dhdg&browser=chrome
+      },
+      onDiscord: () => {
+        shell.openExternal(_SERVER_COMUNITY)
         // https://www.tampermonkey.net/?ext=dhdg&browser=chrome
       },
       doBack () {
@@ -685,9 +693,17 @@
     margin: -28px 0 0 52px;
     display: block;
   }
-  .btn-donate, .btn-singin {
+  .btn-singin {
     font-size: 10px !important;
     padding: 2px 14px;
+  }
+  .btn-donate {
+    font-size: 10px !important;
+    padding: 2px 6px;
+  }
+  .btn-community {
+    font-size: 10px !important;
+    padding: 2px 6px;
   }
   .btn-refresh {
     font-size: 10px !important;

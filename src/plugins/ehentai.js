@@ -5,10 +5,15 @@ import path from 'path'
 import moment from 'moment'
 import settings from 'electron-settings'
 import axios from 'axios'
+import https from 'https'
+
 import cookieSupport from 'axios-cookiejar-support'
 import * as cfg from './lib/config'
 
 cookieSupport(axios)
+
+// At request level
+const agent = new https.Agent({ rejectUnauthorized: false })
 
 let saveBlockerId = null
 let jarCookie = cfg.loadCookie()
@@ -44,6 +49,7 @@ const reqHentai = async (link, method, options = {}) => {
     method: method || 'GET',
     jar: jarCookie,
     withCredentials: true,
+    httpsAgent: agent,
     timeout: 5000
   }, options)).then((res) => {
     return jarCookieCheck().then(() => res)
@@ -53,10 +59,12 @@ const reqHentai = async (link, method, options = {}) => {
   }).catch((ex) => {
     if (ex.response) {
       console.log('EX.RESPONSE', ex.response)
+      const unavailable = /<p>(.*?)<\/p>/ig.exec(ex.response.data)
+      return unavailable[1] || unavailable || ex.response.status
     } else {
       console.log('EX', ex)
+      return ex.message || ex
     }
-    return null
   })
 
   // return new Promise((resolve, reject) => {
@@ -237,6 +245,7 @@ let getImage = async (res, manga, l, index, directory, emit) => {
         responseType: 'stream',
         // jar: cookie,
         withCredentials: true,
+        httpsAgent: agent,
         timeout: 10000,
         headers: {
           'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.149 Safari/537.36',
@@ -556,12 +565,13 @@ export function parseHentai (link, emit) {
     console.log('getCookie')
 
     console.log('reqHentai', link)
+    const hostname = new URL(link).hostname
     let res = await reqHentai(link, 'GET', {
       header: {
-        ':authority': 'e-hentai.org',
+        ':authority': hostname,
         ':scheme': 'https',
         'pragma': 'no-cache',
-        'referer': `https://${new URL(link).hostname}/`
+        'referer': `https://${hostname}/`
       }
     })
     if (!/DOCTYPE.html.PUBLIC/ig.test(res)) throw new Error(res)

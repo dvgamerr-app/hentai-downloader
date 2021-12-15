@@ -6,7 +6,7 @@
 ![Node](https://img.shields.io/badge/node-10.20.1-green?style=flat-square)
 
 ## Community
-- [Discord](https://discord.gg/4GSnfVCqYb)
+- [Discord](https://touno.io/s/ixj7)
 
 
 ## Overview

@@ -42,10 +42,8 @@ https://e-hentai.org/g/1109336/bec482d462/
 - กดปุ่ม download เพื่อเริ่มดาวน์โหลดมังงะ
 
 ## What's Changed
-- แก้ปัญหาโหลดไฟล์ไม่สมบูรณ์ด้วยการลบไฟล์ที่มีปัญหาทิ้ง แล้วกด Download อีกครั้ง โปรแกรมจะโหลดใหม่จะไฟล์ที่ขาดไปให้ใหม่![256x256](https://user-images.githubusercontent.com/10203425/146343527-8c2b7465-6f80-4e99-bdac-c7e23efc947a.png)
-
-- `exhentai.org` via `cookie` download supported.![256x256](https://user-images.githubusercontent.com/10203425/146343536-f64189be-84c6-4169-8814-ae96531f8ee2.png)
-
+- แก้ปัญหาโหลดไฟล์ไม่สมบูรณ์ด้วยการลบไฟล์ที่มีปัญหาทิ้ง แล้วกด Download อีกครั้ง โปรแกรมจะโหลดใหม่จะไฟล์ที่ขาดไปให้ใหม่
+- `exhentai.org` via `cookie` download supported.
 
 ![image](https://user-images.githubusercontent.com/10203425/146333356-656c53de-37ee-4118-b9c3-6ddc7ca7caf9.png)
 
@@ -65,8 +63,5 @@ https://e-hentai.org/g/1109336/bec482d462/
 - Fixed SSL Verify with download images.
 - Fixed cookie show error from UI
 
-[icons]: https://raw.githubusercontent.com/unhax/ghentai-downloader/master/build/icons/256x256.png
-[app-items]: https://raw.githubusercontent.com/unhax/ghentai-downloader/master/docs/app-items.png
-
 ### License
-MIT © 2018 Touno™
+MIT © 2021 Touno™

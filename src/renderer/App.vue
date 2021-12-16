@@ -487,6 +487,24 @@
           case 0: return 'fa-times'
           default: return 'fa-times'
         }
+      },
+      async onPasteClipboard (data) {
+        let vm = this
+        if (vm.state_verify || vm.state_download || vm.page.signin) {
+          return
+        }
+        
+        let row = data.split(/\n/)
+        for (let i = 0; i < row.length; i++) {
+          try {
+            if (vm.onCheckURL(row[i].trim())) {
+              vm.url = row[i].trim()
+              await vm.urlBegin()
+            }
+          } catch (ex) {
+            console.warn(ex)
+          }
+        }
       }
     },
     watch: {
@@ -505,28 +523,19 @@
       vm.doReload()
 
       window.addEventListener('paste', async e => {
-        if (!vm.state_verify && !vm.state_download && !vm.page.signin) {
-          let data = e.clipboardData.getData('text').trim()
-          if (/\n/ig.test(data)) {
-            let row = data.split(/\n/)
-            for (let i = 0; i < row.length; i++) {
-              try {
-                if (vm.onCheckURL(row[i].trim())) {
-                  vm.url = row[i].trim()
-                  await vm.urlBegin()
-                }
-              } catch (ex) {
-                console.warn(ex)
-              }
-            }
-            vm.$refs.url.focus()
-            e.preventDefault()
-          } else if (e.id !== 'txtURL') {
-            vm.url = data
-            vm.$refs.url.focus()
-            e.preventDefault()
+        const data = e.clipboardData.getData('text').trim()
+
+        if (e.id !== 'txtURL' && !/\n/ig.test(data)) {
+          vm.url = data
+          if (vm.onCheckURL(data)) {
+            await vm.urlBegin()
           }
+          vm.$refs.url.focus()
+          return e.preventDefault()
         }
+
+        await vm.onPasteClipboard(data)
+        e.preventDefault()
       })
     }
   }

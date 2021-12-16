@@ -1,4 +1,4 @@
-import { app, dialog, ipcMain, ipcRenderer } from 'electron'
+import { app, clipboard, dialog, ipcMain, ipcRenderer } from 'electron'
 import settings from 'electron-settings'
 import * as hentai from './ehentai.js'
 
@@ -8,21 +8,35 @@ if (!settings.get('directory')) {
   settings.set('directory', app.getPath('downloads'))
 }
 
+const onWatchClipboard = (e) => {
+  let data = null
+  setInterval(() => {
+    if (!settings.get('clipboard', false)) return
+    
+    const text = clipboard.readText()
+    if (data !== text) {
+      e.sender.send('CLIPBOARD', text)
+      data = text
+    }
+  }, 300)
+}
+
 export function onClick (menuItem) {
   if (menuItem.role === 'toggle-clipboard') {
     settings.set('clipboard', menuItem.checked)
-    hentai.onWatchClipboard()
   }
 }
 
-export function initMain (mainWindow, appIcon) {
-  hentai.onWatchClipboard()
-  console.log(appIcon)
-  // settings.delete('config')
+export function initMain (mainWindow) {
+  ipcMain.on('CLIPBOARD', function (e) {
+    onWatchClipboard(e)
+  })
+
   ipcMain.on('CANCEL', function (e) {
     hentai.cancel()
     e.sender.send('CANCEL', null)
   })
+  
   ipcMain.on('CHANGE_DIRECTORY', function (e) {
     dialog.showOpenDialog(mainWindow, {
       properties: ['openDirectory']
@@ -129,6 +143,9 @@ export const client = {
           settings.delete('ipb_member_id')
           settings.delete('ipb_pass_hash')
         },
+        GetToggleClipboard: () => {
+          return settings.get('clipboard', false)
+        },
         ConfigLoaded: () => {
           return Object.assign(settings.get('config') || {}, {
             directory: settings.get('directory'),
@@ -220,8 +237,9 @@ export const client = {
           console.log('ipc-on::CLIPBOARD', vm)
           ipcRenderer.removeAllListeners('CLIPBOARD')
           ipcRenderer.send('CLIPBOARD')
-          ipcRenderer.on('CLIPBOARD', () => {
-            console.log('ipc-on::CLIPBOARD')
+          ipcRenderer.on('CLIPBOARD', async (e, data) => {
+            console.log('ipc-on::CLIPBOARD', data)
+            await vm.onPasteClipboard(data)
           })
         }
       },

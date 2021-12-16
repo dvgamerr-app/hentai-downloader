@@ -1,4 +1,4 @@
-import { clipboard, powerSaveBlocker } from 'electron'
+import { powerSaveBlocker } from 'electron'
 import URL from 'url-parse'
 import fs, { existsSync } from 'fs'
 import path from 'path'
@@ -18,23 +18,8 @@ const agent = new https.Agent({ rejectUnauthorized: false })
 let cancelDownload = false
 let saveBlockerId = null
 let jarCookie = cfg.loadCookie()
-let timeClip = null
 
 console.log('cookieSupport:', jarCookie)
-export const onWatchClipboard = () => {
-  if (settings.get('clipboard', false)) {
-    let data = null
-    timeClip = setInterval(() => {
-      const text = clipboard.readText()
-      if (data !== text) {
-        console.log('clipboard-watch', text)
-        data = text
-      }
-    }, 300)
-  } else if (timeClip) {
-    clearInterval(timeClip)
-  }
-}
 
 const reqHentai = async (link, method, options = {}) => {
   options.headers = Object.assign({

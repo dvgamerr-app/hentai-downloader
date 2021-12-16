@@ -66,7 +66,7 @@ function createWindow () {
   mainWindow.setSkipTaskbar(settings.get('ontop', false))
   mainWindow.setAlwaysOnTop(settings.get('ontop', false))
   mainWindow.setMovable(!settings.get('ontop', false))
-
+  mainWindow.setMinimizable(false)
 
   let appIcon = new Tray(path.join(__dirname, process.env.NODE_ENV === 'development' ? '../../static/16x16.png' :'static/16x16.png' ))
   let hideWindow = false

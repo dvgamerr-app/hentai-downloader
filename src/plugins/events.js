@@ -70,7 +70,7 @@ export function initMain (mainWindow, appIcon) {
     settings.set('cookie', cookieString)
     console.log(`Login: ${cookieString}`)
     const result = {
-      success: true,
+      success: false,
       igneous: null,
       ipb_member_id: null,
       ipb_pass_hash: null
@@ -80,25 +80,29 @@ export function initMain (mainWindow, appIcon) {
     settings.delete('ipb_member_id')
     settings.delete('ipb_pass_hash')
 
+    let countCookie = 0
     for (const cookie of cookieString.split(';')) {
       const [ key, value ] = cookie.split('=')
 
       if (key.trim() == 'igneous') {
         result.igneous = value.trim()
         settings.set('igneous', value.trim())
+        countCookie++
       }
       
       else if (key.trim() == 'ipb_member_id') {
         result.ipb_member_id = value.trim()
         settings.set('ipb_member_id', value.trim())
+        countCookie++
       }
       
       else if (key.trim() == 'ipb_pass_hash') {
         result.ipb_pass_hash = value.trim()
         settings.set('ipb_pass_hash', value.trim())
+        countCookie++
       }
     }
-
+    if (countCookie == 3) result.success = true
     e.sender.send('LOGIN', result)
     
     // if (igneous !== '') {

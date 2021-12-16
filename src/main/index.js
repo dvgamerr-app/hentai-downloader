@@ -28,7 +28,6 @@ function createWindow () {
     minHeight: height,
     maxWidth: width,
     maxHeight: height,
-    'node-integration': false,
     title: app.getName(),
     icon: path.join(__dirname, '../../build/icons/icon.ico'),
     show: true,
@@ -65,6 +64,10 @@ function createWindow () {
   mainWindow.loadURL(winURL)
   mainWindow.setMenu(null)
   mainWindow.setSkipTaskbar(settings.get('ontop', false))
+  mainWindow.setAlwaysOnTop(settings.get('ontop', false))
+  mainWindow.setMovable(!settings.get('ontop', false))
+
+
   let appIcon = new Tray(path.join(__dirname, process.env.NODE_ENV === 'development' ? '../../static/16x16.png' :'static/16x16.png' ))
   let hideWindow = false
 

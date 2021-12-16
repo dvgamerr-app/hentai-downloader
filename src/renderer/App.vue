@@ -17,7 +17,7 @@
               <button v-tooltip.right="'Donate to support me ❤'" type="button" class="btn btn-sm btn-donate btn-outline-danger mr-2" @click="onDonate">
                 <i class="fa fa-credit-card"></i>
               </button>
-              <button type="button" class="btn btn-sm btn-singin btn-outline-warning" @click.prevent="page.signin = true">
+              <button type="button" :disabled="state_verify && state_name !== 'Loading...'" class="btn btn-sm btn-singin btn-outline-warning" @click.prevent="page.signin = true">
                 Cookie
               </button>
             </div>
@@ -26,27 +26,26 @@
         <div v-if="page.signin" class="row">
           <div class="col-sm-12">
             <form class="form signin row" @submit.prevent="onSignIn">
-              <div class="col-sm-5 message">
-                <p v-if="error_message == ''">
-                  <label class="text-danger">Readme</label><br>
-                  วิธีเข้าใช้งานเว็บแพนด้า <b>exhentai.org</b> กรุณาหาเองในกูเกิล
+              <div class="col-sm-7 message">
+                <p class="mb-2">
+                  วิธีเข้าใช้งานเว็บแพนด้า <a href="#" @click="onWikiExhentai"><b>exhentai.org</b></a> หลังจากนั้น กดปุ่ม <code><b>F12</b></code>
+                  <br>ไปที่แท็บ <code><b>Console</b></code> แล้วพิมพ์ <code><b>copy(document.cookie)</b></code> กดปุ่ม <code><b>ENTER</b></code>
+                  <br>จากนั้นให้ <code><b>ctl+v</b></code> ในช่อง cookie ด้านขวาแล้วกด <code><b>Save</b></code>
                 </p>
-                <p v-else class="error text-danger">
-                  <b>{{error_message}}</b>
-                </p>
+                <span v-if="error_message != ''" class="help-block text-danger text-error">{{error_message}}</span>
               </div>
-              <div v-if="!state_signin" class="col-sm-4 form-group">
+              <div v-if="!state_signin" class="col-sm-5 form-group">
                 <label for="txtUsername" style="margin-bottom: 0px;">cookie:</label>
                 <!-- <input type="text" class="form-control" id="txtUsername" placeholder="Username" v-model="sign.member"> -->
                 <!-- <input type="text" class="form-control" id="txtPassword" placeholder="Password" v-model="sign.hash"> -->
                 <input type="text" class="form-control" id="txtCookie" placeholder="document.cookie" v-model="sign.cookie">
-              </div>
-              <div v-if="!state_signin" class="col-sm-3 item">
                 <button type="submit" class="btn btn-sm btn-success"><i class="fa fa-floppy-o"></i> Save</button>
-                <button type="button" class="btn btn-sm btn-default" @click.prevent="doBack"><i class="fa fa-close"></i></button>
+                <!-- <button type="button" class="btn btn-sm btn-default" @click.prevent="doBack"><i class="fa fa-close"></i></button> -->
               </div>
-              <div v-if="state_signin" class="col-sm-7 preload">
-                <i class="fa fa-circle-o-notch fa-spin fa-3x fa-fw"></i> <span>Please wait...</span>
+              <div v-if="state_signin" class="col-sm-5 preload d-flex" style="align-items:center;justify-content:center;">
+                <div>
+                  <i class="fa fa-circle-o-notch fa-spin fa-2x fa-fw"></i> <span class="preload-text">Sign-In...</span>
+                </div>
               </div>
             </form>
           </div>
@@ -77,10 +76,10 @@
                   style="width: 100px;padding:7px;" @click="onQueue">
                   <i :class="['fa', state_icon]"  aria-hidden="true"></i> {{state_name}}
                 </button>
-                <button :disabled="state_verify && state_name !== 'Loading...'" type="button" class="btn btn-default" :class="[state_name === 'Loading...' ? 'text-danger' : '']" style="padding: 5px 11px;" @click="onCancel">
+                <button v-tooltip.bottom="'Setting'" :disabled="state_verify && state_name !== 'Loading...'" type="button" class="btn btn-default" :class="[state_name === 'Loading...' ? 'text-danger' : '']" style="padding: 5px 11px;" @click="onCancel">
                   <i :class="['fa', state_name !== 'Loading...' ? 'fa-gear' : 'fa-times']" aria-hidden="true"></i>
                 </button>
-                <button :disabled="state_name === 'Loading...'" type="button" class="btn btn-default" :class="[state_name === 'Loading...' ? 'text-muted' : '']" style="padding: 5px 11px; margin-left: 5px;" @click="onCancel">
+                <button v-tooltip.bottom="'History'" :disabled="state_name === 'Loading...'" type="button" class="btn btn-default" :class="[state_name === 'Loading...' ? 'text-muted' : '']" style="padding: 5px 11px; margin-left: 5px;" @click="onCancel">
                   <i :class="['fa', 'fa-history']" aria-hidden="true"></i>
                 </button>
               </div>
@@ -188,6 +187,7 @@
 
   const _SERVER_DONATE = 'https://touno.io/s/8jal'
   const _SERVER_COMUNITY = 'https://touno.io/s/ixj7'
+  const _SERVER_WIKI = 'https://touno.io/s/dv0z'
 
   export default {
     name: 'ghentai',
@@ -366,22 +366,25 @@
           this.page.signin = false
           vm.sign.name = null
           vm.sign.cookie = ''
+          vm.error_message = ''
           vm.clearCookie()
           return
         }
         vm.state_signin = true
         vm.LOGIN(vm.sign.cookie.trim()).then((data) => {
-          // if (data.success) {
-          vm.sign.name = data.igneous
-          // } else {
-          //   vm.sign.member = ''
-          //   vm.sign.hash = ''
-          //   vm.error_message = data.message
-          // }
-          // console.log('DATA:', data)
+          vm.error_message = ''
           vm.state_signin = false
           vm.page.signin = false
-        }).catch(() => {
+          if (data.success) {
+            vm.sign.name = data.igneous
+          } else {
+            vm.error_message = `can't not parser cookie.`
+            vm.sign.cookie = ''
+          }
+          vm.sign.name = data.igneous
+        }).catch(ex => {
+          vm.error_message = ex.message
+          vm.sign.cookie = ''
           vm.state_signin = false
           vm.page.signin = false
         })
@@ -391,11 +394,12 @@
       },
       onDonate: () => {
         shell.openExternal(_SERVER_DONATE)
-        // https://www.tampermonkey.net/?ext=dhdg&browser=chrome
       },
       onDiscord: () => {
         shell.openExternal(_SERVER_COMUNITY)
-        // https://www.tampermonkey.net/?ext=dhdg&browser=chrome
+      },
+      onWikiExhentai: () => {
+        shell.openExternal(_SERVER_WIKI)
       },
       doBack () {
         this.page.signin = false
@@ -672,10 +676,12 @@
     font-weight: bold;
   }
   .form.signin > .message {
-    font-size: 10px;
+    font-size: .75rem;
     border-right: #e8e8e8 solid 1px;
-    padding: 0px 6px 4px 12px !important;
     height: 65px;
+  }
+  .form.signin > .message > code {
+    font-weight: bold;
   }
   .form.signin > .message > p {
     margin-bottom: 0px;
@@ -686,14 +692,13 @@
   .form.signin > .item {
     padding-top: 18px;
   }
-  .form.signin > .preload {
+  /* .form.signin > .preload {
     padding: 22px 0 0 64px;
-  }
-  .form.signin > .preload > span {
-    font-size: 1.6rem;
+  } */
+  .form.signin .preload-text {
+    font-size: 1.3rem;
     font-weight: bold;
-    margin: -28px 0 0 52px;
-    display: block;
+    color: #333;
   }
   .btn-singin {
     font-size: 10px !important;

@@ -36,13 +36,22 @@ export const onWatchClipboard = () => {
 }
 
 const reqHentai = async (link, method, options = {}) => {
-  options.header = Object.assign({
-    'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/59.0.3071.115 Safari/537.36',
-    'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
-    'accept-language': 'th-TH,th;q=0.8,en-US;q=0.6,en;q=0.4,ja;q=0.2',
+  options.headers = Object.assign({
+    'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.93 Safari/537.36',
+    'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
+    'Accept-Encoding': 'gzip, deflate, br',
+    'accept-language': 'en-US,en;q=0.9,th;q=0.8,ja;q=0.7',
     'cache-control': 'no-cache',
-    'upgrade-insecure-requests': '1'
-  }, options.header)
+    "sec-ch-ua": `" Not A;Brand";v="99", "Chromium";v="96", "Google Chrome";v="96"`,
+    "sec-ch-ua-mobile": "?0",
+    "sec-ch-ua-platform": "Windows",
+    "Sec-Fetch-Dest": "document",
+    "Sec-Fetch-Mode": "navigate",
+    "Sec-Fetch-Site": "same-origin",
+    "Sec-Fetch-User": "?1",
+    "Upgrade-Insecure-Requests": "1",
+    "Connection": "keep-alive",
+  }, options.headers)
 
   wLog(`URL REQUEST: ${link}`)
   await jarCookieBuild()
@@ -56,7 +65,6 @@ const reqHentai = async (link, method, options = {}) => {
   }, options)).then((res) => {
     return jarCookieCheck().then(() => res)
   }).then((res) => {
-    console.log('Response::', res.data.length)
     wLog(`URL RESPONSE: ${res.status} body: ${res.data.length}`)
     return res.data
   }).catch((ex) => {
@@ -171,6 +179,9 @@ const jarCookieBuild = async (ex = false) => {
     await setCookie('/', `igneous=${settings.get('igneous')}`, '.exhentai.org')
     await setCookie('/', `ipb_member_id=${settings.get('ipb_member_id')}`, '.exhentai.org')
     await setCookie('/', `ipb_pass_hash=${settings.get('ipb_pass_hash')}`, '.exhentai.org')
+    await setCookie('/', `igneous=${settings.get('igneous')}`, '.e-hentai.org')
+    await setCookie('/', `ipb_member_id=${settings.get('ipb_member_id')}`, '.e-hentai.org')
+    await setCookie('/', `ipb_pass_hash=${settings.get('ipb_pass_hash')}`, '.e-hentai.org')
   }
 }
 
@@ -182,18 +193,18 @@ const jarCookieCheck = async () => {
   await blockCookie('/', 'yay', true)
   cfg.saveCookie(jarCookie)
 
-  console.group('Cookie Check List')
-  const idx = jarCookie.store.idx
-  if (Object.keys(idx).length > 0) {
-    for (const domain in idx) {
-      for (const router in idx[domain]) {
-        for (const cookie in idx[domain][router]) {
-          console.log('  -', domain, cookie, ':', idx[domain][router][cookie].value)
-        }
-      }
-    }
-  }
-  console.groupEnd('Cookie Check List')
+  // console.group('Cookie Check List')
+  // const idx = jarCookie.store.idx
+  // if (Object.keys(idx).length > 0) {
+  //   for (const domain in idx) {
+  //     for (const router in idx[domain]) {
+  //       for (const cookie in idx[domain][router]) {
+  //         console.log('  -', domain, cookie, ':', idx[domain][router][cookie].value)
+  //       }
+  //     }
+  //   }
+  // }
+  // console.groupEnd('Cookie Check List')
 }
 // console.log('development:', touno.DevMode)
 const wError = (...msg) => {
@@ -251,21 +262,23 @@ let getImage = async (res, manga, l, index, directory, emit) => {
         url: image,
         method: 'GET',
         responseType: 'stream',
-        // jar: cookie,
+        jar: jarCookie,
         withCredentials: true,
         httpsAgent: agent,
         timeout: 10000,
         headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.149 Safari/537.36',
-          'Accept': 'image/webp,image/apng,image/*,*/*;q=0.8',
-          'Accept-Encoding': 'gzip, deflate',
-          'Accept-Language': 'th-TH,th;q=0.8,en-US;q=0.6,en;q=0.4,ja;q=0.2',
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.93 Safari/537.36',
+          'Accept': 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
+          'Accept-Encoding': 'gzip, deflate, br',
+          'Accept-Language': 'en-US,en;q=0.9,th;q=0.8,ja;q=0.7',
           'Strict-Transport-Security': 'max-age=15552000; includeSubDomains; preload',
-          'Vary': 'Origin, Access-Control-Request-Headers, Access-Control-Request-Method, Accept-Encoding',
-          'referer': 'https://e-hentai.org/',
-          'CF-Cache-Status': 'HIT',
-          'Accept-Ranges': 'bytes',
-          'Server': 'cloudflare'
+          'referer': `https://${new URL(manga.url).hostname}/`,
+          "sec-ch-ua": `" Not A;Brand";v="99", "Chromium";v="96", "Google Chrome";v="96"`,
+          "sec-ch-ua-mobile": "?0",
+          "sec-ch-ua-platform": "Windows",
+          "Sec-Fetch-Dest": "image",
+          "Sec-Fetch-Mode": "no-cors",
+          "Sec-Fetch-Site": "cross-site"
         }
       })
       // console.log('response', response)
@@ -335,102 +348,6 @@ let getImage = async (res, manga, l, index, directory, emit) => {
     }
   } while (nRetry < 3 && !isSuccess)
 
-  // xhr({
-  //   method: 'GET',
-  //   headers: {
-  //     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/59.0.3071.115 Safari/537.36',
-  //     'Accept': 'image/webp,image/apng,image/*,*/*;q=0.8',
-  //     'Accept-Encoding': 'gzip, deflate',
-  //     'Accept-Language': 'th-TH,th;q=0.8,en-US;q=0.6,en;q=0.4,ja;q=0.2',
-  //     'referer': 'https://e-hentai.org/'
-  //   },
-  //   jar: jarCookie,
-  //   url: image,
-  //   timeout: 5000
-  // })
-  // req.on('response', async response => {
-  //   if (response.statusCode === 200) {
-  //     let extensions = null
-  //     switch (response.headers['content-type']) {
-  //       case 'jpg':
-  //       case 'image/jpg':
-  //       case 'image/jpeg':
-  //         extensions = 'jpg'
-  //         break
-  //       case 'image/png':
-  //         extensions = 'png'
-  //         break
-  //       case 'image/gif':
-  //         extensions = 'gif'
-  //         break
-  //     }
-  //     if (extensions) {
-  //       if (!fs.existsSync(dir)) fs.mkdirSync(dir)
-  //       let fsStream = fs.createWriteStream(`${dir}/${filename}.${extensions}`)
-  //       req.pipe(fsStream)
-  //       fsStream.on('error', (ex) => {
-  //         wError(`${dir}/${filename}.${extensions}`)
-  //         wError(ex)
-  //         resolve()
-  //         fsStream.close()
-  //       })
-
-  //       fsStream.on('finish', () => {
-  //         let success = parseInt(manga.page) === index + 1
-  //         emit.send('DOWNLOAD_WATCH', { index: l, current: filename, total: parseInt(manga.page), finish: success })
-  //         if (success) {
-  //           let config = settings.get('config') || { user_id: 'guest' }
-  //           let items = fs.readdirSync(dir)
-  //           wLog('Complate -- Read', manga.page, 'files, and in directory', items.length, 'files')
-  //           wLog('---------------------')
-
-  //           exHentaiHistory('exhentai/manga', {
-  //             user_id: config.user_id,
-  //             name: manga.name,
-  //             link: manga.url,
-  //             cover: manga.cover,
-  //             language: manga.language,
-  //             size: manga.size,
-  //             page: manga.page,
-  //             completed: true
-  //           })
-  //         }
-  //         resolve()
-  //         fsStream.close()
-  //       })
-  //     } else {
-  //       wLog(index + 1, '--> ', response.statusCode, response.headers['content-type'])
-  //       resolve()
-  //     }
-  //   } else {
-  //     wLog(index + 1, '--> ', response.statusCode, response.headers['content-type'])
-  //     resolve()
-  //   }
-  // })
-  // req.on('error', async ex => {
-  //   let link = manga.items[index]
-  //   wError(link, ex.message)
-  //   wError(link, ex.stack)
-  //   wLog('Retry::')
-  //   let nRetry = 0
-  //   let isSuccess = false
-  //   do {
-  //     try {
-  //       manga.items[index] = `${link}${link.indexOf('?') > -1 ? '&' : '?'}nl=${nl}`
-  //       await jarCookieBuild()
-  //       const res = await request({ url: manga.items[index], jar: jarCookie })
-  //       await jarCookieCheck()
-  //       nl = /return nl\('(.*?)'\)/ig.exec(res)[1]
-  //       await getImage(res, manga, l, index, directory, emit)
-  //       isSuccess = true
-  //     } catch (ex) {
-  //       nRetry++
-  //       wError(manga.items[index], ex.message)
-  //       wError(manga.items[index], ex.stack)
-  //       wLog('Retry::', manga.items[index])
-  //     }
-  //   } while (nRetry < 3 && !isSuccess)
-  // })
 }
 
 export const download = async (list, directory, emit) => {
@@ -578,9 +495,7 @@ export function parseHentai (link, emit) {
     console.log('reqHentai', link)
     const hostname = new URL(link).hostname
     let res = await reqHentai(link, 'GET', {
-      header: {
-        ':authority': hostname,
-        ':scheme': 'https',
+      headers: {
         'pragma': 'no-cache',
         'referer': `https://${hostname}/`
       }

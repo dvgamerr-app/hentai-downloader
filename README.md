@@ -62,6 +62,7 @@ https://e-hentai.org/g/1109336/bec482d462/
 - Fixed headers sending with SSL
 - Fixed SSL Verify with download images.
 - Fixed cookie show error from UI
+- Fixed Can't load `ex` and `e-` at the same time. 
 
 ### License
 MIT © 2021 Touno™

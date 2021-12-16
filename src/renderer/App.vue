@@ -8,8 +8,8 @@
           </div>
           <div class="col-sm-6">
             <div class="text-right">
-              <span v-if="sign.name == null" class="help-block"><b>{{sign.name}}</b></span>
-              <span v-else class="help-block" style="color: #616161;">Hello, <b>{{sign.name}}</b></span>
+              <span v-if="!sign.name" class="help-block"><b>{{sign.name}}</b></span>
+              <span v-else class="help-block" style="color: #616161;">Hello, <b>{{getHideName(sign.name)}}</b></span>
               <!-- sign.cookie == null && !state_verify -->
               <button v-tooltip.right="'Join Discord Community'" type="button" class="btn btn-sm btn-community btn-outline-info" @click="onDiscord">
                 <i class="fa fa-comments-o"></i>
@@ -17,7 +17,13 @@
               <button v-tooltip.right="'Donate to support me ❤'" type="button" class="btn btn-sm btn-donate btn-outline-danger mr-2" @click="onDonate">
                 <i class="fa fa-credit-card"></i>
               </button>
-              <button type="button" :disabled="state_verify && state_name !== 'Loading...'" class="btn btn-sm btn-singin btn-outline-warning" @click.prevent="page.signin = true">
+              <button
+                type="button"
+                :disabled="state_verify || state_name == 'Loading...'"
+                class="btn btn-sm btn-singin" 
+                :class="state_verify || state_name == 'Loading...' ? 'btn-outline-secondary' : 'btn-outline-warning'"
+                @click.prevent="page.signin = true"
+              >
                 Cookie
               </button>
             </div>
@@ -54,7 +60,7 @@
           <div v-if="!page.option" class="row" style="margin-top:4px; margin-bottom: 6px;">
             <div class="col-sm-8">
               <div v-if="!state_verify" class="form-group" :class="{ 'has-error' : error_message }" style="margin-bottom:2px">
-                <input ref="url" type="text" class="form-control input-sm input-url" id="txtURL" placeholder="https://e-hentai.org/g/1031609/631e04b5f7/" maxlength="50" @keyup.enter="onQueue" v-model="url">
+                <input ref="url" type="text" class="form-control input-sm input-url" id="txtURL" :placeholder="!sign.name ? 'https://e-hentai.org/g/1160960/81818b89fe/': 'https://exhentai.org/g/1169311/5b08d3935d/'" maxlength="50" @keyup.enter="onQueue" v-model="url">
                 <i class="fa fa-link fa-input-left" aria-hidden="true"></i>
                 <i class="fa fa-search fa-input-right" aria-hidden="true"></i>
                 <span class="help-block text-danger text-error">{{error_message}}</span>
@@ -76,10 +82,10 @@
                   style="width: 100px;padding:7px;" @click="onQueue">
                   <i :class="['fa', state_icon]"  aria-hidden="true"></i> {{state_name}}
                 </button>
-                <button v-tooltip.bottom="'Setting'" :disabled="state_verify && state_name !== 'Loading...'" type="button" class="btn btn-default" :class="[state_name === 'Loading...' ? 'text-danger' : '']" style="padding: 5px 11px;" @click="onCancel">
+                <button v-tooltip.bottom="'Setting'" :disabled="state_verify && state_name !== 'Loading...'" type="button" class="btn btn-default" :class="[state_name === 'Loading...' ? 'text-danger' : '']" style="padding: 5px 11px;" @click.prevent="onCancel">
                   <i :class="['fa', state_name !== 'Loading...' ? 'fa-gear' : 'fa-times']" aria-hidden="true"></i>
                 </button>
-                <button v-tooltip.bottom="'History'" :disabled="state_name === 'Loading...'" type="button" class="btn btn-default" :class="[state_name === 'Loading...' ? 'text-muted' : '']" style="padding: 5px 11px; margin-left: 5px;" @click="onCancel">
+                <button v-tooltip.bottom="'History'" :disabled="state_verify || state_name == 'Loading...'" type="button" class="btn btn-default" :class="[state_name === 'Loading...' ? 'text-muted' : '']" style="padding: 5px 11px; margin-left: 5px;">
                   <i :class="['fa', 'fa-history']" aria-hidden="true"></i>
                 </button>
               </div>
@@ -122,7 +128,7 @@
           <tbody>
             <tr>
               <td colspan="6" style="padding: 0px !important;">
-                <div style="height:210px;overflow-x:hidden;overflow-y:scroll;">
+                <div style="height:210px;overflow-x:hidden;overflow-y:scroll;padding-bottom:16px;">
                 <table class="table table-striped manga-items" style="padding:0px;margin:0px;margin-bottom: 0px !important;">
                   <colgroup>
                     <col style="width:6%;">
@@ -312,6 +318,11 @@
       onMouseLeave () {
         // console.log('onMouseLeave', key)
       },
+      getHideName (name) {
+        if (!name) return ''
+        const [ , key ] = /\w(\w*?)\w\w\w$/ig.exec(name)
+        return name.replace(key, '...')
+      },
       onWatch (e, manga) {
         this.manga[manga.index].status = 2
         this.bar.step = parseInt(manga.current)
@@ -424,8 +435,7 @@
 
         console.log('appDir::', appDir)
         let Initialize = async () => {
-          const data = await vm.SESSION()
-          console.log('SESSION', data)
+          vm.CLIPBOARD(vm)
           // if (existsSync(join(appDir, vm.folder.id))) {
           //   config.guest = readFileSync(join(appDir, vm.folder.id), 'utf-8').toString()
           // }
@@ -456,7 +466,7 @@
             const delay = setTimeout(() => {
               clearTimeout(delay)
               resolve()
-            }, 1500)
+            }, 800)
           })
         }
 

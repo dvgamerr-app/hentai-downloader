@@ -15,6 +15,7 @@ cookieSupport(axios)
 // At request level
 const agent = new https.Agent({ rejectUnauthorized: false })
 
+let cancelDownload = false
 let saveBlockerId = null
 let jarCookie = cfg.loadCookie()
 let timeClip = null
@@ -249,6 +250,8 @@ let getImage = async (res, manga, l, index, directory, emit) => {
   let nRetry = 0
   let isSuccess = false
   do {
+    if (cancelDownload) { throw new Error('User Cancel Request by button.') }
+
     let resImage = null
     if (nRetry > 0) {
       wLog('Retry::', nRetry)
@@ -353,7 +356,12 @@ let getImage = async (res, manga, l, index, directory, emit) => {
 
 }
 
+export const cancel = () => {
+  cancelDownload = true
+}
+
 export const download = async (list, directory, emit) => {
+  cancelDownload = false
   const delay = (timeout = 1000) => new Promise(resolve => {
     const id = setTimeout(() => {
       clearTimeout(id)
@@ -366,6 +374,7 @@ export const download = async (list, directory, emit) => {
   try {
     let iManga = 0
     for await (const manga of list) {
+      if (cancelDownload) { throw new Error('User Cancel Request by button.') }
       if (manga.error) continue
 
       let iImage = 0
@@ -377,7 +386,7 @@ export const download = async (list, directory, emit) => {
           let res = await reqHentai(imageUrl)
           await getImage(res, manga, iManga, iImage, directory, emit)
         } else {
-          await delay(100)
+          await delay(400)
           emit.send('DOWNLOAD_WATCH', { index: iManga, current: filename, total: parseInt(manga.page), finish: parseInt(manga.page) === iImage + 1 })
         }
         iImage++
@@ -485,15 +494,9 @@ let getManga = async (link, raw, emit) => {
 }
 
 export function parseHentai (link, emit) {
+  cancelDownload = false
   return (async () => {
     link = validateURL(link)
-    console.log('validateURL', link)
-    // let memberId = await getCookie('igneous')
-    // if (memberId && !await getCookie('nw')) {
-    //   await setCookie('/', 'nw=1')
-    //   await setCookie('/', 'nw=1', 'exhentai.org')
-    // }
-
     console.log('reqHentai', link)
     const hostname = new URL(link).hostname
     

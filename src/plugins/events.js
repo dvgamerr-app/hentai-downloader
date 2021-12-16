@@ -19,24 +19,9 @@ export function initMain (mainWindow, appIcon) {
   hentai.onWatchClipboard()
   console.log(appIcon)
   // settings.delete('config')
-  ipcMain.on('SESSION', function (e) {
-    // hentai.reload().then(() => {
-    //   return hentai.cookie('ipb_member_id')
-    // }).then(data => {
-    //   if (!data) {
-    //     settings.delete('igneous')
-    //     settings.delete('config')
-    //   }
-      
-    //   if (!settings.get('ontop', false)) {
-    //     mainWindow.setAlwaysOnTop(false)
-    //     mainWindow.setMovable(true)
-    //   }
-      e.sender.send('SESSION', null)
-    // }).catch(ex => {
-    //   console.log(ex)
-    //   e.sender.send('SESSION', null)
-    // })
+  ipcMain.on('CANCEL', function (e) {
+    hentai.cancel()
+    e.sender.send('CANCEL', null)
   })
   ipcMain.on('CHANGE_DIRECTORY', function (e) {
     dialog.showOpenDialog(mainWindow, {
@@ -168,6 +153,7 @@ export const client = {
         CANCEL: () => {
           return new Promise((resolve) => {
             console.log('ipc-remove::CANCEL')
+            ipcRenderer.send('CANCEL')
             ipcRenderer.removeAllListeners('INIT_MANGA')
             ipcRenderer.removeAllListeners('URL_VERIFY')
             ipcRenderer.removeAllListeners('DOWNLOAD_WATCH')
@@ -230,15 +216,12 @@ export const client = {
             ipcRenderer.send('LOGIN', cookie)
           })
         },
-        SESSION: () => {
-          return new Promise((resolve) => {
-            ipcRenderer.removeAllListeners('SESSION')
-            console.log('ipc-send::SESSION')
-            ipcRenderer.send('SESSION')
-            ipcRenderer.on('SESSION', (e, data) => {
-              console.log('ipc-on::SESSION')
-              resolve(data)
-            })
+        CLIPBOARD: (vm) => {
+          console.log('ipc-on::CLIPBOARD', vm)
+          ipcRenderer.removeAllListeners('CLIPBOARD')
+          ipcRenderer.send('CLIPBOARD')
+          ipcRenderer.on('CLIPBOARD', () => {
+            console.log('ipc-on::CLIPBOARD')
           })
         }
       },

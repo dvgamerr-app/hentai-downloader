@@ -5,44 +5,65 @@
 ![MIT](https://img.shields.io/dub/l/vibe-d.svg?style=flat-square)
 ![Node](https://img.shields.io/badge/node-10.20.1-green?style=flat-square)
 
+![app](./docs/1639646197537.gif)
+
+**คำเตือน** ไม่ควรเปิดเว็บ `exhentai.org` ระหว่างที่ดาวน์โหลดมังงะเพราะจะทำให้รูปบางรูปอาจจะโหลดไม่สำเร็จ
+
 ## Community
 - [Discord](https://touno.io/s/ixj7)
-
 
 ## Overview
 โปรแกรมดาวน์โหลดมังงะจาก `e-hentai.org` ได้โดยไม่ต้องปั้ม Credits และสามารถเพิ่มคิวได้เรื่อยๆ และตรวจจับ clipboard ได้จากการ copy และ paste ที่หน้าโปรแกรม ในรูปแบบ บรรทัดละเรื่อง 
 
+![Icon](./build/icons/256x256.png)
+
 **ข้อจำกัด**
-- ระบบจะเริ่มดาวน์โหลดทีละเรื่องที่ละไฟล์เท่านั้น (เป็นข้อจำกัดของตัวเว็บไซต์เอง)
+- ระบบจะดาวน์โหลดทีละเรื่องที่ละไฟล์เท่านั้น `(เป็นข้อจำกัดของตัวเว็บไซต์เอง และ ป้องกันการโดนแบน)`
+- ระบบไม่ตั้งชื่อตามชื่อไฟล์เดิมที่ download แต่จะตั้งชื่อใหม่เป็นเลขหน้าแทน
 
 ### Features
-- `exhentai.org` download manga.
-- addon login for `exhentai.org` rare.
-- save last user queue.
-- list history user page.
+- รับรอง `exhentai.org` และ `e-hentai.org` เท่านั้น
+- แก้ไฟล์เสียได้จาก redownload
+- บันทึก queue ให้ หากยังไม่ได้ download
 
-### How to use
+### วิธิใช้
 - copy link จากเว็บ `e-hentai.org` ใส่ในช่อง url แล้วกด Enter
 - ถ้าจะเพิ่ม Queue ก็แค่ copy link มาใส่เพิ่ม
 - หรือ copy ลิ้งแบบหลายบรรทัดมาแล้ว paste ที่หน้าโปรแกรม **ตัวอย่างแบบหลายบรรทัด**
 
 ```
-https://e-hentai.org/g/1165997/855db7b447/
 https://e-hentai.org/g/1161024/4cf43275bc/
 https://e-hentai.org/g/1160960/81818b89fe/
 https://e-hentai.org/g/1132634/ddc026cba5/
 https://e-hentai.org/g/1109336/bec482d462/
-https://e-hentai.org/g/1215542/a443972290/
 ```
 
 - กดปุ่ม folder เพื่อเลือก path ที่ต้องการจะ save ไฟล์ลง 
 - กดปุ่ม download เพื่อเริ่มดาวน์โหลดมังงะ
-- **คำเตือน** ไม่ควรเปิดเว็บ `e-hentai.org` ระหว่างที่ดาวน์โหลดมังงะเพราะจะทำให้รูปบางรูปอาจจะโหลดไม่สำเร็จ
 
-![Icon][icons]
+## What's Changed
+- แก้ปัญหาโหลดไฟล์ไม่สมบูรณ์ด้วยการลบไฟล์ที่มีปัญหาทิ้ง แล้วกด Download อีกครั้ง โปรแกรมจะโหลดใหม่จะไฟล์ที่ขาดไปให้ใหม่![256x256](https://user-images.githubusercontent.com/10203425/146343527-8c2b7465-6f80-4e99-bdac-c7e23efc947a.png)
+
+- `exhentai.org` via `cookie` download supported.![256x256](https://user-images.githubusercontent.com/10203425/146343536-f64189be-84c6-4169-8814-ae96531f8ee2.png)
 
 
-![app][app-items]
+![image](https://user-images.githubusercontent.com/10203425/146333356-656c53de-37ee-4118-b9c3-6ddc7ca7caf9.png)
+
+- Awaly on Top with try icon.
+- Watch clipboard and parse manga.
+- New Button Join `Discord Community`
+- New Button Link `Donate`
+- New Button `Setting` and `History`
+
+### Changelog `v2.2.0`
+- Addon script join your session exhentai.org.
+- Update UI
+- Update electron `v3` to `v11`
+- Change request-promise module to axios module.
+- Fixed cookie jar to tough-cookie.
+- Fixed headers sending with SSL
+- Fixed SSL Verify with download images.
+- Fixed cookie show error from UI
 
 [icons]: https://raw.githubusercontent.com/unhax/ghentai-downloader/master/build/icons/256x256.png
 [app-items]: https://raw.githubusercontent.com/unhax/ghentai-downloader/master/docs/app-items.png

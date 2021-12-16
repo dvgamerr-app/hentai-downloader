@@ -37,7 +37,12 @@ function createWindow () {
     resizable: false,
     alwaysOnTop: true,
     skipTaskbar: false,
-    transparent: false
+    transparent: false,
+    webPreferences: {
+      nodeIntegration: true,
+      contextIsolation: false,
+      enableRemoteModule: true,
+    }
   }
   const getPosition = () => {
     const padding = 10

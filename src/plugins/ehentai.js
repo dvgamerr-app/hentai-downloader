@@ -54,7 +54,7 @@ const reqHentai = async (link, method, options = {}) => {
   }, options.headers)
 
   wLog(`URL REQUEST: ${link}`)
-  await jarCookieBuild()
+  await jarCookieBuild(new URL(link).hostname)
   return axios(Object.assign({
     url: link,
     method: method || 'GET',
@@ -68,6 +68,7 @@ const reqHentai = async (link, method, options = {}) => {
     wLog(`URL RESPONSE: ${res.status} body: ${res.data.length}`)
     return res.data
   }).catch((ex) => {
+    wError(ex)
     if (ex.response) {
       console.log('EX.RESPONSE', ex.response)
       const unavailable = /<p>(.*?)<\/p>/ig.exec(ex.response.data)
@@ -129,17 +130,17 @@ const getCookie = (name, ex = false) => new Promise((resolve, reject) => {
   })
 })
 
-const pushCookie = (cookie) => new Promise((resolve, reject) => {
-  if (!cookie || !jarCookie) return resolve()
+// const pushCookie = (cookie) => new Promise((resolve, reject) => {
+//   if (!cookie || !jarCookie) return resolve()
   
-  jarCookie.store.putCookie(cookie, (err) => {
-    if (err) {
-      console.error('jarCookie::putCookie:', err)
-      return reject(err)
-    }
-    resolve()
-  })
-})
+//   jarCookie.store.putCookie(cookie, (err) => {
+//     if (err) {
+//       console.error('jarCookie::putCookie:', err)
+//       return reject(err)
+//     }
+//     resolve()
+//   })
+// })
 export const setCookie = (path, value, domain = 'e-hentai.org') => new Promise((resolve, reject) => {
   if (!jarCookie) return resolve()
 
@@ -152,36 +153,38 @@ export const setCookie = (path, value, domain = 'e-hentai.org') => new Promise((
     resolve()
   })
 })
-const jarCookieBuild = async (ex = false) => {
-  let memberId = await getCookie('ipb_member_id')
-  if (memberId) {
-    const exMemberId = await getCookie('ipb_member_id', true)
-    if (!exMemberId) {
-      memberId = memberId.clone()
-      memberId.domain = 'exhentai.org'
-      pushCookie(memberId)
-    }
-    if (!settings.get('igneous') && ex) {
-      throw new Error('Please join your browser session.')
-    }
-  } else {
-    settings.set('config', {})
-  }
+const jarCookieBuild = async (hostname) => {
+  // let memberId = await getCookie('ipb_member_id')
+  // if (memberId) {
+  //   const exMemberId = await getCookie('ipb_member_id', true)
+  //   if (!exMemberId) {
+  //     memberId = memberId.clone()
+  //     memberId.domain = 'exhentai.org'
+  //     pushCookie(memberId)
+  //   }
+  //   if (!settings.get('igneous')) {
+  //     throw new Error('Please join your browser session.')
+  //   }
+  // } else {
+  //   settings.set('config', {})
+  // }
 
-  let passHash = await getCookie('ipb_pass_hash')
-  if (passHash) {
-    passHash = passHash.clone()
-    passHash.domain = 'exhentai.org'
-    pushCookie(passHash)
+  // let passHash = await getCookie('ipb_pass_hash')
+  // if (passHash) {
+  //   passHash = passHash.clone()
+  //   passHash.domain = 'exhentai.org'
+  //   pushCookie(passHash)
+  // }
+  if (!settings.get('igneous') && hostname == 'exhentai.org') {
+    throw new Error('Please join your browser session.')
   }
-
+  
+  jarCookie.removeAllCookiesSync()
+  await setCookie('/', 'nw=1', hostname)
   if (settings.get('igneous')) {
-    await setCookie('/', `igneous=${settings.get('igneous')}`, '.exhentai.org')
-    await setCookie('/', `ipb_member_id=${settings.get('ipb_member_id')}`, '.exhentai.org')
-    await setCookie('/', `ipb_pass_hash=${settings.get('ipb_pass_hash')}`, '.exhentai.org')
-    await setCookie('/', `igneous=${settings.get('igneous')}`, '.e-hentai.org')
-    await setCookie('/', `ipb_member_id=${settings.get('ipb_member_id')}`, '.e-hentai.org')
-    await setCookie('/', `ipb_pass_hash=${settings.get('ipb_pass_hash')}`, '.e-hentai.org')
+    await setCookie('/', `igneous=${settings.get('igneous')}`, hostname)
+    await setCookie('/', `ipb_member_id=${settings.get('ipb_member_id')}`, hostname)
+    await setCookie('/', `ipb_pass_hash=${settings.get('ipb_pass_hash')}`, hostname)
   }
 }
 
@@ -485,15 +488,16 @@ export function parseHentai (link, emit) {
   return (async () => {
     link = validateURL(link)
     console.log('validateURL', link)
-    let memberId = await getCookie('igneous')
-    if (memberId && !await getCookie('nw')) {
-      console.log('nw')
-      await setCookie('/', 'nw=1')
-      await setCookie('/', 'nw=1', 'exhentai.org')
-    }
+    // let memberId = await getCookie('igneous')
+    // if (memberId && !await getCookie('nw')) {
+    //   await setCookie('/', 'nw=1')
+    //   await setCookie('/', 'nw=1', 'exhentai.org')
+    // }
 
     console.log('reqHentai', link)
     const hostname = new URL(link).hostname
+    
+    await setCookie('/', 'nw=1', hostname)
     let res = await reqHentai(link, 'GET', {
       headers: {
         'pragma': 'no-cache',

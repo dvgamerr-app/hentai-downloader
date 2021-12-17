@@ -1,11 +1,12 @@
 ```text
-#windows #downloader #exhentai #e-hentai
+น่าจะ 2 ปีครึ่ง แล้วมั้ง ที่บอกว่าจะปล่อยตัวที่โหลด exhentai ได้ เอาเป็นว่า
+ปล่อยเลยละกัน ถถถถถถถถ ปั่นอยู่ 3 วันเสร็จ แต่ดองมา 2 ปี ถถถถถถถ
+.
+#windows #downloader #exhentai #ehentai
 .
 community: https://touno.io/s/ixj7
-homepage: https://touno.io/s/g2yb
 sourcecode: https://touno.io/s/whvg
 download: 
-- https://touno.io/s/gra8
-- https://mega.nz/#!zhIUARLA!E3P0lLTaYcpVzrqS9-STRqPpw2j4CF-5j7Hf2Ye5yss
+- [Github] https://touno.io/s/itl5
 ```
 

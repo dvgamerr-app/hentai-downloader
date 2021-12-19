@@ -37,13 +37,13 @@ export function initMain (mainWindow) {
     e.sender.send('CANCEL', null)
   })
   
-  ipcMain.on('CHANGE_DIRECTORY', function (e) {
-    dialog.showOpenDialog(mainWindow, {
+  ipcMain.on('CHANGE_DIRECTORY', async (e) => {
+
+    const fileNames = dialog.showOpenDialogSync(mainWindow, {
       properties: ['openDirectory']
-    }, fileNames => {
-      if (fileNames) settings.set('directory', fileNames[0])
-      e.sender.send('CHANGE_DIRECTORY', fileNames)
     })
+    if (fileNames.length > 0) settings.set('directory', fileNames[0])
+    e.sender.send('CHANGE_DIRECTORY', fileNames)
   })
   ipcMain.on('URL_VERIFY', function (e, url) {
     hentai.parseHentai(url, e.sender).then(async manga => {

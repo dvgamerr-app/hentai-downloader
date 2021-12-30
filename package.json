@@ -6,6 +6,8 @@
   "description": "Manga Hentai in e-hentai.org and exhentai.org downloader.",
   "license": "ISC",
   "main": "./dist/electron/main.js",
+  "engines" : { "node" : "=10.20.1" },
+  "engineStrict" : true,
   "scripts": {
     "build": "node .electron-vue/build.js && electron-builder",
     "build:dir": "node .electron-vue/build.js && electron-builder --dir",

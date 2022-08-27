@@ -94,7 +94,7 @@
     "babel-register": "^6.24.1",
     "babili-webpack-plugin": "^0.1.2",
     "cfonts": "^1.2.0",
-    "chai": "^4.3.4",
+    "chai": "^4.3.6",
     "chalk": "^2.4.1",
     "copy-webpack-plugin": "^4.5.2",
     "cross-env": "^5.2.1",

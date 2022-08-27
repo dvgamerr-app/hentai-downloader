@@ -1,26 +1,36 @@
-import { app, BrowserWindow, Tray, Menu, screen } from 'electron'
-import express from 'express'
-import cors from 'cors'
-import settings from 'electron-settings'
-import bodyParser from 'body-parser'
-import path from 'path'
+const { app, BrowserWindow, Tray, Menu, screen }  = require('electron')
+const logger = require('@touno-io/debuger')('window')
+const { join } = require('path')
+const settings = require('electron-settings')
+const pkg = require('../package.json')
 
-// import hentai from '../plugins/ehentai.js'
-import { initMain, onClick } from '../plugins/events'
+const onClick = (e) => {
+  console.log(e)
+}
 
-// let appIcon
+if (require('electron-squirrel-startup')) {
+  app.quit();
+}
+
+settings.configure({ fileName: `${pkg.name}.json`, prettify: true })
+logger.log('settings-loaded', settings.SettingsObject)
+logger.log('ENV:', process.env)
+
 let mainWindow
 let mainConfig
-const router = express()
-const winURL = process.env.NODE_ENV === 'development' ? `http://localhost:9080` : `file://${__dirname}/index.html`
+// const router = express()
+// const winURL = process.env.NODE_ENV === 'development' ? `http://localhost:9080` : `file://${__dirname}/index.html`
+const winURL = `file://${__dirname}/index.html`
 
-if (process.env.NODE_ENV !== 'development') {
-  global.__static = path.join(__dirname, '/static').replace(/\\/g, '\\\\')
-}
+// if (process.env.NODE_ENV !== 'development') {
+//   global.__static = join(__dirname, '/static').replace(/\\/g, '\\\\')
+// }
 let width = 600
-let height = (process.env.NODE_ENV !== 'development') ? 345 : 385
+let height = 345
 
 function createWindow () {
+settings.configure()
+
   mainConfig = {
     width: width,
     height: height,
@@ -29,7 +39,7 @@ function createWindow () {
     maxWidth: width,
     maxHeight: height,
     title: app.getName(),
-    icon: path.join(__dirname, '../../build/icons/icon.ico'),
+    icon: join(__dirname, '../../build/icons/icon.ico'),
     show: true,
     // frame: false,
     movable: false,
@@ -38,6 +48,7 @@ function createWindow () {
     skipTaskbar: false,
     transparent: false,
     webPreferences: {
+      preload: join(__dirname, 'preload.js'),
       nodeIntegration: true,
       contextIsolation: false,
       enableRemoteModule: true,
@@ -49,7 +60,7 @@ function createWindow () {
       const screenSize = screen.getPrimaryDisplay().workAreaSize
       if (mainWindow) {
         [ width, height ] = mainWindow.getSize()
-        console.log('screenSize', screenSize, 'width', width, 'height', height)
+        logger.log('screenSize', screenSize, 'width', width, 'height', height)
       }
       return {
         x: screenSize.width - width - padding,
@@ -68,7 +79,9 @@ function createWindow () {
   mainWindow.setMovable(!settings.get('ontop', false))
   mainWindow.setMinimizable(false)
 
-  let appIcon = new Tray(path.join(__dirname, process.env.NODE_ENV === 'development' ? '../../static/16x16.png' :'static/16x16.png' ))
+  mainWindow.webContents.openDevTools();
+
+  let appIcon = new Tray(join(__dirname, 'icons/16x16.png'))
   let hideWindow = false
 
   const contextMenu = Menu.buildFromTemplate([
@@ -112,7 +125,7 @@ function createWindow () {
     if (y < 0) y = 0
     if (y > (height - winHeight)) y = (height - winHeight)
     settings.set('position', { x, y })
-    console.log({ x, y })
+    logger.log({ x, y })
   }
   let moveId = null
   mainWindow.on('moved', () => {
@@ -139,10 +152,10 @@ function createWindow () {
     mainWindow = null
   })
 
-  initMain(mainWindow, appIcon)
+  // initMain(mainWindow, appIcon)
 }
 
-app.on('ready', () => createWindow())
+app.on('ready', createWindow)
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
@@ -151,51 +164,7 @@ app.on('window-all-closed', () => {
 })
 
 app.on('activate', () => {
-  if (mainWindow === null) createWindow()
-})
-
-router.use(cors())
-router.use(bodyParser.json())
-router.use(bodyParser.urlencoded({ extended: false }))
-
-router.post('/token', async (req, res) => {
-  try {
-    if (req.body) {
-      // const { cookie } = req.body
-      // console.log('TOKEN:', cookie)
-      // console.log('setCookie:', hentai.setCookie)
-      res.json({ token: true })
-    } else {
-      res.json({ token: false })
-    }
-  } catch (ex) {
-    console.log(ex)
-    res.status(404)
-  } finally {
-    res.end()
+  if (BrowserWindow.getAllWindows().length === 0) {
+    createWindow()
   }
 })
-
-router.listen(34841, '127.0.0.1', () => {
-  console.log('listen port 34841 ready.')
-})
-
-/**
- * Auto Updater
- *
- * Uncomment the following code below and install `electron-updater` to
- * support auto updating. Code Signing with a valid certificate is required.
- * https://simulatedgreg.gitbooks.io/electron-vue/content/en/using-electron-builder.html#auto-updating
- */
-
-/*
-import { autoUpdater } from 'electron-updater'
-
-autoUpdater.on('update-downloaded', () => {
-  autoUpdater.quitAndInstall()
-})
-
-app.on('ready', () => {
-  if (process.env.NODE_ENV === 'production') autoUpdater.checkForUpdates()
-})
- */

@@ -19,7 +19,10 @@ logger.log('App:', app.getName())
 
 const mainApp = {
   url: `file://${__dirname}/index.html`,
+  // // eslint-disable-next-line no-undef
+  // url: MAIN_WINDOW_WEBPACK_ENTRY,
   window: null,
+  tray: null,
   config: {},
   width: 600,
   height: 380
@@ -49,7 +52,9 @@ function createWindow () {
     skipTaskbar: false,
     transparent: false,
     webPreferences: {
-      preload: join(__dirname, 'preload.js'),
+      preload: join(__dirname, './preload.js'),
+      // // eslint-disable-next-line no-undef
+      // preload: MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY,
       nodeIntegration: true,
       contextIsolation: false,
       enableRemoteModule: false,
@@ -83,7 +88,7 @@ function createWindow () {
 
   mainApp.window.webContents.openDevTools();
 
-  let appIcon = new Tray(join(__dirname, 'icons/16x16.png'))
+  mainApp.tray = new Tray(join(__dirname, './icons/16x16.png'))
   let hideWindow = false
 
   const contextMenu = Menu.buildFromTemplate([
@@ -108,9 +113,9 @@ function createWindow () {
     { label: 'Exit', role: 'quit' }
   ])
 
-  appIcon.setContextMenu(contextMenu)
-  appIcon.setToolTip('Hentai Downloader 2.2.0')
-  appIcon.on('click', () => {
+  mainApp.tray.setContextMenu(contextMenu)
+  mainApp.tray.setToolTip('Hentai Downloader 2.2.0')
+  mainApp.tray.on('click', () => {
     if (hideWindow) {
       mainApp.window.show()
     } else {
@@ -150,16 +155,19 @@ function createWindow () {
   })
 
   mainApp.window.on('closed', () => {
-    appIcon.destroy()
+    mainApp.tray.destroy()
     delete mainApp.window
   })
 
-  // initMain(mainApp.window, appIcon)
+  // initMain(mainApp.window, mainApp.tray)
 }
 
 app.on('ready', createWindow)
 app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') app.quit()
+  if (process.platform !== 'darwin') {
+    app.quit()
+    mainApp.tray.destroy()
+  }
 })
 app.on('activate', () => {
   if (BrowserWindow.getAllWindows().length === 0) createWindow()

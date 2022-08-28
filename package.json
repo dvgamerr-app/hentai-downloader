@@ -33,45 +33,6 @@
     "email": "info.dvgamer@gmail.com"
   },
   "license": "MIT",
-  "config": {
-    "forge": {
-      "packagerConfig": {
-        "icon": "./src/icons/icon.ico"
-      },
-      "makers": [
-        {
-          "name": "@electron-forge/maker-squirrel",
-          "config": {
-            "name": "hentai_downloader"
-          }
-        },
-        {
-          "name": "@electron-forge/maker-zip",
-          "platforms": [
-            "darwin"
-          ]
-        },
-        {
-          "name": "@electron-forge/maker-deb",
-          "config": {}
-        },
-        {
-          "name": "@electron-forge/maker-rpm",
-          "config": {}
-        },
-        {
-          "name": "@electron-forge/publisher-github",
-          "config": {
-            "repository": {
-              "owner": "me",
-              "name": "awesome-thing"
-            },
-            "prerelease": true
-          }
-        }
-      ]
-    }
-  },
   "dependencies": {
     "electron-squirrel-startup": "^1.0.0",
     "vue": "^2.7.10"
@@ -87,8 +48,6 @@
     "electron": "20.1.0",
     "electron-settings": "^4.0.2",
     "eslint": "^8.23.0",
-    "eslint-plugin-vue": "^9.4.0",
-    "vue-loader": "^17.0.0",
-    "vue-template-compiler": "^2.7.10"
+    "eslint-plugin-vue": "^9.4.0"
   }
 }

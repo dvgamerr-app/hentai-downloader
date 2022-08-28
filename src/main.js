@@ -4,44 +4,45 @@ const { join } = require('path')
 const settings = require('electron-settings')
 const pkg = require('../package.json')
 
-const onClick = (e) => {
-  console.log(e)
-}
-
 if (require('electron-squirrel-startup')) {
   app.quit();
 }
 
+const onClick = (e) => {
+  console.log(e)
+}
+
 settings.configure({ fileName: `${pkg.name}.json`, prettify: true })
 logger.log('settings-loaded', settings.SettingsObject)
-logger.log('ENV:', process.env)
+logger.log('env:', process.env.NODE_ENV)
+logger.log('App:', app.getName())
 
-let mainWindow
-let mainConfig
+const mainApp = {
+  url: `file://${__dirname}/index.html`,
+  window: null,
+  config: {},
+  width: 600,
+  height: 380
+}
+
 // const router = express()
 // const winURL = process.env.NODE_ENV === 'development' ? `http://localhost:9080` : `file://${__dirname}/index.html`
-const winURL = `file://${__dirname}/index.html`
 
 // if (process.env.NODE_ENV !== 'development') {
 //   global.__static = join(__dirname, '/static').replace(/\\/g, '\\\\')
 // }
-let width = 600
-let height = 345
 
 function createWindow () {
-settings.configure()
-
-  mainConfig = {
-    width: width,
-    height: height,
-    minWidth: width,
-    minHeight: height,
-    maxWidth: width,
-    maxHeight: height,
+  mainApp.config = {
+    width: mainApp.width,
+    height: mainApp.height,
+    minWidth: mainApp.width,
+    minHeight: mainApp.height,
+    maxWidth: mainApp.width,
+    maxHeight: mainApp.height,
     title: app.getName(),
-    icon: join(__dirname, '../../build/icons/icon.ico'),
+    icon: join(__dirname, './icons/icon.ico'),
     show: true,
-    // frame: false,
     movable: false,
     resizable: false,
     alwaysOnTop: true,
@@ -51,35 +52,36 @@ settings.configure()
       preload: join(__dirname, 'preload.js'),
       nodeIntegration: true,
       contextIsolation: false,
-      enableRemoteModule: true,
+      enableRemoteModule: false,
     }
   }
+  
   const getPosition = () => {
     const padding = 10
-    if (settings.get('ontop', false)) {
+    if (settings.getSync('ontop', false)) {
       const screenSize = screen.getPrimaryDisplay().workAreaSize
-      if (mainWindow) {
-        [ width, height ] = mainWindow.getSize()
-        logger.log('screenSize', screenSize, 'width', width, 'height', height)
+      if (mainApp.window) {
+        [ mainApp.width, mainApp.height ] = mainApp.window.getSize()
+        logger.log('screenSize', screenSize, 'width', mainApp.width, 'height',  mainApp.height)
       }
       return {
-        x: screenSize.width - width - padding,
-        y: screenSize.height - height - padding
+        x: screenSize.width - mainApp.width - padding,
+        y: screenSize.height - mainApp.height - padding
       }
     } else {
-      return settings.get('position')
+      return settings.getSync('position')
     }
   }
 
-  mainWindow = new BrowserWindow(Object.assign(mainConfig, getPosition()))
-  mainWindow.loadURL(winURL)
-  mainWindow.setMenu(null)
-  mainWindow.setSkipTaskbar(settings.get('ontop', false))
-  mainWindow.setAlwaysOnTop(settings.get('ontop', false))
-  mainWindow.setMovable(!settings.get('ontop', false))
-  mainWindow.setMinimizable(false)
+  mainApp.window = new BrowserWindow(Object.assign(mainApp.config, getPosition()))
+  mainApp.window.loadURL(mainApp.url)
+  mainApp.window.setMenu(null)
+  mainApp.window.setSkipTaskbar(settings.getSync('ontop', false))
+  mainApp.window.setAlwaysOnTop(settings.getSync('ontop', false))
+  mainApp.window.setMovable(!settings.getSync('ontop', false))
+  mainApp.window.setMinimizable(false)
 
-  mainWindow.webContents.openDevTools();
+  mainApp.window.webContents.openDevTools();
 
   let appIcon = new Tray(join(__dirname, 'icons/16x16.png'))
   let hideWindow = false
@@ -89,19 +91,19 @@ settings.configure()
       label: 'Always On Top',
       sublabel: 'and lock window mode.',
       type: 'checkbox',
-      checked: settings.get('ontop', false),
+      checked: settings.getSync('ontop', false),
       click: (menuItem) => {
         settings.set('ontop', menuItem.checked)
-        mainWindow.setAlwaysOnTop(menuItem.checked)
-        mainWindow.setMovable(!menuItem.checked)
-        mainWindow.setSkipTaskbar(menuItem.checked)
-        // mainWindow.set
+        mainApp.window.setAlwaysOnTop(menuItem.checked)
+        mainApp.window.setMovable(!menuItem.checked)
+        mainApp.window.setSkipTaskbar(menuItem.checked)
+        // mainApp.window.set
         const position = getPosition()
-        if (position) mainWindow.setPosition(position.x, position.y)
+        if (position) mainApp.window.setPosition(position.x, position.y)
       }
     },
     { type: 'separator' },
-    { label: 'Watch Clipboard', type: 'checkbox', role: 'toggle-clipboard', checked: settings.get('clipboard', false), click: onClick },
+    { label: 'Watch Clipboard', type: 'checkbox', role: 'toggle-clipboard', checked: settings.getSync('clipboard', false), click: onClick },
     { label: 'Auto Download', type: 'checkbox', role: 'auto-dl', visible: false, checked: false, click: onClick },
     { label: 'Exit', role: 'quit' }
   ])
@@ -110,16 +112,16 @@ settings.configure()
   appIcon.setToolTip('Hentai Downloader 2.2.0')
   appIcon.on('click', () => {
     if (hideWindow) {
-      mainWindow.show()
+      mainApp.window.show()
     } else {
-      mainWindow.hide()
+      mainApp.window.hide()
     }
   })
 
   const savePosition = () => {
-    let [ x, y ] = mainWindow.getPosition()
+    let [ x, y ] = mainApp.window.getPosition()
     const { width, height } = screen.getPrimaryDisplay().workAreaSize
-    const [ winWidth, winHeight ] = mainWindow.getSize()
+    const [ winWidth, winHeight ] = mainApp.window.getSize()
     if (x < 0) x = 0
     if (x > (width - winWidth)) x = (width - winWidth)
     if (y < 0) y = 0
@@ -128,43 +130,37 @@ settings.configure()
     logger.log({ x, y })
   }
   let moveId = null
-  mainWindow.on('moved', () => {
-    if (settings.get('ontop', false)) return
+  mainApp.window.on('moved', () => {
+    if (settings.getSync('ontop', false)) return
     if (moveId) clearTimeout(moveId)
     moveId = setTimeout(savePosition, 200)
   })
-  mainWindow.on('move', () => {
-    if (settings.get('ontop', false)) return
+  mainApp.window.on('move', () => {
+    if (settings.getSync('ontop', false)) return
     if (moveId) clearTimeout(moveId)
     moveId = setTimeout(savePosition, 200)
   })
 
-  mainWindow.on('show', () => {
+  mainApp.window.on('show', () => {
     hideWindow = !hideWindow
   })
 
-  mainWindow.on('hide', () => {
+  mainApp.window.on('hide', () => {
     hideWindow = !hideWindow
   })
 
-  mainWindow.on('closed', () => {
+  mainApp.window.on('closed', () => {
     appIcon.destroy()
-    mainWindow = null
+    delete mainApp.window
   })
 
-  // initMain(mainWindow, appIcon)
+  // initMain(mainApp.window, appIcon)
 }
 
 app.on('ready', createWindow)
-
 app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') {
-    app.quit()
-  }
+  if (process.platform !== 'darwin') app.quit()
 })
-
 app.on('activate', () => {
-  if (BrowserWindow.getAllWindows().length === 0) {
-    createWindow()
-  }
+  if (BrowserWindow.getAllWindows().length === 0) createWindow()
 })

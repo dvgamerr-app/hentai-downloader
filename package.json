@@ -47,7 +47,7 @@
     "@touno-io/debuger": "^2.4.1",
     "electron": "20.1.0",
     "electron-settings": "^4.0.2",
-    "eslint": "^8.23.0",
+    "eslint": "^8.23.1",
     "eslint-plugin-vue": "^9.4.0"
   }
 }

@@ -35,7 +35,7 @@
   "license": "MIT",
   "dependencies": {
     "electron-squirrel-startup": "^1.0.0",
-    "vue": "^2.7.10"
+    "vue": "^3.2.47"
   },
   "devDependencies": {
     "@electron-forge/cli": "^6.0.0-beta.65",

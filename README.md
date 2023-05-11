@@ -66,6 +66,6 @@ https://e-hentai.org/g/1109336/bec482d462/
 
 ## If you need help You can join Discord.
 
-[![Join Us?](https://discordapp.com/api/guilds/475720106471849996/widget.png?style=banner2)](https://touno.io/s/ixj7)
+[![Join Us?](https://discordapp.com/api/guilds/475720106471849996/widget.png?style=banner2)](https://discord.gg/QDccF497Mw)
 
 

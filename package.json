@@ -3,14 +3,6 @@
   "title": "Hentai Downloader",
   "version": "3.0.0",
   "description": "Manga Hentai in e-hentai.org and exhentai.org downloader.",
-  "main": "./src/main.js",
-  "scripts": {
-    "start": "electron-forge start",
-    "package": "electron-forge package",
-    "make": "electron-forge make",
-    "publish": "electron-forge publish",
-    "lint": "echo \"No linting configured\""
-  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/touno-io/hentai-downloader.git"
@@ -33,21 +25,38 @@
     "email": "info.dvgamer@gmail.com"
   },
   "license": "MIT",
+  "main": "./out/main/index.js",
+  "scripts": {
+    "format": "prettier --plugin prettier-plugin-svelte --write .",
+    "lint": "eslint . --ext .js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix",
+    "start": "electron-vite preview",
+    "dev": "electron-vite dev",
+    "build": "electron-vite build",
+    "postinstall": "electron-builder install-app-deps",
+    "build:unpack": "npm run build && electron-builder --dir",
+    "build:win": "npm run build && electron-builder --win",
+    "build:mac": "npm run build && electron-builder --mac",
+    "build:linux": "npm run build && electron-builder --linux"
+  },
   "dependencies": {
-    "electron-squirrel-startup": "^1.0.0",
-    "vue": "^2.7.10"
+    "@electron-toolkit/preload": "^3.0.0",
+    "@electron-toolkit/utils": "^3.0.0",
+    "electron-updater": "^6.1.7"
   },
   "devDependencies": {
-    "@electron-forge/cli": "^6.0.0-beta.65",
-    "@electron-forge/maker-deb": "^6.0.0-beta.65",
-    "@electron-forge/maker-rpm": "^6.0.0-beta.65",
-    "@electron-forge/maker-squirrel": "^6.0.0-beta.65",
-    "@electron-forge/maker-zip": "^6.0.0-beta.65",
-    "@electron-forge/plugin-webpack": "^6.0.0-beta.65",
-    "@touno-io/debuger": "^2.4.1",
-    "electron": "20.1.0",
+    "@electron-toolkit/eslint-config": "^1.0.2",
+    "@electron-toolkit/eslint-config-prettier": "^2.0.0",
+    "@sveltejs/vite-plugin-svelte": "^3.0.1",
+    "electron": "^28.2.0",
+    "electron-builder": "^24.9.1",
+    "electron-log": "^5.1.1",
     "electron-settings": "^4.0.2",
-    "eslint": "^8.23.0",
-    "eslint-plugin-vue": "^9.4.0"
+    "electron-vite": "^2.0.0",
+    "eslint": "^8.56.0",
+    "eslint-plugin-svelte": "^2.35.1",
+    "prettier": "^3.2.4",
+    "prettier-plugin-svelte": "^3.1.2",
+    "svelte": "^4.2.9",
+    "vite": "^5.0.12"
   }
 }

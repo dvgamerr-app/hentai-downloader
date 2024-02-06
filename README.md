@@ -64,6 +64,33 @@ https://e-hentai.org/g/1109336/bec482d462/
 - Fixed cookie show error from UI
 - Fixed Can't load `ex` and `e-` at the same time. 
 
+## Project Setup
+
+### Install
+
+```bash
+$ pnpm install
+```
+
+### Development
+
+```bash
+$ pnpm dev
+```
+
+### Build
+
+```bash
+# For windows
+$ pnpm build:win
+
+# For macOS
+$ pnpm build:mac
+
+# For Linux
+$ pnpm build:linux
+```
+
 ## If you need help You can join Discord.
 
 [![Join Us?](https://discordapp.com/api/guilds/475720106471849996/widget.png?style=banner2)](https://discord.gg/QDccF497Mw)

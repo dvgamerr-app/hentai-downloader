@@ -1,1 +1,29 @@
-theme: jekyll-theme-minimal
+title: Hentai Downloader
+repo: dvgamerr-app/hentai-downloader
+version: v2.2.1
+author:
+  username: dvgamerr
+  name: Kananek T.
+  website: https://dvgamerr.app/
+
+description: >
+  ExHentai exhentai.org, e-hentai.org images gallery download to folder.
+
+# Build settings
+cronitor_token: a08df15d735c0c7518246129767fd319
+
+# theme: dvgamerr/minima-lite
+baseurl: /hentai-downloader
+remote_theme: dvgamerr/minima-lite
+
+plugins:
+  - jekyll-feed
+  - jekyll-seo-tag
+
+minima:
+  date_format: "%-d %b %Y"
+  social_links:
+    - { platform: devto,          user_url: "https://dev.to/dvgamerr" }
+    - { platform: facebook,       user_url: "https://www.facebook.com/dvgamerr" }
+    - { platform: x,        user_url: "https://x.com/dvgamerr" }
+    - { platform: youtube,        user_url: "https://www.youtube.com/channel/UCbMNge3pQHkb3avJvUj4hLA" }

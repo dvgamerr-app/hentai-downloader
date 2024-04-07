@@ -39,24 +39,24 @@
     "build:linux": "npm run build && electron-builder --linux"
   },
   "dependencies": {
-    "@electron-toolkit/preload": "^3.0.0",
+    "@electron-toolkit/preload": "^3.0.1",
     "@electron-toolkit/utils": "^3.0.0",
-    "electron-updater": "^6.1.7"
+    "electron-updater": "^6.1.8"
   },
   "devDependencies": {
     "@electron-toolkit/eslint-config": "^1.0.2",
     "@electron-toolkit/eslint-config-prettier": "^2.0.0",
-    "@sveltejs/vite-plugin-svelte": "^3.0.1",
-    "electron": "^28.2.0",
-    "electron-builder": "^24.9.1",
-    "electron-log": "^5.1.1",
+    "@sveltejs/vite-plugin-svelte": "^3.0.2",
+    "electron": "^29.2.0",
+    "electron-builder": "^24.13.3",
+    "electron-log": "^5.1.2",
     "electron-settings": "^4.0.2",
-    "electron-vite": "^2.0.0",
-    "eslint": "^8.56.0",
+    "electron-vite": "^2.1.0",
+    "eslint": "^8.57.0",
     "eslint-plugin-svelte": "^2.35.1",
-    "prettier": "^3.2.4",
-    "prettier-plugin-svelte": "^3.1.2",
-    "svelte": "^4.2.9",
-    "vite": "^5.0.12"
+    "prettier": "^3.2.5",
+    "prettier-plugin-svelte": "^3.2.2",
+    "svelte": "^4.2.12",
+    "vite": "^5.2.8"
   }
 }

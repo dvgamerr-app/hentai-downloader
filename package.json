@@ -47,7 +47,7 @@
     "@electron-toolkit/eslint-config": "2.1.0",
     "@electron-toolkit/eslint-config-prettier": "3.0.0",
     "@sveltejs/vite-plugin-svelte": "6.1.2",
-    "electron": "37.3.0",
+    "electron": "37.3.1",
     "electron-builder": "26.0.19",
     "electron-log": "^5.4.2",
     "electron-settings": "5.0.0",

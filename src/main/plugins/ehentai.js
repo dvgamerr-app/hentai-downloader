@@ -234,23 +234,28 @@ const getManga = async (link, raw, emit) => {
   }
 
   const fetchImageLinks = (src) => {
-    for (const match of src.matchAll(/(gdtm|gdtl)".*?<a href="(.*?)">/gs)) {
-      manga.items.push(match[2])
+    const gdtMatch = /<div id="gdt"[^>]*>([\s\S]*?)<div class="gtb">/i.exec(src)
+    if (!gdtMatch) return
+    for (const match of gdtMatch[1].matchAll(/<a href="([^"]+)">/g)) {
+      manga.items.push(match[1])
     }
   }
 
   fetchImageLinks(raw)
 
-  const totalPage = Math.ceil(manga.page / manga.items.length)
+  if (manga.items.length === 0) throw new Error('manga.items is empty, page parsing failed')
+
+  const pageCount = parseInt(manga.page)
+  const totalPage = Math.ceil(pageCount / manga.items.length)
   emit.send('INIT_MANGA', { page: 1, total: totalPage })
 
-  if (manga.items.length !== parseInt(manga.page)) {
+  if (manga.items.length !== pageCount) {
     for (let i = 1; i < totalPage; i++) {
       emit.send('INIT_MANGA', { page: i + 1, total: totalPage })
       const nextRaw = await reqHentai(`${link}?p=${i}`)
       fetchImageLinks(nextRaw)
     }
-    if (manga.items.length !== parseInt(manga.page)) {
+    if (manga.items.length !== pageCount) {
       throw new Error(`manga.items is '${manga.items.length}' and length is '${manga.page}'`)
     }
   }
@@ -266,7 +271,7 @@ export function parseHentai(link, emit) {
     const res = await reqHentai(link, {
       headers: { pragma: 'no-cache', referer: `https://${hostname}/` }
     })
-    if (!/DOCTYPE.html.PUBLIC/i.test(res)) throw new Error(res)
+    if (!/<!DOCTYPE html/i.test(res)) throw new Error(res)
     if (/<a href="(.*?)">Never Warn Me Again/i.test(res)) throw new Error('Never Warn Me Again')
     return getManga(link, res, emit)
   })().catch((ex) => {

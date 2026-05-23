@@ -1,12 +1,59 @@
-import { contextBridge } from 'electron'
+import { contextBridge, ipcRenderer } from 'electron'
 import { electronAPI } from '@electron-toolkit/preload'
 
-// Custom APIs for renderer
-const api = {}
+const api = {
+  configLoaded: () => ipcRenderer.invoke('CONFIG_LOADED'),
 
-// Use `contextBridge` APIs to expose Electron APIs to
-// renderer only if context isolation is enabled, otherwise
-// just add to the DOM global.
+  clearCookie: () => ipcRenderer.invoke('CLEAR_COOKIE'),
+
+  changeDirectory: () =>
+    new Promise((resolve) => {
+      ipcRenderer.once('CHANGE_DIRECTORY', (_, dir) => resolve(dir?.[0] || ''))
+      ipcRenderer.send('CHANGE_DIRECTORY')
+    }),
+
+  cancel: () => {
+    ipcRenderer.removeAllListeners('INIT_MANGA')
+    ipcRenderer.removeAllListeners('URL_VERIFY')
+    ipcRenderer.removeAllListeners('DOWNLOAD_WATCH')
+    ipcRenderer.removeAllListeners('DOWNLOAD_COMPLATE')
+    ipcRenderer.removeAllListeners('LOGIN')
+    ipcRenderer.send('CANCEL')
+  },
+
+  urlVerify: (url) =>
+    new Promise((resolve) => {
+      ipcRenderer.once('URL_VERIFY', (_, res) => resolve(res))
+      ipcRenderer.send('URL_VERIFY', url)
+    }),
+
+  initManga: (callback) => {
+    ipcRenderer.removeAllListeners('INIT_MANGA')
+    ipcRenderer.on('INIT_MANGA', (_, data) => callback(data))
+  },
+
+  download: (data, onWatch) =>
+    new Promise((resolve) => {
+      ipcRenderer.removeAllListeners('DOWNLOAD_WATCH')
+      ipcRenderer.removeAllListeners('DOWNLOAD_COMPLATE')
+      ipcRenderer.on('DOWNLOAD_WATCH', (_, manga) => onWatch(manga))
+      ipcRenderer.once('DOWNLOAD_COMPLATE', () => resolve())
+      ipcRenderer.send('DOWNLOAD_BEGIN', data)
+    }),
+
+  login: (cookie) =>
+    new Promise((resolve) => {
+      ipcRenderer.once('LOGIN', (_, data) => resolve(data))
+      ipcRenderer.send('LOGIN', cookie)
+    }),
+
+  clipboard: (onPaste) => {
+    ipcRenderer.removeAllListeners('CLIPBOARD')
+    ipcRenderer.send('CLIPBOARD')
+    ipcRenderer.on('CLIPBOARD', (_, data) => onPaste(data))
+  }
+}
+
 if (process.contextIsolated) {
   try {
     contextBridge.exposeInMainWorld('electron', electronAPI)

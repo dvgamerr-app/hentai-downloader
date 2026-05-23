@@ -137,8 +137,18 @@ function createWindow() {
     return { action: 'deny' }
   })
 
+  mainApp.win.webContents.on('console-message', (_, level, message, line, sourceId) => {
+    const src = sourceId ? `${sourceId}:${line}` : ''
+    if (level === 3) log.error(`[renderer] ${message}${src ? ' ' + src : ''}`)
+    else if (level === 2) log.warn(`[renderer] ${message}${src ? ' ' + src : ''}`)
+    else log.log(`[renderer] ${message}${src ? ' ' + src : ''}`)
+  })
+
   if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
     mainApp.win.loadURL(process.env['ELECTRON_RENDERER_URL'])
+    mainApp.win.webContents.once('did-finish-load', () => {
+      mainApp.win.webContents.openDevTools({ mode: 'detach' })
+    })
   } else {
     mainApp.win.loadFile(join(__dirname, '../renderer/index.html'))
   }

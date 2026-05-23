@@ -21,9 +21,27 @@ Electron desktop app with three processes wired through IPC:
 
 **Main process** (`src/main/index.js`) — creates the `BrowserWindow` and `Tray`, loads `electron-settings` for persistent config (window position, auth cookies, download directory), and delegates all IPC handlers to `plugins/events.js`.
 
-**Preload** (`src/preload/index.js`) — minimal bridge using `@electron-toolkit/preload`; exposes `window.electron` to the renderer.
+**Preload** (`src/preload/index.js`) — exposes `window.electron` (via `@electron-toolkit/preload`) and `window.api` (custom IPC bridge). All renderer↔main communication goes through `window.api.*`.
 
-**Renderer** (`src/renderer/`) — Svelte 5 UI with `svelte-routing`.
+**Renderer** (`src/renderer/`) — Svelte 5 single-component app (`App.svelte`). No router — the whole UI lives in one component with local state controlling which view is shown (landing screen vs main downloader).
+
+**Styling** — Bootstrap 4.6.2 + Flatly Bootswatch theme SCSS (`src/renderer/src/assets/theme.scss`) + Font Awesome 4.7 (copied to `src/renderer/src/assets/`). Sass deprecation warnings from Bootstrap 4 are silenced via `electron.vite.config.mjs`.
+
+### `window.api` (preload bridge)
+
+All UI→main calls go through `window.api.*` exposed in `src/preload/index.js`:
+
+| Method | Description |
+|---|---|
+| `configLoaded()` | Returns `{directory, igneous, cookie}` from settings |
+| `clearCookie()` | Deletes igneous/ipb cookies from settings |
+| `changeDirectory()` | Opens native folder picker, returns path |
+| `cancel()` | Cancels active download, clears all IPC listeners |
+| `urlVerify(url)` | Fetches manga metadata, returns `{error, data}` |
+| `initManga(callback)` | Registers progress callback for manga page loading |
+| `download(data, onWatch)` | Starts download queue, calls `onWatch` per image |
+| `login(cookie)` | Parses and saves exhentai cookies, returns `{success}` |
+| `clipboard(onPaste)` | Starts clipboard polling, calls `onPaste` on new text |
 
 ### IPC channels (events.js)
 

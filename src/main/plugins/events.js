@@ -6,6 +6,19 @@ if (!settings.getSync('directory')) {
   settings.setSync('directory', app.getPath('downloads'))
 }
 
+ipcMain.handle('CONFIG_LOADED', () => ({
+  directory: settings.getSync('directory') || '',
+  igneous: settings.getSync('igneous') || null,
+  cookie: settings.getSync('cookie') || ''
+}))
+
+ipcMain.handle('CLEAR_COOKIE', () => {
+  settings.deleteSync('cookie')
+  settings.deleteSync('igneous')
+  settings.deleteSync('ipb_member_id')
+  settings.deleteSync('ipb_pass_hash')
+})
+
 const onWatchClipboard = (e) => {
   let last = null
   setInterval(() => {

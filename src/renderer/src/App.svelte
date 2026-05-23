@@ -15,8 +15,8 @@
     <a href="https://electron-vite.org/" target="_blank" rel="noreferrer">Documentation</a>
   </div>
   <div class="action">
-    <!-- svelte-ignore a11y-click-events-have-key-events a11y-no-static-element-interactions a11y-missing-attribute-->
-    <a target="_blank" rel="noreferrer" on:click={ipcHandle}>Send IPC</a>
+    <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions a11y_missing_attribute -->
+    <a target="_blank" rel="noreferrer" onclick={ipcHandle}>Send IPC</a>
   </div>
 </div>
 <Versions />

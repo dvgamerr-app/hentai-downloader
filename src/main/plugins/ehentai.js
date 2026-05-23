@@ -1,344 +1,150 @@
 import { powerSaveBlocker } from 'electron'
-import URL from 'url-parse'
 import fs, { existsSync } from 'fs'
 import path from 'path'
-import moment from 'moment'
+import { Readable } from 'stream'
+import { pipeline } from 'stream/promises'
+import dayjs from 'dayjs'
 import settings from 'electron-settings'
-import axios from 'axios'
-import https from 'https'
 
-import cookieSupport from 'axios-cookiejar-support'
-import * as cfg from './lib/config'
+const USER_AGENT =
+  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36'
 
-cookieSupport(axios)
-
-// At request level
-const agent = new https.Agent({ rejectUnauthorized: false })
+const DEFAULT_HEADERS = {
+  'user-agent': USER_AGENT,
+  accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+  'accept-language': 'en-US,en;q=0.9',
+  'cache-control': 'no-cache'
+}
 
 let cancelDownload = false
 let saveBlockerId = null
-let jarCookie = cfg.loadCookie()
 
-console.log('cookieSupport:', jarCookie)
+const wError = (...msg) =>
+  fs.appendFileSync(
+    `./${dayjs().format('YYYY-MM-DD')}-error.log`,
+    `${dayjs().format('HH:mm:ss.SSS')} ${msg.join(' ')}\n`
+  )
 
-const reqHentai = async (link, method, options = {}) => {
-  options.headers = Object.assign({
-    'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.93 Safari/537.36',
-    'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
-    'Accept-Encoding': 'gzip, deflate, br',
-    'accept-language': 'en-US,en;q=0.9,th;q=0.8,ja;q=0.7',
-    'cache-control': 'no-cache',
-    "sec-ch-ua": `" Not A;Brand";v="99", "Chromium";v="96", "Google Chrome";v="96"`,
-    "sec-ch-ua-mobile": "?0",
-    "sec-ch-ua-platform": "Windows",
-    "Sec-Fetch-Dest": "document",
-    "Sec-Fetch-Mode": "navigate",
-    "Sec-Fetch-Site": "same-origin",
-    "Sec-Fetch-User": "?1",
-    "Upgrade-Insecure-Requests": "1",
-    "Connection": "keep-alive",
-  }, options.headers)
+const wLog = (...msg) =>
+  fs.appendFileSync(
+    `./${dayjs().format('YYYY-MM-DD')}.log`,
+    `${dayjs().format('HH:mm:ss.SSS')} ${msg.join(' ')}\n`
+  )
 
-  wLog(`URL REQUEST: ${link}`)
-  await jarCookieBuild(new URL(link).hostname)
-  return axios(Object.assign({
-    url: link,
-    method: method || 'GET',
-    jar: jarCookie,
-    withCredentials: true,
-    httpsAgent: agent,
-    timeout: 5000
-  }, options)).then((res) => {
-    return jarCookieCheck().then(() => res)
-  }).then((res) => {
-    wLog(`URL RESPONSE: ${res.status} body: ${res.data.length}`)
-    return res.data
-  }).catch((ex) => {
-    wError(ex)
-    if (ex.response) {
-      console.log('EX.RESPONSE', ex.response)
-      const unavailable = /<p>(.*?)<\/p>/ig.exec(ex.response.data)
-      return unavailable[1] || unavailable || ex.response.status
-    } else {
-      console.log('EX', ex)
-      return ex.message || ex
-    }
-  })
-
-  // return new Promise((resolve, reject) => {
-  //   wLog(`URL REQUEST: ${link}`)
-  //   axios(Object.assign({
-  //     url: link,
-  //     method: method || 'GET',
-  //     jar: jarCookie,
-  //     timeout: 5000
-  //   }, options), (error, res, body) => {
-  //     jarCookieCheck().then(() => {
-  //       if (error) {
-  //         reject(new Error(error))
-  //         return
-  //       }
-  //       let { statusCode } = res
-  //       wLog(`URL RESPONSE: ${statusCode} body: ${body.length}`)
-  //       if (statusCode === 302 || statusCode === 200) {
-  //         resolve(body)
-  //       } else {
-  //         reject(new Error(statusCode))
-  //       }
-  //     })
-  //   })
-  // })
-}
-
-const blockCookie = (path, name, ex = false) => new Promise((resolve, reject) => {
-  if (!jarCookie) resolve()
-
-  jarCookie.store.removeCookie(!ex ? 'e-hentai.org' : 'exhentai.org', path, name, (err) => {
-    
-    if (err) {
-      console.error('jarCookie::removeCookie:', err)
-      return reject(err)
-    }
-    resolve()
-  })
-})
-
-const getCookie = (name, ex = false) => new Promise((resolve, reject) => {
-  if (!jarCookie) return resolve(null)
-
-  // console.log('getCookie', name)
-  jarCookie.store.findCookie(!ex ? 'e-hentai.org' : 'exhentai.org', '/', name, (err, cookie) => {
-    if (err) {
-      console.error('jarCookie::findCookie:', err)
-      return reject(err)
-    }
-    resolve(cookie)
-  })
-})
-
-// const pushCookie = (cookie) => new Promise((resolve, reject) => {
-//   if (!cookie || !jarCookie) return resolve()
-  
-//   jarCookie.store.putCookie(cookie, (err) => {
-//     if (err) {
-//       console.error('jarCookie::putCookie:', err)
-//       return reject(err)
-//     }
-//     resolve()
-//   })
-// })
-export const setCookie = (path, value, domain = 'e-hentai.org') => new Promise((resolve, reject) => {
-  if (!jarCookie) return resolve()
-
-  // console.log('setCookie:', value)
-  jarCookie.setCookie(`${value}; Path=${path}; Domain=${domain}`, `http://${domain}/`, {}, (err) => {
-    if (err) {
-      console.error('jarCookie::setCookie:', err)
-      return reject(err)
-    }
-    resolve()
-  })
-})
-const jarCookieBuild = async (hostname) => {
-  // let memberId = await getCookie('ipb_member_id')
-  // if (memberId) {
-  //   const exMemberId = await getCookie('ipb_member_id', true)
-  //   if (!exMemberId) {
-  //     memberId = memberId.clone()
-  //     memberId.domain = 'exhentai.org'
-  //     pushCookie(memberId)
-  //   }
-  //   if (!settings.get('igneous')) {
-  //     throw new Error('Please join your browser session.')
-  //   }
-  // } else {
-  //   settings.set('config', {})
-  // }
-
-  // let passHash = await getCookie('ipb_pass_hash')
-  // if (passHash) {
-  //   passHash = passHash.clone()
-  //   passHash.domain = 'exhentai.org'
-  //   pushCookie(passHash)
-  // }
-  if (!settings.get('igneous') && hostname == 'exhentai.org') {
+const buildCookieHeader = (hostname) => {
+  if (hostname === 'exhentai.org' && !settings.getSync('igneous')) {
     throw new Error('Please join your browser session.')
   }
-  
-  jarCookie.removeAllCookiesSync()
-  await setCookie('/', 'nw=1', hostname)
-  if (settings.get('igneous')) {
-    await setCookie('/', `igneous=${settings.get('igneous')}`, hostname)
-    await setCookie('/', `ipb_member_id=${settings.get('ipb_member_id')}`, hostname)
-    await setCookie('/', `ipb_pass_hash=${settings.get('ipb_pass_hash')}`, hostname)
+  const cookies = ['nw=1']
+  if (settings.getSync('igneous')) {
+    cookies.push(`igneous=${settings.getSync('igneous')}`)
+    cookies.push(`ipb_member_id=${settings.getSync('ipb_member_id')}`)
+    cookies.push(`ipb_pass_hash=${settings.getSync('ipb_pass_hash')}`)
   }
+  return cookies.join('; ')
 }
 
-const jarCookieCheck = async () => {
-  await blockCookie('/', 'sk')
-  await blockCookie('/', 'sk', true)
-
-  await blockCookie('/s/', 'skipserver')
-  await blockCookie('/', 'yay', true)
-  cfg.saveCookie(jarCookie)
-
-  // console.group('Cookie Check List')
-  // const idx = jarCookie.store.idx
-  // if (Object.keys(idx).length > 0) {
-  //   for (const domain in idx) {
-  //     for (const router in idx[domain]) {
-  //       for (const cookie in idx[domain][router]) {
-  //         console.log('  -', domain, cookie, ':', idx[domain][router][cookie].value)
-  //       }
-  //     }
-  //   }
-  // }
-  // console.groupEnd('Cookie Check List')
-}
-// console.log('development:', touno.DevMode)
-const wError = (...msg) => {
-  fs.appendFileSync(`./${moment().format('YYYY-MM-DD')}-error.log`, `${moment().format('HH:mm:ss.SSS')} ${msg.join(' ')}\n`)
-}
-const wLog = (...msg) => {
-  fs.appendFileSync(`./${moment().format('YYYY-MM-DD')}.log`, `${moment().format('HH:mm:ss.SSS')} ${msg.join(' ')}\n`)
-}
-
-const exHentaiHistory = (uri, data) => {
-  return {
-    url: uri,
-    data: data
+const reqHentai = async (link, options = {}) => {
+  const { hostname } = new URL(link)
+  wLog(`URL REQUEST: ${link}`)
+  const res = await fetch(link, {
+    method: options.method || 'GET',
+    headers: {
+      ...DEFAULT_HEADERS,
+      cookie: buildCookieHeader(hostname),
+      referer: `https://${hostname}/`,
+      ...options.headers
+    },
+    signal: options.signal
+  })
+  if (!res.ok) {
+    const text = await res.text()
+    const match = /<p>(.*?)<\/p>/i.exec(text)
+    const msg = match?.[1] || `HTTP ${res.status}`
+    wLog(`URL ERROR: ${res.status} ${msg}`)
+    throw new Error(msg)
   }
+  const text = await res.text()
+  wLog(`URL RESPONSE: ${res.status} body: ${text.length}`)
+  return text
 }
 
-let getFilename = (index, total) => {
-  return `${Math.pow(10, (total.toString().length - index.toString().length) + 1).toString().substr(2, 10) + index}`
+const getExtension = (contentType = '') => {
+  if (/jpeg|jpg/.test(contentType)) return 'jpg'
+  if (/png/.test(contentType)) return 'png'
+  if (/gif/.test(contentType)) return 'gif'
+  return 'jpg'
 }
 
-const getExtension = (res) => {
-  switch (res.headers['content-type']) {
-    case 'jpg':
-    case 'image/jpg':
-    case 'image/jpeg': return 'jpg'
-    case 'image/png': return 'png'
-    case 'image/gif': return 'gif'
-  }
-}
-let getImage = async (res, manga, l, index, directory, emit) => {
-  let image = /id="img".*?src="(.*?)"/ig.exec(res)[1]
-  let nl = /return nl\('(.*?)'\)/ig.exec(res)[1]
-  let filename = getFilename(index + 1, manga.page)
+const getFilename = (index, total) =>
+  `${Math.pow(10, total.toString().length - index.toString().length + 1)
+    .toString()
+    .slice(2)}${index}`
 
-  let name = manga.name.replace(/[/\\|.:?<>"]/ig, '')
-  let dir = path.join(directory, name)
-  if (!fs.existsSync(dir)) fs.mkdirSync(dir)
+const getImage = async (res, manga, listIndex, imageIndex, directory, emit) => {
+  let imageUrl = /id="img".*?src="(.*?)"/i.exec(res)?.[1]
+  let nl = /return nl\('(.*?)'\)/i.exec(res)?.[1]
+  const filename = getFilename(imageIndex + 1, manga.page)
+  const safeName = manga.name.replace(/[/\\|.:?<>"]/g, '')
+  const dir = path.join(directory, safeName)
+  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true })
+
+  const { hostname } = new URL(manga.url)
+  const cookieStr = buildCookieHeader(hostname)
 
   let nRetry = 0
   let isSuccess = false
-  do {
-    if (cancelDownload) { throw new Error('User Cancel Request by button.') }
 
-    let resImage = null
+  do {
+    if (cancelDownload) throw new Error('User Cancel Request by button.')
     if (nRetry > 0) {
       wLog('Retry::', nRetry)
-      let link = manga.items[index]
-      manga.items[index] = `${link}${link.indexOf('?') > -1 ? '&' : '?'}nl=${nl}`
-      res = await reqHentai(manga.items[index])
-      nl = /return nl\('(.*?)'\)/ig.exec(res)[1]
-      image = /id="img".*?src="(.*?)"/ig.exec(res)[1]
+      const sep = manga.items[imageIndex].includes('?') ? '&' : '?'
+      manga.items[imageIndex] = `${manga.items[imageIndex]}${sep}nl=${nl}`
+      const retryPage = await reqHentai(manga.items[imageIndex])
+      nl = /return nl\('(.*?)'\)/i.exec(retryPage)?.[1]
+      imageUrl = /id="img".*?src="(.*?)"/i.exec(retryPage)?.[1]
     }
-    emit.send('DOWNLOAD_WATCH', { index: l, current: filename, total: parseInt(manga.page) })
-    wLog(`Downloading...  -- '${(index + 1)}.jpg' of ${manga.page} files -->`)
+
+    emit.send('DOWNLOAD_WATCH', { index: listIndex, current: filename, total: parseInt(manga.page) })
+    wLog(`Downloading... '${imageIndex + 1}' of ${manga.page} files`)
+
     try {
-      const response = await axios({
-        url: image,
-        method: 'GET',
-        responseType: 'stream',
-        jar: jarCookie,
-        withCredentials: true,
-        httpsAgent: agent,
-        timeout: 10000,
+      const imgRes = await fetch(imageUrl, {
         headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.93 Safari/537.36',
-          'Accept': 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
-          'Accept-Encoding': 'gzip, deflate, br',
-          'Accept-Language': 'en-US,en;q=0.9,th;q=0.8,ja;q=0.7',
-          'Strict-Transport-Security': 'max-age=15552000; includeSubDomains; preload',
-          'referer': `https://${new URL(manga.url).hostname}/`,
-          "sec-ch-ua": `" Not A;Brand";v="99", "Chromium";v="96", "Google Chrome";v="96"`,
-          "sec-ch-ua-mobile": "?0",
-          "sec-ch-ua-platform": "Windows",
-          "Sec-Fetch-Dest": "image",
-          "Sec-Fetch-Mode": "no-cors",
-          "Sec-Fetch-Site": "cross-site"
-        }
+          'user-agent': USER_AGENT,
+          accept: 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
+          'accept-language': 'en-US,en;q=0.9',
+          cookie: cookieStr,
+          referer: `https://${hostname}/`,
+          'sec-fetch-dest': 'image',
+          'sec-fetch-mode': 'no-cors',
+          'sec-fetch-site': 'cross-site'
+        },
+        signal: AbortSignal.timeout(30_000)
       })
-      // console.log('response', response)
+      if (!imgRes.ok) throw new Error(`Image HTTP ${imgRes.status}`)
+
+      const ext = getExtension(imgRes.headers.get('content-type'))
+      const filePath = `${dir}/${filename}.${ext}`
+      const writer = fs.createWriteStream(filePath)
+      await pipeline(Readable.fromWeb(imgRes.body), writer)
+
       isSuccess = true
-      resImage = response.data
-      // // clearTimeout(cancelTime)
-      const extensions = getExtension(response)
-      if (extensions) wLog(index + 1, '--> ', response.statusCode, response.headers['content-type'])
+      const finished = parseInt(manga.page) === imageIndex + 1
+      emit.send('DOWNLOAD_WATCH', { index: listIndex, current: filename, total: parseInt(manga.page), finish: finished })
 
-      const asyncWriterImage = (timeout = 30) => new Promise((resolve, reject) => {
-        let cancelTime = setTimeout(() => {
-          writer.close()
-          // resImage.close()
-          reject(new Error('Operation canceled.'))
-        }, timeout * 1000)
-        resImage.on('error', ex => {
-          clearTimeout(cancelTime)
-          writer.close()
-          // resImage.close()
-          reject(new Error(`Download:: ${ex.toString()}`))
-        })
-        writer.on('error', (ex) => {
-          clearTimeout(cancelTime)
-          writer.close()
-          // resImage.close()
-          reject(new Error(`Writer:: ${ex.toString()}`))
-        })
-
-        writer.on('finish', () => {
-          clearTimeout(cancelTime)
-          writer.close()
-          // resImage.close()
-          resolve()
-        })
-      })
-
-      const writer = fs.createWriteStream(`${dir}/${filename}.${extensions}`)
-      resImage.pipe(writer)
-      await asyncWriterImage()
-
-      let success = parseInt(manga.page) === index + 1
-      emit.send('DOWNLOAD_WATCH', { index: l, current: filename, total: parseInt(manga.page), finish: success })
-      if (success) {
-        let config = settings.get('config') || { user_id: 'guest' }
-        let items = fs.readdirSync(dir)
-        wLog('Complate -- Read', manga.page, 'files, and in directory', items.length, 'files')
+      if (finished) {
+        const items = fs.readdirSync(dir)
+        wLog(`Complete -- Read ${manga.page} files, directory has ${items.length} files`)
         wLog('---------------------')
-
-        exHentaiHistory('exhentai/manga', {
-          user_id: config.user_id,
-          name: manga.name,
-          link: manga.url,
-          cover: manga.cover,
-          language: manga.language,
-          size: manga.size,
-          page: manga.page,
-          completed: true
-        })
       }
     } catch (ex) {
       nRetry++
-      wLog('getImage::', manga.items[index])
-      wError('getImage::', index, ex.message)
-      wError('getImage::', index, ex.stack)
-    } finally {
-      wLog('getImage::', manga.items[index])
+      wLog('getImage::', manga.items[imageIndex])
+      wError('getImage::', imageIndex, ex.message)
     }
   } while (nRetry < 3 && !isSuccess)
-
 }
 
 export const cancel = () => {
@@ -347,32 +153,33 @@ export const cancel = () => {
 
 export const download = async (list, directory, emit) => {
   cancelDownload = false
-  const delay = (timeout = 1000) => new Promise(resolve => {
-    const id = setTimeout(() => {
-      clearTimeout(id)
-      resolve()
-    }, timeout)
-  })
+  const delay = (ms = 400) => new Promise((r) => setTimeout(r, ms))
 
   saveBlockerId = powerSaveBlocker.start('prevent-display-sleep')
   let imgTotal = 0
   try {
     let iManga = 0
-    for await (const manga of list) {
-      if (cancelDownload) { throw new Error('User Cancel Request by button.') }
+    for (const manga of list) {
+      if (cancelDownload) throw new Error('User Cancel Request by button.')
       if (manga.error) continue
 
       let iImage = 0
-      for await (const imageUrl of manga.items) {
+      for (const imageUrl of manga.items) {
         const filename = getFilename(iImage + 1, manga.page)
-        const name = manga.name.replace(/[/\\|.:?<>"]/ig, '')
-        const exisFile = ext => existsSync(`${path.join(directory, name)}/${filename}.${ext}`)
+        const safeName = manga.name.replace(/[/\\|.:?<>"]/g, '')
+        const exisFile = (ext) => existsSync(`${path.join(directory, safeName)}/${filename}.${ext}`)
+
         if (!exisFile('jpg') && !exisFile('png') && !exisFile('gif')) {
-          let res = await reqHentai(imageUrl)
+          const res = await reqHentai(imageUrl)
           await getImage(res, manga, iManga, iImage, directory, emit)
         } else {
-          await delay(400)
-          emit.send('DOWNLOAD_WATCH', { index: iManga, current: filename, total: parseInt(manga.page), finish: parseInt(manga.page) === iImage + 1 })
+          await delay()
+          emit.send('DOWNLOAD_WATCH', {
+            index: iManga,
+            current: filename,
+            total: parseInt(manga.page),
+            finish: parseInt(manga.page) === iImage + 1
+          })
         }
         iImage++
         imgTotal++
@@ -383,58 +190,39 @@ export const download = async (list, directory, emit) => {
     wError(`*error*: ${ex.toString()}`)
   } finally {
     wLog('hentai-downloader', `*downloading request* \`${imgTotal}\` time`)
-    if (powerSaveBlocker.isStarted(saveBlockerId)) powerSaveBlocker.stop(saveBlockerId)
+    if (saveBlockerId !== null && powerSaveBlocker.isStarted(saveBlockerId)) {
+      powerSaveBlocker.stop(saveBlockerId)
+    }
     saveBlockerId = null
   }
-
-  // for (let l = 0; l < list.length; l++) {
-  //   let manga = list[l]
-  //   if (manga.error) continue
-  //   for (let i = 0; i < manga.items.length; i++) {
-  //     let filename = getFilename(i + 1, manga.page)
-  //     let name = manga.name.replace(/[/\\|.:?<>"]/ig, '')
-  //     let dir = path.join(directory, name)
-  //     if (!fs.existsSync(`${dir}/${filename}.jpg`) && !fs.existsSync(`${dir}/${filename}.png`) && !fs.existsSync(`${dir}/${filename}.gif`)) {
-  //       all.push(() => new Promise(async (resolve, reject) => {
-  //         await jarCookieBuild()
-  //         let res = await request(manga.items[i], { jar: jarCookie })
-  //         await jarCookieCheck()
-  //         await getImage(res, manga, l, i, resolve, directory, emit)
-  //       }))
-  //     } else {
-  //       emit.send('DOWNLOAD_WATCH', { index: l, current: filename, total: parseInt(manga.page), finish: parseInt(manga.page) === i + 1 })
-  //     }
-  //   }
-  // }
 }
 
 const validateURL = (link) => {
-  const baseUrl = new URL(link.trim())
-  if (!/\/\w{1}\/\d{1,8}\/[0-9a-f]+?\//ig.test(baseUrl.pathname)) {
-    throw new Error(`Key missing, or incorrect key provided.`)
-  } else {
-    let [fixed] = /\/\w{1}\/\d{1,8}\/[0-9a-f]+?\//ig.exec(baseUrl.pathname)
-    return `https://${baseUrl.hostname}${fixed}`
+  const base = new URL(link.trim())
+  if (!/\/\w\/\d{1,8}\/[0-9a-f]+\//i.test(base.pathname)) {
+    throw new Error('Key missing, or incorrect key provided.')
   }
+  const [fixed] = /\/\w\/\d{1,8}\/[0-9a-f]+\//i.exec(base.pathname)
+  return `https://${base.hostname}${fixed}`
 }
 
-let getManga = async (link, raw, emit) => {
-  const baseUrl = new URL(link)
-  let [fixed] = /\/\w{1}\/\d{1,8}\/[0-9a-f]+?\//ig.exec(baseUrl.pathname)
+const getManga = async (link, raw, emit) => {
+  const base = new URL(link)
+  const [fixed] = /\/\w\/\d{1,8}\/[0-9a-f]+\//i.exec(base.pathname)
 
-  let name = /<div id="gd2">.*?gn">(.*?)<\/.*?gj">(.*?)<\/.*?<\/div>/ig.exec(raw)
-  let language = /Language:.*?class="gdt2">(.*?)&/ig.exec(raw)
-  let size = /File Size:.*?class="gdt2">(.*?)</ig.exec(raw)
-  let length = /Length:.*?gdt2">(.*?).page/ig.exec(raw)
-  let cover = /<div id="gleft">.*?url\((.*?)\)/ig.exec(raw)
+  const name = /<div id="gd2">.*?gn">(.*?)<\/.*?gj">(.*?)<\/.*?<\/div>/is.exec(raw)
+  const language = /Language:.*?class="gdt2">(.*?)&/is.exec(raw)
+  const size = /File Size:.*?class="gdt2">(.*?)</is.exec(raw)
+  const length = /Length:.*?gdt2">(.*?).page/is.exec(raw)
+  const cover = /<div id="gleft">.*?url\((.*?)\)/is.exec(raw)
 
   if (!name) throw new Error('manga.name is not found')
   if (!language) throw new Error('manga.language is not found')
   if (!size) throw new Error('manga.size is not found')
   if (!length) throw new Error('manga.page is not found')
-  if (!cover) throw new Error('manga.page is not found')
+  if (!cover) throw new Error('manga.cover is not found')
 
-  let manga = {
+  const manga = {
     ref: fixed,
     url: link,
     name: name[1],
@@ -444,89 +232,65 @@ let getManga = async (link, raw, emit) => {
     page: length[1],
     items: []
   }
-  const fetchImage = (manga, raw) => {
-    for (const gdt of raw.match(/(gdtm|gdtl)".*?<a href="(.*?)">/ig)) {
-      manga.items.push(/(gdtm|gdtl)".*?<a href="(.*?)">/i.exec(gdt)[2])
+
+  const fetchImageLinks = (src) => {
+    for (const match of src.matchAll(/(gdtm|gdtl)".*?<a href="(.*?)">/gs)) {
+      manga.items.push(match[2])
     }
   }
-  // slack(baseUrl.host, manga)
-  fetchImage(manga, raw)
 
-  console.log('------- manga -------')
-  console.dir(manga)
-  let config = settings.get('config') || { user_id: 'guest' }
-  console.log('------- config -------')
-  console.dir(config)
-  exHentaiHistory('exhentai/manga', Object.assign(manga, {
-    user_id: config.user_id
-  }))
+  fetchImageLinks(raw)
 
   const totalPage = Math.ceil(manga.page / manga.items.length)
   emit.send('INIT_MANGA', { page: 1, total: totalPage })
 
-  console.log('Recheck NextPage:', manga.items.length, manga.page)
-  if (manga.items.length !== manga.page) {
+  if (manga.items.length !== parseInt(manga.page)) {
     for (let i = 1; i < totalPage; i++) {
       emit.send('INIT_MANGA', { page: i + 1, total: totalPage })
-      raw = await reqHentai(`${link}?p=${i}`)
-      fetchImage(manga, raw)
+      const nextRaw = await reqHentai(`${link}?p=${i}`)
+      fetchImageLinks(nextRaw)
     }
-    if (manga.items.length !== parseInt(manga.page)) throw new Error(`manga.items is '${manga.items.length}' and length is '${manga.page}'`)
-    return manga
-  } else {
-    return manga
+    if (manga.items.length !== parseInt(manga.page)) {
+      throw new Error(`manga.items is '${manga.items.length}' and length is '${manga.page}'`)
+    }
   }
+
+  return manga
 }
 
-export function parseHentai (link, emit) {
+export function parseHentai(link, emit) {
   cancelDownload = false
   return (async () => {
     link = validateURL(link)
-    console.log('reqHentai', link)
-    const hostname = new URL(link).hostname
-    
-    await setCookie('/', 'nw=1', hostname)
-    let res = await reqHentai(link, 'GET', {
-      headers: {
-        'pragma': 'no-cache',
-        'referer': `https://${hostname}/`
-      }
+    const { hostname } = new URL(link)
+    const res = await reqHentai(link, {
+      headers: { pragma: 'no-cache', referer: `https://${hostname}/` }
     })
-    if (!/DOCTYPE.html.PUBLIC/ig.test(res)) throw new Error(res)
-    let warnMe = /<a href="(.*?)">Never Warn Me Again/ig.exec(res)
-    if (warnMe) throw new Error('Never Warn Me Again')
-    console.log('getManga')
+    if (!/DOCTYPE.html.PUBLIC/i.test(res)) throw new Error(res)
+    if (/<a href="(.*?)">Never Warn Me Again/i.test(res)) throw new Error('Never Warn Me Again')
     return getManga(link, res, emit)
-  })().catch(ex => {
-    if (ex.response) {
-      const res = ex.response.toJSON()
-      console.log('Error:', res)
-      const baseUrl = new URL(link.trim())
-      wLog(`This gallery has been removed: https://${baseUrl.hostname}${baseUrl.pathname}`)
-      throw new Error('This gallery has been removed or is unavailable.')
-    } else {
-      wError(`*error*: ${link}\n${ex.toString()}`)
-      throw ex
-    }
+  })().catch((ex) => {
+    wError(`*error*: ${link}\n${ex.toString()}`)
+    throw ex
   })
 }
 
-export async function login (username, password) {
-  let res1 = await reqHentai('https://forums.e-hentai.org/index.php?act=Login&CODE=01', 'POST', {
-    header: { 'referer': 'https://forums.e-hentai.org/index.php' },
-    form: {
-      referer: 'https://forums.e-hentai.org/index.php',
-      CookieDate: 1,
-      b: 'd',
-      bt: '1-1',
-      UserName: username.trim(),
-      PassWord: password.trim(),
-      ipb_login_submit: 'Login!'
+export async function login(username, password) {
+  const body = new URLSearchParams({
+    referer: 'https://forums.e-hentai.org/index.php',
+    CookieDate: '1',
+    b: 'd',
+    bt: '1-1',
+    UserName: username.trim(),
+    PassWord: password.trim(),
+    ipb_login_submit: 'Login!'
+  })
+  return fetch('https://forums.e-hentai.org/index.php?act=Login&CODE=01', {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/x-www-form-urlencoded',
+      referer: 'https://forums.e-hentai.org/index.php'
     },
-    resolveWithFullResponse: true
+    body
   })
-  return res1
 }
-
-export const cookie = getCookie
-export const reload = jarCookieCheck

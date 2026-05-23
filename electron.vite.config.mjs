@@ -9,13 +9,6 @@ export default defineConfig({
     plugins: [externalizeDepsPlugin()]
   },
   renderer: {
-    plugins: [
-      svelte({
-        compilerOptions: {
-          // keep old `new Component({ target })` API working (Svelte 4 behavior)
-          compatibility: { componentApi: 4 }
-        }
-      })
-    ]
+    plugins: [svelte()]
   }
 })

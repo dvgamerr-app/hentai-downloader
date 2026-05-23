@@ -122,8 +122,8 @@ function createWindow() {
     moveId = setTimeout(savePosition, 200)
   })
 
-  mainApp.win.on('show', () => { hideWindow = !hideWindow })
-  mainApp.win.on('hide', () => { hideWindow = !hideWindow })
+  mainApp.win.on('show', () => { hideWindow = false })
+  mainApp.win.on('hide', () => { hideWindow = true })
 
   mainApp.win.on('closed', () => {
     mainApp.tray.destroy()

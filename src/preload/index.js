@@ -16,7 +16,7 @@ const api = {
     ipcRenderer.removeAllListeners('INIT_MANGA')
     ipcRenderer.removeAllListeners('URL_VERIFY')
     ipcRenderer.removeAllListeners('DOWNLOAD_WATCH')
-    ipcRenderer.removeAllListeners('DOWNLOAD_COMPLATE')
+    ipcRenderer.removeAllListeners('DOWNLOAD_COMPLETE')
     ipcRenderer.removeAllListeners('LOGIN')
     ipcRenderer.send('CANCEL')
   },
@@ -35,9 +35,9 @@ const api = {
   download: (data, onWatch) =>
     new Promise((resolve) => {
       ipcRenderer.removeAllListeners('DOWNLOAD_WATCH')
-      ipcRenderer.removeAllListeners('DOWNLOAD_COMPLATE')
+      ipcRenderer.removeAllListeners('DOWNLOAD_COMPLETE')
       ipcRenderer.on('DOWNLOAD_WATCH', (_, manga) => onWatch(manga))
-      ipcRenderer.once('DOWNLOAD_COMPLATE', () => resolve())
+      ipcRenderer.once('DOWNLOAD_COMPLETE', () => resolve())
       ipcRenderer.send('DOWNLOAD_BEGIN', data)
     }),
 

@@ -13,15 +13,17 @@ ipcMain.handle('CONFIG_LOADED', () => ({
 }))
 
 ipcMain.handle('CLEAR_COOKIE', () => {
-  settings.deleteSync('cookie')
-  settings.deleteSync('igneous')
-  settings.deleteSync('ipb_member_id')
-  settings.deleteSync('ipb_pass_hash')
+  settings.unsetSync('cookie')
+  settings.unsetSync('igneous')
+  settings.unsetSync('ipb_member_id')
+  settings.unsetSync('ipb_pass_hash')
 })
 
+let clipboardIntervalId = null
 const onWatchClipboard = (e) => {
+  if (clipboardIntervalId !== null) clearInterval(clipboardIntervalId)
   let last = null
-  setInterval(() => {
+  clipboardIntervalId = setInterval(() => {
     if (!settings.getSync('clipboard', false)) return
     const text = clipboard.readText()
     if (last !== text) {
@@ -50,7 +52,7 @@ export function initMain(mainWindow) {
       properties: ['openDirectory']
     })
     if (fileNames?.length > 0) settings.setSync('directory', fileNames[0])
-    e.sender.send('CHANGE_DIRECTORY', fileNames)
+    e.sender.send('CHANGE_DIRECTORY', fileNames || [])
   })
 
   ipcMain.on('URL_VERIFY', (e, url) => {
@@ -63,14 +65,14 @@ export function initMain(mainWindow) {
   ipcMain.on('DOWNLOAD_BEGIN', (e, sender) => {
     hentai
       .download(sender.manga, sender.directory, e.sender)
-      .then(() => e.sender.send('DOWNLOAD_COMPLATE'))
-      .catch((ex) => console.error('DOWNLOAD_COMPLATE error', ex))
+      .then(() => e.sender.send('DOWNLOAD_COMPLETE'))
+      .catch((ex) => console.error('DOWNLOAD_COMPLETE error', ex))
   })
 
   ipcMain.on('LOGIN', (e, cookieString) => {
-    settings.deleteSync('igneous')
-    settings.deleteSync('ipb_member_id')
-    settings.deleteSync('ipb_pass_hash')
+    settings.unsetSync('igneous')
+    settings.unsetSync('ipb_member_id')
+    settings.unsetSync('ipb_pass_hash')
 
     const result = { success: false, igneous: null, ipb_member_id: null, ipb_pass_hash: null }
     let count = 0

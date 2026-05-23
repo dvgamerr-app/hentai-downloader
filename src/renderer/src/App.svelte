@@ -155,6 +155,7 @@
   }
 
   function handlePaste(e) {
+    if (e.target?.id === 'txtCookie') return
     const data = e.clipboardData.getData('text').trim()
     if (e.target?.id !== 'txtURL' && !/\n/i.test(data)) {
       url = data

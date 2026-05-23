@@ -1,4 +1,4 @@
-import { powerSaveBlocker } from 'electron'
+import { app, powerSaveBlocker } from 'electron'
 import fs, { existsSync } from 'fs'
 import path from 'path'
 import { Readable } from 'stream'
@@ -19,15 +19,17 @@ const DEFAULT_HEADERS = {
 let cancelDownload = false
 let saveBlockerId = null
 
+const logDir = () => app.getPath('userData')
+
 const wError = (...msg) =>
   fs.appendFileSync(
-    `./${dayjs().format('YYYY-MM-DD')}-error.log`,
+    path.join(logDir(), `${dayjs().format('YYYY-MM-DD')}-error.log`),
     `${dayjs().format('HH:mm:ss.SSS')} ${msg.join(' ')}\n`
   )
 
 const wLog = (...msg) =>
   fs.appendFileSync(
-    `./${dayjs().format('YYYY-MM-DD')}.log`,
+    path.join(logDir(), `${dayjs().format('YYYY-MM-DD')}.log`),
     `${dayjs().format('HH:mm:ss.SSS')} ${msg.join(' ')}\n`
   )
 
@@ -280,22 +282,3 @@ export function parseHentai(link, emit) {
   })
 }
 
-export async function login(username, password) {
-  const body = new URLSearchParams({
-    referer: 'https://forums.e-hentai.org/index.php',
-    CookieDate: '1',
-    b: 'd',
-    bt: '1-1',
-    UserName: username.trim(),
-    PassWord: password.trim(),
-    ipb_login_submit: 'Login!'
-  })
-  return fetch('https://forums.e-hentai.org/index.php?act=Login&CODE=01', {
-    method: 'POST',
-    headers: {
-      'content-type': 'application/x-www-form-urlencoded',
-      referer: 'https://forums.e-hentai.org/index.php'
-    },
-    body
-  })
-}

@@ -7,14 +7,23 @@ import dayjs from 'dayjs'
 import settings from 'electron-settings'
 
 const USER_AGENT =
-  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36'
+  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36'
 
 const DEFAULT_HEADERS = {
   'user-agent': USER_AGENT,
   accept:
-    'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+    'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,application/signed-exchange;v=b3;q=0.7,*/*;q=0.8',
   'accept-language': 'en-US,en;q=0.9',
-  'cache-control': 'no-cache'
+  'cache-control': 'no-cache',
+  pragma: 'no-cache',
+  'upgrade-insecure-requests': '1',
+  'sec-ch-ua': '"Chromium";v="152", "Not?A_Brand";v="99", "Google Chrome";v="152"',
+  'sec-ch-ua-mobile': '?0',
+  'sec-ch-ua-platform': '"Windows"',
+  'sec-fetch-dest': 'document',
+  'sec-fetch-mode': 'navigate',
+  'sec-fetch-site': 'same-origin',
+  'sec-fetch-user': '?1'
 }
 const GALLERY_PATH_PATTERN = /\/\w\/\d{1,8}\/[0-9a-f]+\//i
 const IMAGE_EXTENSIONS = ['jpg', 'png', 'gif']
@@ -53,16 +62,23 @@ const buildCookieHeader = (hostname) => {
 const reqHentai = async (link, options = {}) => {
   const { hostname } = new URL(link)
   wLog(`URL REQUEST: ${link}`)
-  const res = await fetch(link, {
-    method: options.method || 'GET',
-    headers: {
-      ...DEFAULT_HEADERS,
-      cookie: buildCookieHeader(hostname),
-      referer: `https://${hostname}/`,
-      ...options.headers
-    },
-    signal: options.signal
-  })
+  let res
+  try {
+    res = await fetch(link, {
+      method: options.method || 'GET',
+      headers: {
+        ...DEFAULT_HEADERS,
+        cookie: buildCookieHeader(hostname),
+        referer: `https://${hostname}/`,
+        ...options.headers
+      },
+      signal: options.signal || AbortSignal.timeout(30_000)
+    })
+  } catch (ex) {
+    const msg = ex.name === 'TimeoutError' ? `Request timed out: ${link}` : ex.message
+    wError(`URL ERROR: ${msg}`)
+    throw new Error(msg)
+  }
   if (!res.ok) {
     const text = await res.text()
     const match = /<p>(.*?)<\/p>/i.exec(text)
@@ -126,6 +142,9 @@ const getImage = async (res, manga, listIndex, imageIndex, dir, emit) => {
           'accept-language': 'en-US,en;q=0.9',
           cookie: cookieStr,
           referer: `https://${hostname}/`,
+          'sec-ch-ua': '"Chromium";v="152", "Not?A_Brand";v="99", "Google Chrome";v="152"',
+          'sec-ch-ua-mobile': '?0',
+          'sec-ch-ua-platform': '"Windows"',
           'sec-fetch-dest': 'image',
           'sec-fetch-mode': 'no-cors',
           'sec-fetch-site': 'cross-site'

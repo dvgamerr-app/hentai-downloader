@@ -5,5 +5,5 @@ export default async () => {
 
   console.log(`[FORUMS] logout-get: ${global._appToken.step03}`)
   let html = await request('GET', global._appToken.step03)
-  return /redirectwrap[\W\w]*?<h4>Thanks/ig.test(html)
+  return /redirectwrap[\W\w]*?<h4>Thanks/gi.test(html)
 }

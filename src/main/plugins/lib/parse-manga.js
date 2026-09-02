@@ -2,14 +2,14 @@ import parseImage from './parse-image'
 
 export default (uri, html) => {
   uri = uri instanceof URL ? uri : new URL(uri.trim().replace(/&amp;/g, '&'))
-  const [ gallery ] = /\/\w{1}\/\d{1,8}\/[0-9a-f]+?\//ig.exec(uri.pathname) || []
+  const [gallery] = /\/\w{1}\/\d{1,8}\/[0-9a-f]+?\//gi.exec(uri.pathname) || []
   uri = new URL(`${uri.protocol}//${uri.hostname}${gallery}`)
 
-  const [ , name ] = /<div id="gd2">.*?gn">(.*?)<\/.*?gj">(.*?)<\/.*?<\/div>/ig.exec(html) || []
-  const [ , language ] = /Language:.*?class="gdt2">(.*?)&/ig.exec(html) || []
-  const [ , size ] = /File Size:.*?class="gdt2">(.*?)</ig.exec(html) || []
-  const [ , length ] = /Length:.*?gdt2">(.*?).page/ig.exec(html) || []
-  const [ , cover ] = /<div id="gleft">.*?url\((.*?)\)/ig.exec(html) || []
+  const [, name] = /<div id="gd2">.*?gn">(.*?)<\/.*?gj">(.*?)<\/.*?<\/div>/gi.exec(html) || []
+  const [, language] = /Language:.*?class="gdt2">(.*?)&/gi.exec(html) || []
+  const [, size] = /File Size:.*?class="gdt2">(.*?)</gi.exec(html) || []
+  const [, length] = /Length:.*?gdt2">(.*?).page/gi.exec(html) || []
+  const [, cover] = /<div id="gleft">.*?url\((.*?)\)/gi.exec(html) || []
 
   if (!name) throw new Error('manga.name is undefined.')
   if (!language) throw new Error('manga.language is undefined.')

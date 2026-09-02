@@ -26,13 +26,15 @@ async function launch() {
   if (app) return 'already running'
   app = await electron.launch({
     args: [MAIN],
-    cwd: ROOT,
+    cwd: ROOT
   })
   page = await app.firstWindow()
   // wait for landing screen to finish (landing=false means main UI loaded)
-  await page.waitForFunction(() => !document.querySelector('[style*="background-image"]'), {
-    timeout: 10000
-  }).catch(() => {})
+  await page
+    .waitForFunction(() => !document.querySelector('[style*="background-image"]'), {
+      timeout: 10000
+    })
+    .catch(() => {})
   return 'launched'
 }
 
@@ -52,21 +54,27 @@ async function evalJs(code) {
 async function quit() {
   if (!app) return 'not running'
   await app.close()
-  app = null; page = null
+  app = null
+  page = null
   return 'closed'
 }
 
 async function run(cmd, ...args) {
   switch (cmd) {
-    case 'launch': return await launch()
-    case 'ss': return await screenshot(args[0])
-    case 'eval': return await evalJs(args.join(' '))
-    case 'quit': return await quit()
-    default: return `unknown command: ${cmd}`
+    case 'launch':
+      return await launch()
+    case 'ss':
+      return await screenshot(args[0])
+    case 'eval':
+      return await evalJs(args.join(' '))
+    case 'quit':
+      return await quit()
+    default:
+      return `unknown command: ${cmd}`
   }
 }
 
-const [,, firstCmd, ...firstArgs] = process.argv
+const [, , firstCmd, ...firstArgs] = process.argv
 if (firstCmd) {
   const result = await run(firstCmd, ...firstArgs)
   console.log(result)

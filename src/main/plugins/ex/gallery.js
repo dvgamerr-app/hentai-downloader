@@ -4,15 +4,16 @@ export default async (uri) => {
   try {
     uri = uri instanceof URL ? uri : new URL(uri.trim().replace(/&amp;/g, '&'))
 
-    if (!/\/\w{1}\/\d{1,8}\/[0-9a-f]+?\//ig.test(uri.pathname)) throw new Error(`Key missing, or incorrect key provided.`)
+    if (!/\/\w{1}\/\d{1,8}\/[0-9a-f]+?\//gi.test(uri.pathname))
+      throw new Error(`Key missing, or incorrect key provided.`)
     if (/^ex/i.test(uri.hostname) && global._appToken.name) throw new Error(`Session not login.`)
 
     let html = await request('GET', uri.toString())
-    if (!/DOCTYPE.html.PUBLIC/ig.test(html)) throw new Error(html)
-    let [ , warnMe ] = /<a href="(.*?)">Never Warn Me Again/ig.exec(html) || []
+    if (!/DOCTYPE.html.PUBLIC/gi.test(html)) throw new Error(html)
+    let [, warnMe] = /<a href="(.*?)">Never Warn Me Again/gi.exec(html) || []
     if (warnMe) {
       // throw new Error('Never Warn Me Again')
-      html = await request('GET', warnMe[1], {}, { 'referer': `${uri.protocol}//${uri.hostname}` })
+      html = await request('GET', warnMe[1], {}, { referer: `${uri.protocol}//${uri.hostname}` })
     }
     return html
   } catch (ex) {

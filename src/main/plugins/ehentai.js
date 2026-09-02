@@ -11,35 +11,39 @@ const USER_AGENT =
 
 const DEFAULT_HEADERS = {
   'user-agent': USER_AGENT,
-  accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+  accept:
+    'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
   'accept-language': 'en-US,en;q=0.9',
   'cache-control': 'no-cache'
 }
+const GALLERY_PATH_PATTERN = /\/\w\/\d{1,8}\/[0-9a-f]+\//i
+const IMAGE_EXTENSIONS = ['jpg', 'png', 'gif']
+const delay = (ms = 400) => new Promise((resolve) => setTimeout(resolve, ms))
 
 let cancelDownload = false
 let saveBlockerId = null
 
 const logDir = () => app.getPath('userData')
 
-const wError = (...msg) =>
+const appendLog = (suffix, msg) => {
+  const now = dayjs()
   fs.appendFileSync(
-    path.join(logDir(), `${dayjs().format('YYYY-MM-DD')}-error.log`),
-    `${dayjs().format('HH:mm:ss.SSS')} ${msg.join(' ')}\n`
+    path.join(logDir(), `${now.format('YYYY-MM-DD')}${suffix}.log`),
+    `${now.format('HH:mm:ss.SSS')} ${msg.join(' ')}\n`
   )
+}
 
-const wLog = (...msg) =>
-  fs.appendFileSync(
-    path.join(logDir(), `${dayjs().format('YYYY-MM-DD')}.log`),
-    `${dayjs().format('HH:mm:ss.SSS')} ${msg.join(' ')}\n`
-  )
+const wError = (...msg) => appendLog('-error', msg)
+const wLog = (...msg) => appendLog('', msg)
 
 const buildCookieHeader = (hostname) => {
-  if (hostname === 'exhentai.org' && !settings.getSync('igneous')) {
+  const igneous = settings.getSync('igneous')
+  if (hostname === 'exhentai.org' && !igneous) {
     throw new Error('Please join your browser session.')
   }
   const cookies = ['nw=1']
-  if (settings.getSync('igneous')) {
-    cookies.push(`igneous=${settings.getSync('igneous')}`)
+  if (igneous) {
+    cookies.push(`igneous=${igneous}`)
     cookies.push(`ipb_member_id=${settings.getSync('ipb_member_id')}`)
     cookies.push(`ipb_pass_hash=${settings.getSync('ipb_pass_hash')}`)
   }
@@ -83,12 +87,11 @@ const getFilename = (index, total) =>
     .toString()
     .slice(2)}${index}`
 
-const getImage = async (res, manga, listIndex, imageIndex, directory, emit) => {
+const getImage = async (res, manga, listIndex, imageIndex, dir, emit) => {
   let imageUrl = /id="img".*?src="(.*?)"/i.exec(res)?.[1]
   let nl = /return nl\('(.*?)'\)/i.exec(res)?.[1]
   const filename = getFilename(imageIndex + 1, manga.page)
-  const safeName = manga.name.replace(/[/\\|.:?<>"]/g, '')
-  const dir = path.join(directory, safeName)
+  const pageTotal = Number.parseInt(manga.page, 10)
   if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true })
 
   const { hostname } = new URL(manga.url)
@@ -108,7 +111,11 @@ const getImage = async (res, manga, listIndex, imageIndex, directory, emit) => {
       imageUrl = /id="img".*?src="(.*?)"/i.exec(retryPage)?.[1]
     }
 
-    emit.send('DOWNLOAD_WATCH', { index: listIndex, current: filename, total: parseInt(manga.page) })
+    emit.send('DOWNLOAD_WATCH', {
+      index: listIndex,
+      current: filename,
+      total: pageTotal
+    })
     wLog(`Downloading... '${imageIndex + 1}' of ${manga.page} files`)
 
     try {
@@ -133,8 +140,13 @@ const getImage = async (res, manga, listIndex, imageIndex, directory, emit) => {
       await pipeline(Readable.fromWeb(imgRes.body), writer)
 
       isSuccess = true
-      const finished = parseInt(manga.page) === imageIndex + 1
-      emit.send('DOWNLOAD_WATCH', { index: listIndex, current: filename, total: parseInt(manga.page), finish: finished })
+      const finished = pageTotal === imageIndex + 1
+      emit.send('DOWNLOAD_WATCH', {
+        index: listIndex,
+        current: filename,
+        total: pageTotal,
+        finish: finished
+      })
 
       if (finished) {
         const items = fs.readdirSync(dir)
@@ -155,7 +167,6 @@ export const cancel = () => {
 
 export const download = async (list, directory, emit) => {
   cancelDownload = false
-  const delay = (ms = 400) => new Promise((r) => setTimeout(r, ms))
 
   saveBlockerId = powerSaveBlocker.start('prevent-display-sleep')
   let imgTotal = 0
@@ -165,22 +176,26 @@ export const download = async (list, directory, emit) => {
       if (cancelDownload) throw new Error('User Cancel Request by button.')
       if (manga.error) continue
 
+      const pageTotal = Number.parseInt(manga.page, 10)
+      const safeName = manga.name.replace(/[/\\|.:?<>"]/g, '')
+      const mangaDir = path.join(directory, safeName)
       let iImage = 0
       for (const imageUrl of manga.items) {
         const filename = getFilename(iImage + 1, manga.page)
-        const safeName = manga.name.replace(/[/\\|.:?<>"]/g, '')
-        const exisFile = (ext) => existsSync(`${path.join(directory, safeName)}/${filename}.${ext}`)
+        const exists = IMAGE_EXTENSIONS.some((ext) =>
+          existsSync(path.join(mangaDir, `${filename}.${ext}`))
+        )
 
-        if (!exisFile('jpg') && !exisFile('png') && !exisFile('gif')) {
+        if (!exists) {
           const res = await reqHentai(imageUrl)
-          await getImage(res, manga, iManga, iImage, directory, emit)
+          await getImage(res, manga, iManga, iImage, mangaDir, emit)
         } else {
           await delay()
           emit.send('DOWNLOAD_WATCH', {
             index: iManga,
             current: filename,
-            total: parseInt(manga.page),
-            finish: parseInt(manga.page) === iImage + 1
+            total: pageTotal,
+            finish: pageTotal === iImage + 1
           })
         }
         iImage++
@@ -201,16 +216,16 @@ export const download = async (list, directory, emit) => {
 
 const validateURL = (link) => {
   const base = new URL(link.trim())
-  if (!/\/\w\/\d{1,8}\/[0-9a-f]+\//i.test(base.pathname)) {
+  const [fixed] = GALLERY_PATH_PATTERN.exec(base.pathname) ?? []
+  if (!fixed) {
     throw new Error('Key missing, or incorrect key provided.')
   }
-  const [fixed] = /\/\w\/\d{1,8}\/[0-9a-f]+\//i.exec(base.pathname)
   return `https://${base.hostname}${fixed}`
 }
 
 const getManga = async (link, raw, emit) => {
   const base = new URL(link)
-  const [fixed] = /\/\w\/\d{1,8}\/[0-9a-f]+\//i.exec(base.pathname)
+  const [fixed] = GALLERY_PATH_PATTERN.exec(base.pathname)
 
   const name = /<div id="gd2">.*?gn">(.*?)<\/.*?gj">(.*?)<\/.*?<\/div>/is.exec(raw)
   const language = /Language:.*?class="gdt2">(.*?)&/is.exec(raw)
@@ -247,7 +262,7 @@ const getManga = async (link, raw, emit) => {
 
   if (manga.items.length === 0) throw new Error('manga.items is empty, page parsing failed')
 
-  const pageCount = parseInt(manga.page)
+  const pageCount = Number.parseInt(manga.page, 10)
   const totalPage = Math.ceil(pageCount / manga.items.length)
   emit.send('INIT_MANGA', { page: 1, total: totalPage })
 
@@ -265,9 +280,9 @@ const getManga = async (link, raw, emit) => {
   return manga
 }
 
-export function parseHentai(link, emit) {
+export async function parseHentai(link, emit) {
   cancelDownload = false
-  return (async () => {
+  try {
     link = validateURL(link)
     const { hostname } = new URL(link)
     const res = await reqHentai(link, {
@@ -275,10 +290,9 @@ export function parseHentai(link, emit) {
     })
     if (!/<!DOCTYPE html/i.test(res)) throw new Error(res)
     if (/<a href="(.*?)">Never Warn Me Again/i.test(res)) throw new Error('Never Warn Me Again')
-    return getManga(link, res, emit)
-  })().catch((ex) => {
+    return await getManga(link, res, emit)
+  } catch (ex) {
     wError(`*error*: ${link}\n${ex.toString()}`)
     throw ex
-  })
+  }
 }
-

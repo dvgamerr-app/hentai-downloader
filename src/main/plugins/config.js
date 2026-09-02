@@ -16,8 +16,8 @@ export default {
         json: true,
         headers: { 'X-Token': token, 'X-Access': +new Date() }
       })(data)
-    } catch (ex) {
-      return () => ({ })
+    } catch {
+      return () => ({})
     }
   }
 }

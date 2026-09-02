@@ -1,4 +1,4 @@
-export default html => {
-  let gdtm = html.match(/gdtm".*?<a href=".*?">/ig) || []
-  return gdtm.map(item => /href="(?<link>.*?)"/ig.exec(item).groups.link)
+export default (html) => {
+  let gdtm = html.match(/gdtm".*?<a href=".*?">/gi) || []
+  return gdtm.map((item) => /href="(?<link>.*?)"/gi.exec(item).groups.link)
 }

@@ -12,31 +12,39 @@ export default async (username, password) => {
 
   console.log(`[FORUMS] login-form: ${step00}`)
   let html = await request('GET', step00)
-  let [ , step01 ] = /form action="(.*?)"/ig.exec(html) || []
+  let [, step01] = /form action="(.*?)"/gi.exec(html) || []
   if (!step01) throw new Error(html)
 
   console.log(`[FORUMS] login-post: ${step01}`)
-  html = await request('POST', step01, {
-    referer: `https://${new URL(step01).hostname}/`,
-    b: '',
-    bt: '',
-    UserName: username,
-    PassWord: password,
-    CookieDate: 1
-  }, header01)
+  html = await request(
+    'POST',
+    step01,
+    {
+      referer: `https://${new URL(step01).hostname}/`,
+      b: '',
+      bt: '',
+      UserName: username,
+      PassWord: password,
+      CookieDate: 1
+    },
+    header01
+  )
 
-  let [ , step02 ] = /redirectfoot.*?href="(.*?)"/ig.exec(html) || []
-  let [ , nickname ] = /You.are.now.logged.in.as:(.*?)</ig.exec(html) || []
+  let [, step02] = /redirectfoot.*?href="(.*?)"/gi.exec(html) || []
+  let [, nickname] = /You.are.now.logged.in.as:(.*?)</gi.exec(html) || []
   if (!step02) throw new Error(html)
 
   console.log(`[FORUMS] user-view: ${step02}`)
   html = await request('GET', step02)
 
-  let [ , showuser, step03 ] = /userlinks[\w\W]+?href="(.+?)"[\w\W]+?href="(.+?)"/ig.exec(html) || []
+  let [, showuser, step03] = /userlinks[\w\W]+?href="(.+?)"[\w\W]+?href="(.+?)"/gi.exec(html) || []
   if (!step03) throw new Error(html)
 
   html = await request('GET', showuser)
-  let { groups } = /profilename[\W\w]*?font.*?>(.*?)<[\W\w]*?src='(?<img>.*?)'[\W\w]*Member Group:(?<member>.*?)<[\W\w]*?Joined:(?<join>[\W\w]*?)</ig.exec(html)
+  let { groups } =
+    /profilename[\W\w]*?font.*?>(.*?)<[\W\w]*?src='(?<img>.*?)'[\W\w]*Member Group:(?<member>.*?)<[\W\w]*?Joined:(?<join>[\W\w]*?)</gi.exec(
+      html
+    )
   if (!groups) throw new Error(html)
 
   global._appToken = {

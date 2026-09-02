@@ -28,7 +28,7 @@
 //   }, options)).then((res) => {
 //     return jarCookieCheck().then(() => res)
 //   })
-  
+
 //   // return new Promise((resolve, reject) => {
 //   //   const callback = (error, res, body) => {
 //   //     if (error) {
@@ -48,6 +48,6 @@
 //   //     formData: data
 //   //   }
 //   //   request(options, callback)
-    
+
 //   // })
 // }

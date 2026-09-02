@@ -1,16 +1,18 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import { electronAPI } from '@electron-toolkit/preload'
 
+const requestOnce = (channel, transform, ...args) =>
+  new Promise((resolve) => {
+    ipcRenderer.once(channel, (_, data) => resolve(transform(data)))
+    ipcRenderer.send(channel, ...args)
+  })
+
 const api = {
   configLoaded: () => ipcRenderer.invoke('CONFIG_LOADED'),
 
   clearCookie: () => ipcRenderer.invoke('CLEAR_COOKIE'),
 
-  changeDirectory: () =>
-    new Promise((resolve) => {
-      ipcRenderer.once('CHANGE_DIRECTORY', (_, dir) => resolve(dir?.[0] || ''))
-      ipcRenderer.send('CHANGE_DIRECTORY')
-    }),
+  changeDirectory: () => requestOnce('CHANGE_DIRECTORY', (directories) => directories?.[0] || ''),
 
   cancel: () => {
     ipcRenderer.removeAllListeners('INIT_MANGA')
@@ -21,11 +23,7 @@ const api = {
     ipcRenderer.send('CANCEL')
   },
 
-  urlVerify: (url) =>
-    new Promise((resolve) => {
-      ipcRenderer.once('URL_VERIFY', (_, res) => resolve(res))
-      ipcRenderer.send('URL_VERIFY', url)
-    }),
+  urlVerify: (url) => requestOnce('URL_VERIFY', (result) => result, url),
 
   initManga: (callback) => {
     ipcRenderer.removeAllListeners('INIT_MANGA')
@@ -41,11 +39,7 @@ const api = {
       ipcRenderer.send('DOWNLOAD_BEGIN', data)
     }),
 
-  login: (cookie) =>
-    new Promise((resolve) => {
-      ipcRenderer.once('LOGIN', (_, data) => resolve(data))
-      ipcRenderer.send('LOGIN', cookie)
-    }),
+  login: (cookie) => requestOnce('LOGIN', (result) => result, cookie),
 
   clipboard: (onPaste) => {
     ipcRenderer.removeAllListeners('CLIPBOARD')

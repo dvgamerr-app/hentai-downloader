@@ -1,2 +1,7 @@
-@import "tailwindcss";
-@import "./font-awesome.css";
+@import 'tailwindcss';
+@import './font-awesome.css';
+
+body {
+  -webkit-app-region: drag;
+  user-select: none;
+}

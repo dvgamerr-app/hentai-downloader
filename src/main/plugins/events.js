@@ -20,8 +20,16 @@ ipcMain.handle('CLEAR_COOKIE', () => {
 })
 
 let clipboardIntervalId = null
-const onWatchClipboard = (e) => {
+let activeWindow = null
+let handlersInitialized = false
+
+const stopClipboardWatch = () => {
   if (clipboardIntervalId !== null) clearInterval(clipboardIntervalId)
+  clipboardIntervalId = null
+}
+
+const onWatchClipboard = (e) => {
+  stopClipboardWatch()
   let last = null
   clipboardIntervalId = setInterval(() => {
     if (!settings.getSync('clipboard', false)) return
@@ -40,6 +48,15 @@ export function onClick(menuItem) {
 }
 
 export function initMain(mainWindow) {
+  activeWindow = mainWindow
+  mainWindow.once('closed', () => {
+    if (activeWindow === mainWindow) activeWindow = null
+    stopClipboardWatch()
+  })
+
+  if (handlersInitialized) return
+  handlersInitialized = true
+
   ipcMain.on('CLIPBOARD', (e) => onWatchClipboard(e))
 
   ipcMain.on('CANCEL', (e) => {
@@ -48,7 +65,7 @@ export function initMain(mainWindow) {
   })
 
   ipcMain.on('CHANGE_DIRECTORY', (e) => {
-    const fileNames = dialog.showOpenDialogSync(mainWindow, {
+    const fileNames = dialog.showOpenDialogSync(activeWindow, {
       properties: ['openDirectory']
     })
     if (fileNames?.length > 0) settings.setSync('directory', fileNames[0])
@@ -81,9 +98,19 @@ export function initMain(mainWindow) {
       const [key, value] = part.split('=')
       const k = key?.trim()
       const v = value?.trim()
-      if (k === 'igneous') { result.igneous = v; settings.setSync('igneous', v); count++ }
-      else if (k === 'ipb_member_id') { result.ipb_member_id = v; settings.setSync('ipb_member_id', v); count++ }
-      else if (k === 'ipb_pass_hash') { result.ipb_pass_hash = v; settings.setSync('ipb_pass_hash', v); count++ }
+      if (k === 'igneous') {
+        result.igneous = v
+        settings.setSync('igneous', v)
+        count++
+      } else if (k === 'ipb_member_id') {
+        result.ipb_member_id = v
+        settings.setSync('ipb_member_id', v)
+        count++
+      } else if (k === 'ipb_pass_hash') {
+        result.ipb_pass_hash = v
+        settings.setSync('ipb_pass_hash', v)
+        count++
+      }
     }
 
     result.success = count === 3

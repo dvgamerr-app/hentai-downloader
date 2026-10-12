@@ -45,7 +45,8 @@
     "dayjs": "^1.11.13",
     "electron-log": "^5.4.3",
     "electron-settings": "^5.0.0",
-    "electron-updater": "^6.8.9"
+    "electron-updater": "^6.8.9",
+    "undici": "^7"
   },
   "devDependencies": {
     "@electron-toolkit/eslint-config": "2.1.0",

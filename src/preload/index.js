@@ -10,6 +10,8 @@ const requestOnce = (channel, transform, ...args) =>
 const api = {
   configLoaded: () => ipcRenderer.invoke('CONFIG_LOADED'),
 
+  setProxy: (value) => ipcRenderer.invoke('SET_PROXY', value),
+
   clearCookie: () => ipcRenderer.invoke('CLEAR_COOKIE'),
 
   changeDirectory: () => requestOnce('CHANGE_DIRECTORY', (directories) => directories?.[0] || ''),

@@ -1,11 +1,13 @@
-# Hentai Downloader ![Version](https://img.shields.io/github/package-json/v/touno-io/hentai-downloader?label=latest&style=flat-square)
+# Hentai Downloader (legacy README)
+
+> This is the previous long-form README (Thai), kept for reference. The current README is [../README.md](../README.md).
 
 ![Build (main)](https://img.shields.io/github/workflow/status/touno-io/hentai-downloader/Multiplatform%20Build/main?style=flat-square)
 ![last commit (main)](https://img.shields.io/github/last-commit/touno-io/hentai-downloader/main.svg?style=flat-square)
 ![MIT](https://img.shields.io/dub/l/vibe-d.svg?style=flat-square)
 ![Bun](https://img.shields.io/badge/Bun-1.3.14-black?style=flat-square)
 
-![app](./docs/1639646197537.gif)
+![app](./1639646197537.gif)
 
 **คำเตือน** ไม่ควรเปิดเว็บแพนด้าเศร้า ระหว่างที่ดาวน์โหลดมังงะเพราะจะทำให้รูปบางรูปอาจจะโหลดไม่สำเร็จ
 
@@ -18,7 +20,7 @@
 
 โปรแกรมดาวน์โหลดมังงะจากแพนด้าเศร้าได้โดยไม่ต้องปั้ม Credits สามารถเพิ่มคิวได้เรื่อยๆ ตรวจจับ clipboard ได้จากการ copy ที่หน้าโปรแกรมได้ที่ละเรื่องหรือ หลายเรื่องพร้อมกันก็ได้
 
-![Icon](./build/icons/256x256.png)
+![Icon](../resources/256x256.png)
 
 **ข้อจำกัด**
 
@@ -118,7 +120,7 @@ bun run build:linux
 - `src/preload/` exposes the narrow `window.api` IPC bridge.
 - `src/renderer/` contains the Svelte renderer and Tailwind/Font Awesome assets.
 
-Detailed maintenance guidance and the latest optimization record are in [CLAUDE.md](./CLAUDE.md).
+Detailed maintenance guidance and the latest optimization record are in [CLAUDE.md](../CLAUDE.md).
 
 ## If you need help You can join Discord.
 

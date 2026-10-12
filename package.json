@@ -6,7 +6,7 @@
   "description": "Manga Hentai in e-hentai.org and exhentai.org downloader.",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/touno-io/hentai-downloader.git"
+    "url": "git+https://github.com/dvgamerr-app/hentai-downloader.git"
   },
   "keywords": [
     "exhentai",
@@ -18,9 +18,9 @@
     "doujin"
   ],
   "bugs": {
-    "url": "https://github.com/touno-io/hentai-downloader/issues"
+    "url": "https://github.com/dvgamerr-app/hentai-downloader/issues"
   },
-  "homepage": "https://github.com/touno-io/hentai-downloader#readme",
+  "homepage": "https://github.com/dvgamerr-app/hentai-downloader#readme",
   "author": {
     "name": "Kananek Thongkam",
     "email": "info.dvgamer@gmail.com"

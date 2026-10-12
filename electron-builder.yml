@@ -39,5 +39,6 @@ appImage:
 npmRebuild: false
 buildDependenciesFromSource: false
 publish:
-  provider: generic
-  url: https://example.com/auto-updates
+  provider: github
+  owner: dvgamerr-app
+  repo: hentai-downloader

@@ -299,6 +299,29 @@ const getManga = async (link, raw, emit) => {
   return manga
 }
 
+const stripTags = (html) =>
+  html
+    .replace(/<(script|style)[\s\S]*?<\/\1>/gi, ' ')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+
+const summarizeBody = (text) => {
+  const plain = stripTags(text)
+  return plain.length > 200 ? `${plain.slice(0, 200)}...` : plain || 'Empty response'
+}
+
+// An HTML page that is not a gallery (ban, removed gallery, login wall, ...)
+const describeNonGallery = (html) => {
+  if (/temporarily banned/i.test(html)) return `IP temporarily banned: ${summarizeBody(html)}`
+  if (/gallery (has been|is) (removed|unavailable)|Gallery Not Available/i.test(html))
+    return 'Gallery has been removed or is unavailable.'
+  if (/Content Warning/i.test(html)) return 'Content warning page returned, try again.'
+  if (/name="UserName"|ipb_login|Log In/i.test(html))
+    return 'Login required, please check your browser session cookies.'
+  return `Unexpected page (not a gallery): ${summarizeBody(html)}`
+}
+
 export async function parseHentai(link, emit) {
   cancelDownload = false
   try {
@@ -307,8 +330,9 @@ export async function parseHentai(link, emit) {
     const res = await reqHentai(link, {
       headers: { pragma: 'no-cache', referer: `https://${hostname}/` }
     })
-    if (!/<!DOCTYPE html/i.test(res)) throw new Error(res)
+    if (!/<!DOCTYPE html/i.test(res)) throw new Error(summarizeBody(res))
     if (/<a href="(.*?)">Never Warn Me Again/i.test(res)) throw new Error('Never Warn Me Again')
+    if (!/<div id="gd2"/i.test(res)) throw new Error(describeNonGallery(res))
     return await getManga(link, res, emit)
   } catch (ex) {
     wError(`*error*: ${link}\n${ex.toString()}`)

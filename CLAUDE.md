@@ -42,6 +42,10 @@ All UI→main calls go through `window.api.*` exposed in `src/preload/index.js`:
 | `download(data, onWatch)` | Starts download queue, calls `onWatch` per image       |
 | `login(cookie)`           | Parses and saves exhentai cookies, returns `{success}` |
 | `clipboard(onPaste)`      | Starts clipboard polling, calls `onPaste` on new text  |
+| `historyList()`           | Returns saved download history (newest first)          |
+| `historyRemove(ref)`      | Removes one entry, returns the updated list            |
+| `historyClear()`          | Clears all history, returns `[]`                       |
+| `historyOpen(directory)`  | Opens the entry's folder, returns `{success, error?}`  |
 
 ### IPC channels (events.js)
 
@@ -62,6 +66,7 @@ All renderer↔main communication goes through named IPC channels defined in `sr
 ### Scraping layer (`src/main/plugins/`)
 
 - `ehentai.js` — core scraping module. Uses **native `fetch`** (Node.js built-in, no axios) with manual cookie headers. Exports `parseHentai` (metadata fetch), `download` (image queue), `cancel`.
+- `lib/history.js` — download history persisted in `electron-settings` under `history` (max 200, newest first, one entry per gallery `ref`). `ehentai.js` calls `addHistory` after each gallery finishes; the History button in `App.svelte` toggles the list view.
 - `lib/config.js` — minimal file, just ensures the `./config` directory exists.
 - `ex/gallery.js`, `ex/login.js`, `ex/logout.js` — exhentai-specific page parsing (legacy, not wired up).
 

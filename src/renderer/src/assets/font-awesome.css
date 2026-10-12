@@ -41,6 +41,9 @@
 .fa-heart:before {
   content: '\f004';
 }
+.fa-trash:before {
+  content: '\f1f8';
+}
 .fa-check:before {
   content: '\f00c';
 }

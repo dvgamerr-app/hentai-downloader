@@ -1,6 +1,8 @@
-import { app, clipboard, dialog, ipcMain } from 'electron'
+import { app, clipboard, dialog, ipcMain, shell } from 'electron'
+import { existsSync } from 'fs'
 import settings from 'electron-settings'
 import * as hentai from './ehentai.js'
+import { clearHistory, getHistory, removeHistory } from './lib/history.js'
 
 if (!settings.getSync('directory')) {
   settings.setSync('directory', app.getPath('downloads'))
@@ -11,6 +13,24 @@ ipcMain.handle('CONFIG_LOADED', () => ({
   igneous: settings.getSync('igneous') || null,
   cookie: settings.getSync('cookie') || ''
 }))
+
+ipcMain.handle('HISTORY_LIST', () => getHistory())
+
+ipcMain.handle('HISTORY_REMOVE', (_, ref) => {
+  removeHistory(ref)
+  return getHistory()
+})
+
+ipcMain.handle('HISTORY_CLEAR', () => {
+  clearHistory()
+  return []
+})
+
+ipcMain.handle('HISTORY_OPEN', async (_, directory) => {
+  if (!directory || !existsSync(directory)) return { success: false, error: 'Folder not found.' }
+  const error = await shell.openPath(directory)
+  return error ? { success: false, error } : { success: true }
+})
 
 ipcMain.handle('CLEAR_COOKIE', () => {
   settings.unsetSync('cookie')

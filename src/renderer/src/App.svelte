@@ -12,7 +12,9 @@
   let exmsg = $state('')
 
   let sign = $state({ name: null, cookie: '' })
-  let page = $state({ signin: false, option: false })
+  let page = $state({ signin: false, option: false, history: false })
+  let history = $state([])
+  let history_error = $state('')
 
   let bar = $state({ step: 0, total: 1 })
   let state_verify = $state(false)
@@ -52,6 +54,7 @@
   const checkURL = (u) => /hentai\.org\/\w\/\d{1,8}\/[0-9a-f]+?\//i.test(u)
 
   async function urlBegin() {
+    page.history = false
     const [ref] = /\/\w\/\d{1,8}\/[0-9a-f]+?\//i.exec(new URL(url).pathname) ?? []
     const found = manga.some((m) => m.status !== STATE.SUCCESS && m.ref === ref)
     manga = manga.filter((m) => m.status !== STATE.SUCCESS)
@@ -96,6 +99,7 @@
   }
 
   function beginDownload() {
+    page.history = false
     url = ''
     error_message = ''
     state_verify = true
@@ -133,6 +137,28 @@
       page.option = false
     }
   }
+
+  async function toggleHistory() {
+    page.history = !page.history
+    history_error = ''
+    if (page.history) history = await window.api.historyList()
+  }
+
+  async function onHistoryOpen(item) {
+    const res = await window.api.historyOpen(item.directory)
+    history_error = res.success ? '' : res.error
+  }
+
+  async function onHistoryRemove(item) {
+    history = await window.api.historyRemove(item.ref)
+  }
+
+  async function onHistoryClear() {
+    history = await window.api.historyClear()
+  }
+
+  const formatDate = (iso) =>
+    new Date(iso).toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' })
 
   function onCancel() {
     if (!state_download) {
@@ -406,7 +432,11 @@
               <button
                 title="History"
                 disabled={state_verify}
-                class="w-8 h-8 flex items-center justify-center text-white/35 hover:bg-white/10 hover:text-white/70 rounded-sm transition-colors
+                onclick={toggleHistory}
+                class="w-8 h-8 flex items-center justify-center rounded-sm transition-colors
+                  {page.history
+                  ? 'text-sky-300 bg-white/10'
+                  : 'text-white/35 hover:bg-white/10 hover:text-white/70'}
                   disabled:opacity-25 disabled:cursor-not-allowed"
               >
                 <i class="fa fa-history text-xs"></i>
@@ -454,112 +484,177 @@
       </div>
     {/if}
 
-    <!-- ─── Queue Table ──────────────────────────────────────────────────── -->
-    <div class="flex-1 overflow-y-auto overflow-x-hidden bg-white">
-      <table class="w-full border-collapse table-fixed">
-        <colgroup>
-          <col class="w-[6%]" />
-          <col class="w-[55%]" />
-          <col class="w-[10%]" />
-          <col class="w-[13%]" />
-          <col class="w-[16%]" />
-        </colgroup>
-        <thead class="sticky top-0 z-10 bg-gray-100 border-b border-gray-200">
-          <tr>
-            <th
-              class="py-2 px-2 text-center font-semibold text-[9px] text-gray-400 uppercase tracking-wider"
-              >#</th
+    {#if page.history}
+      <!-- ─── History ──────────────────────────────────────────────────────── -->
+      <div class="flex-1 overflow-y-auto overflow-x-hidden bg-white">
+        <div
+          class="sticky top-0 z-10 flex items-center justify-between bg-gray-100 border-b border-gray-200 px-3 py-1.5"
+        >
+          <span class="text-[9px] font-semibold text-gray-400 uppercase tracking-wider">
+            History ({history.length})
+          </span>
+          {#if history.length > 0}
+            <button
+              onclick={onHistoryClear}
+              class="text-[10px] text-red-400 hover:text-red-500 transition-colors"
             >
-            <th
-              class="py-2 px-2 font-semibold text-left text-[9px] text-gray-400 uppercase tracking-wider"
-              >Name</th
-            >
-            <th
-              class="py-2 px-2 text-center font-semibold text-[9px] text-gray-400 uppercase tracking-wider"
-              >Pages</th
-            >
-            <th
-              class="py-2 px-2 text-center font-semibold text-[9px] text-gray-400 uppercase tracking-wider"
-              >Lang</th
-            >
-            <th
-              class="py-2 px-2 text-right font-semibold text-[9px] text-gray-400 uppercase tracking-wider pr-3"
-              >Size</th
-            >
-          </tr>
-        </thead>
-        <tbody>
-          {#if manga.length === 0}
-            <tr>
-              <td colspan="5" class="text-center py-14">
-                <div class="flex flex-col items-center gap-2">
-                  <i class="fa fa-inbox text-gray-200 text-4xl"></i>
-                  <span class="text-gray-400 text-[11px] font-medium">Queue is empty</span>
-                  <span class="text-gray-300 text-[10px]">Paste a gallery URL to begin</span>
+              Clear all
+            </button>
+          {/if}
+        </div>
+        {#if history_error}
+          <div class="px-3 py-1.5 text-[10px] text-red-500 bg-red-50 border-b border-red-100">
+            {history_error}
+          </div>
+        {/if}
+        {#if history.length === 0}
+          <div class="flex flex-col items-center gap-2 py-14">
+            <i class="fa fa-history text-gray-200 text-4xl"></i>
+            <span class="text-gray-400 text-[11px] font-medium">No download history yet</span>
+          </div>
+        {:else}
+          <ul>
+            {#each history as item (item.ref)}
+              <li
+                class="flex items-center gap-2 px-3 py-1.5 border-b border-gray-100 hover:bg-blue-50/40"
+              >
+                <div class="flex-1 min-w-0">
+                  <span class="block truncate text-[11px] text-gray-700" title={item.name}>
+                    {item.name}
+                  </span>
+                  <span class="block truncate text-[10px] text-gray-400">
+                    {formatDate(item.date)} · {item.page ?? '?'} pages{item.language
+                      ? ` · ${item.language}`
+                      : ''}{item.size ? ` · ${item.size}` : ''}
+                  </span>
                 </div>
-              </td>
+                <button
+                  title="Open folder"
+                  onclick={() => onHistoryOpen(item)}
+                  class="w-6 h-6 flex items-center justify-center text-sky-400 hover:bg-sky-50 transition-colors rounded-sm shrink-0"
+                >
+                  <i class="fa fa-folder-open-o text-[11px]"></i>
+                </button>
+                <button
+                  title="Remove from history"
+                  onclick={() => onHistoryRemove(item)}
+                  class="w-6 h-6 flex items-center justify-center text-gray-300 hover:text-red-400 hover:bg-red-50 transition-colors rounded-sm shrink-0"
+                >
+                  <i class="fa fa-trash text-[11px]"></i>
+                </button>
+              </li>
+            {/each}
+          </ul>
+        {/if}
+      </div>
+    {:else}
+      <!-- ─── Queue Table ──────────────────────────────────────────────────── -->
+      <div class="flex-1 overflow-y-auto overflow-x-hidden bg-white">
+        <table class="w-full border-collapse table-fixed">
+          <colgroup>
+            <col class="w-[6%]" />
+            <col class="w-[55%]" />
+            <col class="w-[10%]" />
+            <col class="w-[13%]" />
+            <col class="w-[16%]" />
+          </colgroup>
+          <thead class="sticky top-0 z-10 bg-gray-100 border-b border-gray-200">
+            <tr>
+              <th
+                class="py-2 px-2 text-center font-semibold text-[9px] text-gray-400 uppercase tracking-wider"
+                >#</th
+              >
+              <th
+                class="py-2 px-2 font-semibold text-left text-[9px] text-gray-400 uppercase tracking-wider"
+                >Name</th
+              >
+              <th
+                class="py-2 px-2 text-center font-semibold text-[9px] text-gray-400 uppercase tracking-wider"
+                >Pages</th
+              >
+              <th
+                class="py-2 px-2 text-center font-semibold text-[9px] text-gray-400 uppercase tracking-wider"
+                >Lang</th
+              >
+              <th
+                class="py-2 px-2 text-right font-semibold text-[9px] text-gray-400 uppercase tracking-wider pr-3"
+                >Size</th
+              >
             </tr>
-          {:else}
-            {#each manga as item, i (item.ref ?? `${item.name}-${i}`)}
-              <tr
-                class="border-b border-gray-100 transition-colors
+          </thead>
+          <tbody>
+            {#if manga.length === 0}
+              <tr>
+                <td colspan="5" class="text-center py-14">
+                  <div class="flex flex-col items-center gap-2">
+                    <i class="fa fa-inbox text-gray-200 text-4xl"></i>
+                    <span class="text-gray-400 text-[11px] font-medium">Queue is empty</span>
+                    <span class="text-gray-300 text-[10px]">Paste a gallery URL to begin</span>
+                  </div>
+                </td>
+              </tr>
+            {:else}
+              {#each manga as item, i (item.ref ?? `${item.name}-${i}`)}
+                <tr
+                  class="border-b border-gray-100 transition-colors
                   {i % 2 === 1 ? 'bg-gray-50/60' : 'bg-white'}
                   {state_download && item.status === STATE.DOWNLOAD
-                  ? '!bg-emerald-50 !border-emerald-100'
-                  : ''}
+                    ? '!bg-emerald-50 !border-emerald-100'
+                    : ''}
                   {state_download && item.status === STATE.SUCCESS ? '!bg-emerald-50/40' : ''}
                   hover:bg-blue-50/40"
-              >
-                <td class="py-1.5 px-2 text-center">
-                  {#if !state_download}
-                    <span class="text-gray-300 text-[10px] font-medium">{i + 1}</span>
-                  {:else}
-                    <i
-                      class="fa {statusIcon(!item.error ? item.status : 0)} text-[11px]
+                >
+                  <td class="py-1.5 px-2 text-center">
+                    {#if !state_download}
+                      <span class="text-gray-300 text-[10px] font-medium">{i + 1}</span>
+                    {:else}
+                      <i
+                        class="fa {statusIcon(!item.error ? item.status : 0)} text-[11px]
                         {item.status === STATE.SUCCESS ? 'text-[#18BC9C]' : ''}
                         {item.status === STATE.DOWNLOAD ? 'text-[#18BC9C]' : ''}
                         {item.status === STATE.FAIL ? 'text-red-400' : ''}
                         {item.status === STATE.PREPARE ? 'text-gray-300' : ''}"
-                    ></i>
-                  {/if}
-                </td>
-                <td class="py-1.5 px-2 min-w-0">
-                  <span
-                    class="block truncate text-[11px]
+                      ></i>
+                    {/if}
+                  </td>
+                  <td class="py-1.5 px-2 min-w-0">
+                    <span
+                      class="block truncate text-[11px]
                       {state_download && item.status === STATE.DOWNLOAD
-                      ? 'text-[#18BC9C] font-medium'
-                      : ''}
+                        ? 'text-[#18BC9C] font-medium'
+                        : ''}
                       {item.status === STATE.SUCCESS && state_download ? 'text-[#18BC9C]' : ''}
                       {item.status === STATE.FAIL ? 'text-red-400' : ''}
                       {item.status === STATE.PREPARE || !state_download ? 'text-gray-700' : ''}"
-                  >
-                    {item.name}
-                  </span>
-                </td>
-                {#if item.error}
-                  <td colspan="3" class="py-1.5 px-2">
-                    <span class="flex items-center gap-1 text-[10px] text-red-400">
-                      <i class="fa fa-exclamation-triangle shrink-0"></i>
-                      <span class="truncate italic">{item.error}</span>
+                    >
+                      {item.name}
                     </span>
                   </td>
-                {:else}
-                  <td class="py-1.5 px-2 text-center text-[10px] text-gray-500"
-                    >{item.page ?? ''}</td
-                  >
-                  <td class="py-1.5 px-2 text-center text-[10px] text-gray-500"
-                    >{item.language ?? ''}</td
-                  >
-                  <td class="py-1.5 px-2 text-right text-[10px] text-gray-400 pr-3"
-                    >{item.size ?? ''}</td
-                  >
-                {/if}
-              </tr>
-            {/each}
-          {/if}
-        </tbody>
-      </table>
-    </div>
+                  {#if item.error}
+                    <td colspan="3" class="py-1.5 px-2">
+                      <span class="flex items-center gap-1 text-[10px] text-red-400">
+                        <i class="fa fa-exclamation-triangle shrink-0"></i>
+                        <span class="truncate italic">{item.error}</span>
+                      </span>
+                    </td>
+                  {:else}
+                    <td class="py-1.5 px-2 text-center text-[10px] text-gray-500"
+                      >{item.page ?? ''}</td
+                    >
+                    <td class="py-1.5 px-2 text-center text-[10px] text-gray-500"
+                      >{item.language ?? ''}</td
+                    >
+                    <td class="py-1.5 px-2 text-right text-[10px] text-gray-400 pr-3"
+                      >{item.size ?? ''}</td
+                    >
+                  {/if}
+                </tr>
+              {/each}
+            {/if}
+          </tbody>
+        </table>
+      </div>
+    {/if}
 
     <!-- ─── Status Bar ────────────────────────────────────────────────────── -->
     <div class="shrink-0 h-[18px] bg-[#2C3E50] px-3 flex items-center justify-between gap-2">

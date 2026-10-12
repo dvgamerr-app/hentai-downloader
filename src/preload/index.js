@@ -10,6 +10,14 @@ const requestOnce = (channel, transform, ...args) =>
 const api = {
   configLoaded: () => ipcRenderer.invoke('CONFIG_LOADED'),
 
+  historyList: () => ipcRenderer.invoke('HISTORY_LIST'),
+
+  historyRemove: (ref) => ipcRenderer.invoke('HISTORY_REMOVE', ref),
+
+  historyClear: () => ipcRenderer.invoke('HISTORY_CLEAR'),
+
+  historyOpen: (directory) => ipcRenderer.invoke('HISTORY_OPEN', directory),
+
   clearCookie: () => ipcRenderer.invoke('CLEAR_COOKIE'),
 
   changeDirectory: () => requestOnce('CHANGE_DIRECTORY', (directories) => directories?.[0] || ''),

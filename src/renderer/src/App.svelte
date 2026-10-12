@@ -275,7 +275,7 @@
               เข้าใช้ <button
                 type="button"
                 class="text-[#18BC9C] underline font-bold cursor-pointer"
-                onclick={() => window.electron.shell.openExternal(_SERVER_WIKI)}
+                onclick={() => window.api.openExternal(_SERVER_WIKI)}
                 >exhentai.org</button
               >
               &nbsp;กด <code class="bg-gray-200 px-1 rounded">F12</code>
@@ -334,14 +334,14 @@
             {/if}
             <button
               title="Join Discord Community"
-              onclick={() => window.electron.shell.openExternal(_SERVER_COMMUNITY)}
+              onclick={() => window.api.openExternal(_SERVER_COMMUNITY)}
               class="w-6 h-6 flex items-center justify-center border border-sky-400 text-sky-500 hover:bg-sky-50 transition-colors rounded-sm"
             >
               <i class="fa fa-comments-o text-[11px]"></i>
             </button>
             <button
               title="Star on GitHub ⭐"
-              onclick={() => window.electron.shell.openExternal(_SERVER_STAR)}
+              onclick={() => window.api.openExternal(_SERVER_STAR)}
               class="w-6 h-6 flex items-center justify-center border border-amber-400 text-amber-500 hover:bg-amber-50 transition-colors rounded-sm"
             >
               <i class="fa fa-star text-[11px]"></i>
@@ -452,7 +452,7 @@
               readonly
               bind:value={directory_name}
               placeholder="Select a download directory..."
-              class="flex-1 min-w-0 bg-gray-100 border border-gray-300 px-2 py-1.5 text-[11px] text-white
+              class="flex-1 min-w-0 bg-gray-100 border border-gray-300 px-2 py-1.5 text-[11px] text-gray-700
                 outline-none placeholder-gray-400 rounded-sm"
             />
             <button

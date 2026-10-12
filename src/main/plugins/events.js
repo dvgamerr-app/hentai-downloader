@@ -26,6 +26,12 @@ ipcMain.handle('HISTORY_CLEAR', () => {
   return []
 })
 
+ipcMain.handle('OPEN_EXTERNAL', async (_, url) => {
+  if (typeof url !== 'string' || !/^https:\/\//i.test(url)) return false
+  await shell.openExternal(url)
+  return true
+})
+
 ipcMain.handle('HISTORY_OPEN', async (_, directory) => {
   if (!directory || !existsSync(directory)) return { success: false, error: 'Folder not found.' }
   const error = await shell.openPath(directory)

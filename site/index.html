@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Hentai Downloader – queue galleries, download once</title>
+<meta name="description" content="A desktop app for e-hentai.org and exhentai.org that queues gallery links and saves the images into tidy folders. Free, open source, MIT." />
+<meta name="color-scheme" content="light dark" />
+<link rel="icon" href="icon.png" type="image/png" />
+<meta property="og:type" content="website" />
+<meta property="og:title" content="Hentai Downloader – queue galleries, download once" />
+<meta property="og:description" content="Paste gallery links, press Download, get tidy folders of images. Free and open source desktop app." />
+<meta property="og:image" content="https://dvgamerr.app/hentai-downloader/screenshots/queue.png" />
+<meta property="og:url" content="https://dvgamerr.app/hentai-downloader/" />
+<meta name="twitter:card" content="summary_large_image" />
+<style>
+  :root {
+    --bg: #f4f1ea;
+    --bg-2: #ebe6da;
+    --panel: #fffdf8;
+    --ink: #1d2733;
+    --muted: #55606c;
+    --line: #d9d2c2;
+    --navy: #2c3e50;
+    --accent: #0f8f75;
+    --accent-ink: #ffffff;
+    --accent-soft: #d7efe8;
+    --shadow: 0 1px 0 rgba(0,0,0,.04), 0 18px 40px -18px rgba(44,62,80,.35);
+    --radius: 10px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #141b23; --bg-2: #19222c; --panel: #1e2935; --ink: #e8edf2; --muted: #9fadba;
+      --line: #2e3b49; --navy: #0f161d; --accent: #2fd0aa; --accent-ink: #06231c;
+      --accent-soft: #173a33; --shadow: 0 18px 40px -18px rgba(0,0,0,.7);
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #141b23; --bg-2: #19222c; --panel: #1e2935; --ink: #e8edf2; --muted: #9fadba;
+    --line: #2e3b49; --navy: #0f161d; --accent: #2fd0aa; --accent-ink: #06231c;
+    --accent-soft: #173a33; --shadow: 0 18px 40px -18px rgba(0,0,0,.7);
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font: 16px/1.6 system-ui, -apple-system, "Segoe UI", "Noto Sans Thai", Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: var(--accent); text-underline-offset: 3px; }
+  a:focus-visible, button:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; border-radius: 6px; }
+  .wrap { width: min(1080px, 100% - 32px); margin-inline: auto; }
+  header.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 18px 0; }
+  .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; color: var(--ink); text-decoration: none; }
+  .brand img { width: 32px; height: 32px; border-radius: 8px; }
+  .tools { display: flex; gap: 8px; align-items: center; }
+  .chip {
+    border: 1px solid var(--line); background: var(--panel); color: var(--ink); font: inherit; font-size: 14px;
+    padding: 6px 12px; border-radius: 999px; cursor: pointer; text-decoration: none;
+  }
+  .chip:hover { border-color: var(--accent); }
+
+  .hero { display: grid; gap: 40px; padding: 28px 0 64px; align-items: center; }
+  @media (min-width: 900px) { .hero { grid-template-columns: 1fr 1.15fr; } }
+  .eyebrow { font-size: 13px; letter-spacing: .12em; text-transform: uppercase; color: var(--accent); font-weight: 700; margin: 0 0 12px; }
+  h1 { font-size: clamp(2.2rem, 5.5vw, 3.6rem); line-height: 1.05; margin: 0 0 16px; letter-spacing: -.02em; }
+  .lead { font-size: 1.15rem; color: var(--muted); margin: 0 0 24px; max-width: 34em; }
+  .cta { display: flex; flex-wrap: wrap; gap: 12px; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px; padding: 12px 20px; border-radius: 8px; font-weight: 700;
+    text-decoration: none; border: 2px solid var(--accent); font-size: 1rem;
+  }
+  .btn.primary { background: var(--accent); color: var(--accent-ink); }
+  .btn.ghost { background: transparent; color: var(--accent); }
+  .btn:hover { transform: translateY(-1px); }
+  .fine { margin: 14px 0 0; font-size: 14px; color: var(--muted); }
+
+  .shot {
+    background: var(--navy); border-radius: var(--radius); padding: 10px; box-shadow: var(--shadow);
+    transform: rotate(-.6deg);
+  }
+  .shot .bar { display: flex; gap: 6px; padding: 2px 4px 10px; }
+  .shot .bar i { width: 10px; height: 10px; border-radius: 50%; background: #ffffff33; }
+  .shot img { display: block; width: 100%; height: auto; border-radius: 6px; background: #fff; }
+
+  section { padding: 56px 0; border-top: 1px solid var(--line); }
+  h2 { font-size: clamp(1.5rem, 3.4vw, 2.1rem); margin: 0 0 8px; letter-spacing: -.01em; }
+  .sub { color: var(--muted); margin: 0 0 32px; max-width: 40em; }
+  .grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 20px; }
+  .card h3 { margin: 0 0 6px; font-size: 1.05rem; }
+  .card p { margin: 0; color: var(--muted); font-size: .97rem; }
+  .card .n { display: inline-block; font-size: 12px; font-weight: 700; color: var(--accent); background: var(--accent-soft); padding: 2px 8px; border-radius: 999px; margin-bottom: 10px; }
+
+  .steps { counter-reset: s; display: grid; gap: 14px; padding: 0; margin: 0; list-style: none; }
+  .steps li { counter-increment: s; display: grid; grid-template-columns: 40px 1fr; gap: 14px; align-items: start; }
+  .steps li::before {
+    content: counter(s); width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center;
+    background: var(--navy); color: #fff; font-weight: 700;
+  }
+  .steps b { display: block; }
+  .steps span { color: var(--muted); }
+  code, pre { font-family: ui-monospace, "Cascadia Code", Consolas, monospace; font-size: .9em; }
+  code { background: var(--bg-2); padding: 1px 6px; border-radius: 4px; }
+  .cmd { position: relative; background: var(--navy); color: #e8edf2; border-radius: var(--radius); padding: 16px 92px 16px 16px; margin: 20px 0 0; overflow-x: auto; }
+  .cmd pre { margin: 0; white-space: pre; }
+  .cmd button { position: absolute; top: 10px; right: 10px; }
+  .cmd .chip { background: #ffffff14; color: #fff; border-color: #ffffff33; }
+
+  .gallery { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
+  .gallery figure { margin: 0; background: var(--navy); border-radius: var(--radius); padding: 8px; box-shadow: var(--shadow); }
+  .gallery img { width: 100%; height: auto; display: block; border-radius: 5px; }
+  .gallery figcaption { color: #cdd6df; font-size: 14px; padding: 8px 4px 2px; }
+
+  .support { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 8px; }
+  footer { border-top: 1px solid var(--line); padding: 32px 0 48px; color: var(--muted); font-size: 14px; }
+  footer p { margin: 0 0 8px; max-width: 50em; }
+  html:not([lang="th"]) [data-th], html[lang="th"] [data-en] { display: none !important; }
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } .btn:hover { transform: none; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <a class="brand" href="#top"><img src="icon.png" alt="" width="32" height="32" /> Hentai Downloader</a>
+    <div class="tools">
+      <a class="chip" id="stars" href="https://github.com/dvgamerr-app/hentai-downloader">★ Star</a>
+      <button class="chip" id="lang" type="button" aria-label="Switch language">ไทย</button>
+    </div>
+  </header>
+
+  <main id="top">
+    <div class="hero">
+      <div>
+        <p class="eyebrow" data-en>Desktop app · Windows · Open source</p>
+        <p class="eyebrow" data-th>แอปเดสก์ท็อป · Windows · โอเพนซอร์ส</p>
+        <h1 data-en>Paste links.<br />Press Download.</h1>
+        <h1 data-th>วางลิงก์<br />กด Download</h1>
+        <p class="lead" data-en>Hentai Downloader queues galleries from e-hentai.org and exhentai.org and saves each one into its own tidy folder, so you stop saving pages one by one in a browser.</p>
+        <p class="lead" data-th>Hentai Downloader จัดคิวมังงะจาก e-hentai.org และ exhentai.org แล้วบันทึกลงโฟลเดอร์ของแต่ละเรื่อง ไม่ต้องเปิดเบราว์เซอร์เซฟรูปทีละหน้าอีกต่อไป</p>
+        <div class="cta">
+          <a class="btn primary" href="https://github.com/dvgamerr-app/hentai-downloader/releases/latest"><span data-en>Download for Windows</span><span data-th>ดาวน์โหลดสำหรับ Windows</span></a>
+          <a class="btn ghost" href="https://github.com/dvgamerr-app/hentai-downloader"><span data-en>View on GitHub</span><span data-th>ดูบน GitHub</span></a>
+        </div>
+        <p class="fine" data-en>18+ only. Free, MIT licensed. macOS and Linux: build from source.</p>
+        <p class="fine" data-th>18+ เท่านั้น ฟรี ไลเซนส์ MIT ส่วน macOS และ Linux ให้ build จากซอร์ส</p>
+      </div>
+      <div class="shot">
+        <div class="bar" aria-hidden="true"><i></i><i></i><i></i></div>
+        <img src="screenshots/queue.png" width="1200" height="760" alt="The download queue with one gallery in progress and others waiting" />
+      </div>
+    </div>
+
+    <section id="features">
+      <h2 data-en>Built for long queues</h2>
+      <h2 data-th>ออกแบบมาสำหรับคิวยาวๆ</h2>
+      <p class="sub" data-en>Everything the app does is about getting a pile of galleries onto disk with the least babysitting.</p>
+      <p class="sub" data-th>ทุกอย่างในแอปมีไว้เพื่อให้ได้มังงะทั้งกองลงดิสก์โดยไม่ต้องเฝ้า</p>
+      <div class="grid">
+        <div class="card"><h3 data-en>Clipboard watching</h3><h3 data-th>ตรวจจับ clipboard</h3><p data-en>Copy a gallery link anywhere and the app picks it up.</p><p data-th>copy ลิงก์จากที่ไหนก็ได้ แอปจับให้เอง</p></div>
+        <div class="card"><h3 data-en>Multi-line paste</h3><h3 data-th>วางหลายบรรทัด</h3><p data-en>Paste a list, one link per line, and all of it joins the queue.</p><p data-th>วางลิสต์บรรทัดละลิงก์ แล้วเข้าคิวทั้งหมด</p></div>
+        <div class="card"><h3 data-en>No Credits spent</h3><h3 data-th>ไม่เสีย Credits</h3><p data-en>Fetches the normal viewer images, not the paid originals.</p><p data-th>โหลดรูปจากหน้า viewer ปกติ ไม่ใช่ไฟล์ original ที่เสียเงิน</p></div>
+        <div class="card"><h3 data-en>Safe to re-run</h3><h3 data-th>รันซ้ำได้</h3><p data-en>Pages already on disk are skipped, so only the missing ones are fetched.</p><p data-th>หน้าที่มีอยู่แล้วจะถูกข้าม โหลดเฉพาะที่ขาด</p></div>
+        <div class="card"><h3 data-en>One folder per gallery</h3><h3 data-th>หนึ่งเรื่องหนึ่งโฟลเดอร์</h3><p data-en>Files are numbered by page inside a folder named after the gallery.</p><p data-th>ไฟล์ตั้งชื่อเป็นเลขหน้า อยู่ในโฟลเดอร์ชื่อเดียวกับเรื่อง</p></div>
+        <div class="card"><h3 data-en>History</h3><h3 data-th>History</h3><p data-en>The last 200 galleries, newest first, with a button to open the folder.</p><p data-th>200 เรื่องล่าสุด ใหม่สุดก่อน มีปุ่มเปิดโฟลเดอร์</p></div>
+        <div class="card"><h3 data-en>exhentai sign-in</h3><h3 data-th>ล็อกอิน exhentai</h3><p data-en>Paste your own browser cookies. They stay on your computer.</p><p data-th>วาง cookie จากเบราว์เซอร์ของคุณเอง เก็บไว้ในเครื่องเท่านั้น</p></div>
+        <div class="card"><h3 data-en>Auto update</h3><h3 data-th>อัปเดตอัตโนมัติ</h3><p data-en>Installed builds check GitHub Releases and ask before restarting.</p><p data-th>เวอร์ชันที่ติดตั้งเช็ก GitHub Releases และถามก่อนรีสตาร์ท</p></div>
+      </div>
+    </section>
+
+    <section id="start">
+      <h2 data-en>Up and running in four steps</h2>
+      <h2 data-th>เริ่มใช้งานใน 4 ขั้นตอน</h2>
+      <p class="sub" data-en>No account on this site, no configuration file.</p>
+      <p class="sub" data-th>ไม่ต้องสมัครอะไรกับเว็บนี้ ไม่ต้องแก้ไฟล์ config</p>
+      <ol class="steps">
+        <li><div><b data-en>Install</b><b data-th>ติดตั้ง</b><span data-en>Download <code>hentai-downloader-&lt;version&gt;-setup.exe</code> from the <a href="https://github.com/dvgamerr-app/hentai-downloader/releases/latest">latest release</a> and run it.</span><span data-th>โหลด <code>hentai-downloader-&lt;version&gt;-setup.exe</code> จาก <a href="https://github.com/dvgamerr-app/hentai-downloader/releases/latest">latest release</a> แล้วรัน</span></div></li>
+        <li><div><b data-en>Add galleries</b><b data-th>เพิ่มมังงะ</b><span data-en>Paste a link like <code>https://e-hentai.org/g/1234567/abcdef0123/</code> and press Enter. Paste many lines to add many.</span><span data-th>วางลิงก์ เช่น <code>https://e-hentai.org/g/1234567/abcdef0123/</code> แล้วกด Enter วางหลายบรรทัดเพื่อเพิ่มหลายเรื่อง</span></div></li>
+        <li><div><b data-en>Pick a folder</b><b data-th>เลือกโฟลเดอร์</b><span data-en>Click the folder button and choose where files are saved.</span><span data-th>กดปุ่มโฟลเดอร์แล้วเลือกที่เก็บไฟล์</span></div></li>
+        <li><div><b data-en>Download</b><b data-th>Download</b><span data-en>Press Download. Avoid browsing the same site meanwhile, it can make some images fail.</span><span data-th>กด Download ระหว่างโหลดไม่ควรเปิดเว็บเดียวกัน เพราะรูปบางรูปอาจโหลดไม่สำเร็จ</span></div></li>
+      </ol>
+      <p class="sub" style="margin-top:24px" data-en>Prefer to build it yourself? You need <a href="https://bun.sh">Bun</a> 1.3.</p>
+      <p class="sub" style="margin-top:24px" data-th>อยากรัน build เอง? ต้องมี <a href="https://bun.sh">Bun</a> 1.3</p>
+      <div class="cmd"><pre id="cmd">bun install --frozen-lockfile
+bun run build:win</pre><button class="chip" id="copy" type="button"><span data-en>Copy</span><span data-th>คัดลอก</span></button></div>
+    </section>
+
+    <section id="screens">
+      <h2 data-en>A look inside</h2>
+      <h2 data-th>ดูหน้าตาโปรแกรม</h2>
+      <p class="sub" data-en>A compact 600×380 window that stays on top while you work. Screenshots use made-up data.</p>
+      <p class="sub" data-th>หน้าต่างเล็ก 600×380 ลอยอยู่บนสุดระหว่างทำงาน ภาพตัวอย่างใช้ข้อมูลสมมติ</p>
+      <div class="gallery">
+        <figure><img loading="lazy" src="screenshots/landing.png" width="1200" height="760" alt="Start screen with the URL field" /><figcaption data-en>Start screen</figcaption><figcaption data-th>หน้าเริ่มต้น</figcaption></figure>
+        <figure><img loading="lazy" src="screenshots/history.png" width="1200" height="760" alt="History view listing finished galleries" /><figcaption data-en>History</figcaption><figcaption data-th>History</figcaption></figure>
+        <figure><img loading="lazy" src="screenshots/settings.png" width="1200" height="760" alt="Cookie sign-in panel for exhentai.org" /><figcaption data-en>exhentai sign-in</figcaption><figcaption data-th>ล็อกอิน exhentai</figcaption></figure>
+      </div>
+    </section>
+
+    <section id="support">
+      <h2 data-en>Like it? Give it a star</h2>
+      <h2 data-th>ถูกใจ? ฝากกด Star หน่อย</h2>
+      <p class="sub" data-en>A star costs nothing and helps other people find the project. Bugs and ideas are welcome too.</p>
+      <p class="sub" data-th>การกด Star ไม่เสียอะไร และช่วยให้คนอื่นเจอโปรเจกต์นี้ แจ้งบั๊กหรือเสนอไอเดียก็ได้เช่นกัน</p>
+      <div class="support">
+        <a class="btn primary" href="https://github.com/dvgamerr-app/hentai-downloader">★ <span data-en>Star on GitHub</span><span data-th>กด Star บน GitHub</span></a>
+        <a class="btn ghost" href="https://github.com/dvgamerr-app/hentai-downloader/issues"><span data-en>Issues</span><span data-th>แจ้งปัญหา</span></a>
+        <a class="btn ghost" href="https://discord.com/invite/QDccF497Mw">Discord</a>
+        <a class="btn ghost" href="https://github.com/sponsors/dvgamerr"><span data-en>Sponsor</span><span data-th>สนับสนุน</span></a>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <p data-en>MIT licensed · <a href="https://github.com/dvgamerr-app/hentai-downloader">Source on GitHub</a> · <a href="https://github.com/dvgamerr-app/hentai-downloader/blob/main/docs/install.md">Install guide</a></p>
+    <p data-th>ไลเซนส์ MIT · <a href="https://github.com/dvgamerr-app/hentai-downloader">ซอร์สบน GitHub</a> · <a href="https://github.com/dvgamerr-app/hentai-downloader/blob/main/docs/install.md">คู่มือติดตั้ง</a></p>
+    <p data-en>Not affiliated with e-hentai.org or exhentai.org. For adults only. You are responsible for following the sites' terms and the laws that apply to you.</p>
+    <p data-th>ไม่มีส่วนเกี่ยวข้องกับ e-hentai.org หรือ exhentai.org สำหรับผู้ใหญ่เท่านั้น ผู้ใช้ต้องรับผิดชอบต่อข้อกำหนดของเว็บและกฎหมายที่เกี่ยวข้อง</p>
+  </footer>
+</div>
+<script>
+(function () {
+  var root = document.documentElement, btn = document.getElementById('lang');
+  function set(l) { root.lang = l; btn.textContent = l === 'th' ? 'EN' : 'ไทย'; try { localStorage.setItem('lang', l); } catch (e) {} }
+  var saved = null; try { saved = localStorage.getItem('lang'); } catch (e) {}
+  set(saved || ((navigator.language || '').toLowerCase().indexOf('th') === 0 ? 'th' : 'en'));
+  btn.addEventListener('click', function () { set(root.lang === 'th' ? 'en' : 'th'); });
+  document.getElementById('copy').addEventListener('click', function (e) {
+    var b = e.currentTarget, t = document.getElementById('cmd').textContent;
+    if (navigator.clipboard) navigator.clipboard.writeText(t).then(function () {
+      var old = b.innerHTML; b.textContent = '✓'; setTimeout(function () { b.innerHTML = old; }, 1400);
+    }).catch(function () {});
+  });
+  fetch('https://api.github.com/repos/dvgamerr-app/hentai-downloader').then(function (r) { return r.ok ? r.json() : null; })
+    .then(function (d) { if (d && typeof d.stargazers_count === 'number') document.getElementById('stars').textContent = '★ ' + d.stargazers_count; })
+    .catch(function () {});
+})();
+</script>
+</body>
+</html>

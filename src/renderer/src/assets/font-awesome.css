@@ -104,3 +104,6 @@
 .fa-user-circle-o:before {
   content: '\f2be';
 }
+.fa-globe:before {
+  content: '\f0ac';
+}

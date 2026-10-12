@@ -6,6 +6,7 @@ import log from 'electron-log/main'
 import icon from '../../resources/256x256.png?asset'
 import icoTray from '../../resources/16x16.png?asset'
 import { initMain, onClick } from './plugins/events.js'
+import { initUpdater } from './plugins/updater.js'
 
 log.initialize()
 log.log('env:', process.env.NODE_ENV)
@@ -158,6 +159,7 @@ function createWindow() {
   }
 
   initMain(mainApp.win)
+  initUpdater(mainApp.win)
 }
 
 app.whenReady().then(() => {

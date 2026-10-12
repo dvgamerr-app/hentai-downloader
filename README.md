@@ -11,7 +11,8 @@
 
 ## Community
 
-- [Discord](https://touno.io/s/ixj7)
+- [Discord](https://discord.com/invite/QDccF497Mw)
+- [⭐ Star on GitHub](https://github.com/dvgamerr-app/hentai-downloader)
 
 ## Overview
 
@@ -121,4 +122,4 @@ Detailed maintenance guidance and the latest optimization record are in [CLAUDE.
 
 ## If you need help You can join Discord.
 
-[![Join Us?](https://discordapp.com/api/guilds/475720106471849996/widget.png?style=banner2)](https://discord.gg/QDccF497Mw)
+[![Join Us?](https://discordapp.com/api/guilds/475720106471849996/widget.png?style=banner2)](https://discord.com/invite/QDccF497Mw)

@@ -2,8 +2,8 @@
   import { onMount, tick } from 'svelte'
   import landingJpg from './assets/landing.jpg'
 
-  const _SERVER_DONATE = 'https://touno.io/s/8jal'
-  const _SERVER_COMMUNITY = 'https://touno.io/s/ixj7'
+  const _SERVER_STAR = 'https://github.com/dvgamerr-app/hentai-downloader'
+  const _SERVER_COMMUNITY = 'https://discord.com/invite/QDccF497Mw'
   const _SERVER_WIKI = 'https://touno.io/s/dv0z'
   const STATE = { FAIL: 0, PREPARE: 1, DOWNLOAD: 2, SUCCESS: 3 }
 
@@ -340,11 +340,11 @@
               <i class="fa fa-comments-o text-[11px]"></i>
             </button>
             <button
-              title="Donate ❤"
-              onclick={() => window.electron.shell.openExternal(_SERVER_DONATE)}
-              class="w-6 h-6 flex items-center justify-center text-red-300/70 hover:text-red-300 hover:bg-white/10 transition-colors rounded-sm"
+              title="Star on GitHub ⭐"
+              onclick={() => window.electron.shell.openExternal(_SERVER_STAR)}
+              class="w-6 h-6 flex items-center justify-center text-yellow-300/70 hover:text-yellow-300 hover:bg-white/10 transition-colors rounded-sm"
             >
-              <i class="fa fa-heart text-[11px]"></i>
+              <i class="fa fa-star text-[11px]"></i>
             </button>
             <button
               disabled={state_verify}

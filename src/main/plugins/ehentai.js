@@ -5,7 +5,6 @@ import { Readable } from 'stream'
 import { pipeline } from 'stream/promises'
 import dayjs from 'dayjs'
 import settings from 'electron-settings'
-import { proxyFetch } from './lib/proxy.js'
 
 const USER_AGENT =
   'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36'
@@ -65,7 +64,7 @@ const reqHentai = async (link, options = {}) => {
   wLog(`URL REQUEST: ${link}`)
   let res
   try {
-    res = await proxyFetch(link, {
+    res = await fetch(link, {
       method: options.method || 'GET',
       headers: {
         ...DEFAULT_HEADERS,
@@ -136,7 +135,7 @@ const getImage = async (res, manga, listIndex, imageIndex, dir, emit) => {
     wLog(`Downloading... '${imageIndex + 1}' of ${manga.page} files`)
 
     try {
-      const imgRes = await proxyFetch(imageUrl, {
+      const imgRes = await fetch(imageUrl, {
         headers: {
           'user-agent': USER_AGENT,
           accept: 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',

@@ -25,8 +25,6 @@
   let url = $state('')
   let error_message = $state('')
   let directory_name = $state('')
-  let proxy_url = $state('')
-  let proxy_error = $state('')
   let manga = $state([])
   let urlRef = $state(null)
 
@@ -136,16 +134,6 @@
     }
   }
 
-  async function onSaveProxy() {
-    const result = await window.api.setProxy(proxy_url)
-    if (result.success) {
-      proxy_url = result.proxy
-      proxy_error = ''
-    } else {
-      proxy_error = result.error
-    }
-  }
-
   function onCancel() {
     if (!state_download) {
       page.option = true
@@ -221,7 +209,6 @@
     try {
       const config = await window.api.configLoaded()
       directory_name = config.directory || ''
-      proxy_url = config.proxy || ''
       sign.cookie = config.cookie || ''
       sign.name = config.igneous || null
       pretext = 'Initializing server...'
@@ -455,29 +442,6 @@
               <i class="fa fa-arrow-left text-xs"></i>
             </button>
           </div>
-          <!-- Proxy -->
-          <div class="flex items-center gap-1.5 px-3 pb-2">
-            <i class="fa fa-globe text-white/40 shrink-0 text-[11px]"></i>
-            <input
-              type="text"
-              bind:value={proxy_url}
-              onkeydown={(e) => e.key === 'Enter' && onSaveProxy()}
-              placeholder="Proxy, e.g. http://127.0.0.1:8080 (empty = none)"
-              class="flex-1 min-w-0 bg-white/10 border px-2 py-1.5 text-[11px] text-white outline-none
-                placeholder-white/30 rounded-sm {proxy_error
-                ? 'border-red-400'
-                : 'border-white/20'}"
-            />
-            <button
-              onclick={onSaveProxy}
-              class="bg-sky-500 text-white px-3 h-8 text-[11px] font-medium hover:bg-sky-400 transition-colors rounded-sm shrink-0"
-            >
-              Save
-            </button>
-          </div>
-          {#if proxy_error}
-            <div class="px-3 pb-2 text-[10px] text-red-400">{proxy_error}</div>
-          {/if}
         {/if}
       {/if}
     </div>

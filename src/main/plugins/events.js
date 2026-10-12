@@ -1,7 +1,6 @@
 import { app, clipboard, dialog, ipcMain } from 'electron'
 import settings from 'electron-settings'
 import * as hentai from './ehentai.js'
-import { getProxy, setProxy } from './lib/proxy.js'
 
 if (!settings.getSync('directory')) {
   settings.setSync('directory', app.getPath('downloads'))
@@ -10,17 +9,8 @@ if (!settings.getSync('directory')) {
 ipcMain.handle('CONFIG_LOADED', () => ({
   directory: settings.getSync('directory') || '',
   igneous: settings.getSync('igneous') || null,
-  cookie: settings.getSync('cookie') || '',
-  proxy: getProxy()
+  cookie: settings.getSync('cookie') || ''
 }))
-
-ipcMain.handle('SET_PROXY', (_, value) => {
-  try {
-    return { success: true, proxy: setProxy(value) }
-  } catch (ex) {
-    return { success: false, error: ex.message }
-  }
-})
 
 ipcMain.handle('CLEAR_COOKIE', () => {
   settings.unsetSync('cookie')

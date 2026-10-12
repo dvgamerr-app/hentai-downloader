@@ -1,125 +1,103 @@
-# Hentai Downloader ![Version](https://img.shields.io/github/package-json/v/touno-io/hentai-downloader?label=latest&style=flat-square)
+<div align="center">
 
-![Build (main)](https://img.shields.io/github/workflow/status/touno-io/hentai-downloader/Multiplatform%20Build/main?style=flat-square)
-![last commit (main)](https://img.shields.io/github/last-commit/touno-io/hentai-downloader/main.svg?style=flat-square)
-![MIT](https://img.shields.io/dub/l/vibe-d.svg?style=flat-square)
-![Bun](https://img.shields.io/badge/Bun-1.3.14-black?style=flat-square)
+<img src="resources/256x256.png" alt="Hentai Downloader icon" width="96" />
 
-![app](./docs/1639646197537.gif)
+# Hentai Downloader
 
-**คำเตือน** ไม่ควรเปิดเว็บแพนด้าเศร้า ระหว่างที่ดาวน์โหลดมังงะเพราะจะทำให้รูปบางรูปอาจจะโหลดไม่สำเร็จ
+**Paste gallery links, press Download, get tidy folders of images.**
 
-## Community
+A small desktop app for e-hentai.org and exhentai.org that queues galleries for you, so you stop saving pages one by one in a browser.
 
-- [Discord](https://discord.com/invite/QDccF497Mw)
-- [⭐ Star on GitHub](https://github.com/dvgamerr-app/hentai-downloader)
+[![Stars](https://img.shields.io/github/stars/dvgamerr-app/hentai-downloader?style=for-the-badge&color=18BC9C)](https://github.com/dvgamerr-app/hentai-downloader/stargazers)
+[![Latest release](https://img.shields.io/github/v/release/dvgamerr-app/hentai-downloader?style=for-the-badge&color=18BC9C)](https://github.com/dvgamerr-app/hentai-downloader/releases/latest)
+[![License](https://img.shields.io/github/license/dvgamerr-app/hentai-downloader?style=for-the-badge&color=18BC9C)](LICENSE)
+![Platform](https://img.shields.io/badge/Windows-installer-18BC9C?style=for-the-badge)
 
-## Overview
+[Website](https://dvgamerr.app/hentai-downloader/) · [Quick start](#quick-start) · [Install guide](docs/install.md) · [ภาษาไทย](README.th.md)
 
-โปรแกรมดาวน์โหลดมังงะจากแพนด้าเศร้าได้โดยไม่ต้องปั้ม Credits สามารถเพิ่มคิวได้เรื่อยๆ ตรวจจับ clipboard ได้จากการ copy ที่หน้าโปรแกรมได้ที่ละเรื่องหรือ หลายเรื่องพร้อมกันก็ได้
+<img src="docs/screenshots/queue.png" alt="Download queue with one gallery in progress" width="230" />
+<img src="docs/screenshots/history.png" alt="History view listing finished galleries" width="230" />
+<img src="docs/screenshots/settings.png" alt="Cookie sign-in panel for exhentai.org" width="230" />
 
-![Icon](./build/icons/256x256.png)
+**If this saves you time, please [star the repo](https://github.com/dvgamerr-app/hentai-downloader). It helps other people find it.**
 
-**ข้อจำกัด**
+</div>
 
-- ระบบจะดาวน์โหลดทีละเรื่องที่ละไฟล์เท่านั้น `(เป็นข้อจำกัดของตัวเว็บไซต์เอง และ ป้องกันการโดนแบน)`
-- ระบบไม่ตั้งชื่อตามชื่อไฟล์เดิมที่ download แต่จะตั้งชื่อใหม่เป็นเลขหน้าแทน
+> **18+ only.** The sites this app talks to host adult-oriented galleries. Use it only if you are of legal age where you live.
 
-### Features
+## Why
 
-- รับรอง `exhentai.org` และ `e-hentai.org` เท่านั้น
-- แก้ไฟล์เสียได้จาก redownload
-- บันทึก queue ให้ หากยังไม่ได้ download
+- **Queue first, download later.** Paste one link or a whole list, then start the run once. The app walks through the queue for you.
+- **Does not spend Credits/GP.** It fetches the normal viewer images, not the paid original files.
+- **Safe to re-run.** If a gallery came out incomplete, delete the broken files and press Download again. Pages that already exist on disk are skipped and only the missing ones are fetched.
+- **Gentle on the site.** One gallery, one file at a time, with timeouts and retries. That is a limit of the sites themselves, and it keeps you from getting banned.
 
-### วิธิใช้
+## Features
 
-- copy link จากเว็บ `e-hentai.org` ใส่ในช่อง url แล้วกด Enter
-- ถ้าจะเพิ่ม Queue ก็แค่ copy link มาใส่เพิ่ม
-- หรือ copy ลิ้งแบบหลายบรรทัดมาแล้ว paste ที่หน้าโปรแกรม **ตัวอย่างแบบหลายบรรทัด**
+| | Feature | What it does |
+| --- | --- | --- |
+| 📋 | **Clipboard watching** | Copy a gallery link anywhere and the app picks it up. |
+| 📝 | **Multi-line paste** | Paste many links, one per line, and they all join the queue. |
+| 🌐 | **e-hentai + exhentai** | Both sites work. For exhentai you sign in with your own browser cookies. |
+| 🗂️ | **Folder per gallery** | Images are saved into a folder named after the gallery, numbered by page. |
+| 🔁 | **Resume by skipping** | Existing pages are not downloaded twice. |
+| 🕘 | **History** | The last 200 galleries, newest first, with a button to open the folder. |
+| 📌 | **Always on top** | A compact 600×380 window that stays visible, plus a tray icon. |
+| ⬆️ | **Auto update** | Installed builds check GitHub Releases and offer to restart into the new version. |
+
+<details>
+<summary>More screenshots</summary>
+
+<img src="docs/screenshots/landing.png" alt="Start screen with the URL field" width="460" />
+
+</details>
+
+## Quick start
+
+1. Open the [latest release](https://github.com/dvgamerr-app/hentai-downloader/releases/latest) and download `hentai-downloader-<version>-setup.exe`.
+2. Run the installer. A desktop shortcut is created.
+3. Copy a gallery link such as `https://e-hentai.org/g/1234567/abcdef0123/` and paste it into the URL field, then press Enter. Repeat to add more, or paste several lines at once.
+4. Click the folder button to choose where to save, then click **Download**.
+
+For exhentai.org, open the sign-in panel and paste your session cookie. The steps are shown inside the app and written out in the [install guide](docs/install.md).
+
+Only the Windows installer is published on Releases today. macOS and Linux can be built from source, see below.
+
+## Architecture
 
 ```
-https://e-hentai.org/g/1161024/4cf43275bc/
-https://e-hentai.org/g/1160960/81818b89fe/
-https://e-hentai.org/g/1132634/ddc026cba5/
-https://e-hentai.org/g/1109336/bec482d462/
+ Svelte 5 UI  ──window.api──▶  preload  ──IPC──▶  main process
+ (renderer)                                       ├─ ehentai.js  fetch + stream to disk
+                                                  ├─ history.js  electron-settings
+                                                  └─ updater.js  electron-updater
 ```
 
-- กดปุ่ม folder เพื่อเลือก path ที่ต้องการจะ save ไฟล์ลง
-- กดปุ่ม download เพื่อเริ่มดาวน์โหลดมังงะ
+Electron, Svelte 5, Tailwind CSS 4, bundled with electron-vite and managed with Bun. Images are streamed straight to disk, never buffered in memory.
 
-## What's Changed
+## Develop
 
-- แก้ปัญหาโหลดไฟล์ไม่สมบูรณ์ด้วยการลบไฟล์ที่มีปัญหาทิ้ง แล้วกด Download อีกครั้ง โปรแกรมจะโหลดใหม่จะไฟล์ที่ขาดไปให้ใหม่
-- `exhentai.org` via `cookie` download supported.
-
-![image](https://user-images.githubusercontent.com/10203425/146333356-656c53de-37ee-4118-b9c3-6ddc7ca7caf9.png)
-
-- Awaly on Top with try icon.
-- Watch clipboard and parse manga.
-- New Button Join `Discord Community`
-- New Button Link `Donate`
-- New Button `Setting` and `History`
-
-### Changelog `v2.2.0`
-
-- Addon script join your session exhentai.org.
-- Update UI
-- Update electron `v3` to `v11`
-- Change request-promise module to axios module.
-- Fixed cookie jar to tough-cookie.
-- Fixed headers sending with SSL
-- Fixed SSL Verify with download images.
-- Fixed cookie show error from UI
-- Fixed Can't load `ex` and `e-` at the same time.
-
-## Development
-
-The application uses Electron 41, Svelte 5, Tailwind CSS 4, and Bun 1.3. Install the exact locked dependency graph with:
+You need [Bun](https://bun.sh) 1.3.
 
 ```bash
 bun install --frozen-lockfile
+bun run dev            # Electron with hot reload
+bun run build          # bundle main, preload and renderer
+bun run build:win      # Windows installer
+bun run build:mac      # macOS dmg
+bun run build:linux    # AppImage, snap, deb
 ```
 
-Start Electron with renderer hot reload:
+There is no automated test suite yet. Before sending a change, run `bunx eslint src` and `bun run build`. Architecture notes live in [CLAUDE.md](CLAUDE.md), and the previous long README is kept in [docs/readme-legacy.md](docs/readme-legacy.md).
 
-```bash
-bun run dev
-```
+## Support the project
 
-### Validation
+- ⭐ [Star on GitHub](https://github.com/dvgamerr-app/hentai-downloader)
+- 🐞 [Report a bug or request a feature](https://github.com/dvgamerr-app/hentai-downloader/issues)
+- 💬 [Join the Discord](https://discord.com/invite/QDccF497Mw)
+- ❤️ [Sponsor on GitHub](https://github.com/sponsors/dvgamerr)
 
-There is currently no automated test suite. Run lint, formatting checks, the production build, and dependency audit before release:
+> A note from the app itself: do not browse the site in the same session while a download runs. It can make some images fail to load.
 
-```bash
-bun x eslint . --ext .js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts
-bun x prettier --plugin prettier-plugin-svelte --check <changed-files>
-bun run build
-bun audit
-```
+## License and disclaimer
 
-The repository-wide Prettier check still reports legacy formatting in unrelated documentation and configuration files, so formatting changes should remain scoped to files being edited.
-
-### Package installers
-
-```bash
-# For windows
-bun run build:win
-
-# For macOS
-bun run build:mac
-
-# For Linux
-bun run build:linux
-```
-
-### Process architecture
-
-- `src/main/` owns the Electron window, tray, persistent settings, scraping, and streamed downloads.
-- `src/preload/` exposes the narrow `window.api` IPC bridge.
-- `src/renderer/` contains the Svelte renderer and Tailwind/Font Awesome assets.
-
-Detailed maintenance guidance and the latest optimization record are in [CLAUDE.md](./CLAUDE.md).
-
-## If you need help You can join Discord.
-
-[![Join Us?](https://discordapp.com/api/guilds/475720106471849996/widget.png?style=banner2)](https://discord.com/invite/QDccF497Mw)
+[MIT](LICENSE). This project is not affiliated with e-hentai.org or exhentai.org. You are responsible for following their terms and the laws that apply to you.

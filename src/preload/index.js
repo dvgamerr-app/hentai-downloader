@@ -10,6 +10,8 @@ const requestOnce = (channel, transform, ...args) =>
 const api = {
   configLoaded: () => ipcRenderer.invoke('CONFIG_LOADED'),
 
+  openExternal: (url) => ipcRenderer.invoke('OPEN_EXTERNAL', url),
+
   historyList: () => ipcRenderer.invoke('HISTORY_LIST'),
 
   historyRemove: (ref) => ipcRenderer.invoke('HISTORY_REMOVE', ref),

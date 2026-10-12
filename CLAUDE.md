@@ -104,3 +104,10 @@ All renderer↔main communication goes through named IPC channels defined in `sr
 - `bun run build`: passed for main, preload, and renderer.
 - Playwright Electron smoke test: the repository driver launched a child Electron process but did not return a window within the automation timeout; the spawned process tree was terminated.
 - No automated test suite exists.
+
+## Dependency refresh — 2026-10-12
+
+- Bumped Electron 41 → 44, ESLint 9 → 10 (with `@electron-toolkit/eslint-config` 3), prettier-plugin-svelte 3 → 4, and minor/patch updates. Vite stays on ^7 because electron-vite 5 only declares peer support up to Vite 7.
+- ESLint 10 enables `preserve-caught-error`; rethrown errors in `ehentai.js` and `ex/gallery.js` now carry `{ cause: ex }`. `reqHentai` also appends the fetch cause code (e.g. `ECONNREFUSED`) to the `fetch failed` message so network failures are diagnosable.
+- Verified: `bun install --frozen-lockfile`, `bun run build` (main, preload, renderer), `bunx eslint src` (0 errors). Do not run `bun run lint` casually: `--fix` rewrites line endings across source files.
+- Not verified: app launch under Electron 44. The `bun audit` counts above predate this refresh.

@@ -20,10 +20,10 @@ export default async (uri) => {
     if (ex.statusCode === 404) {
       if (ex.error) {
         // logs('hentai-downloader', `*rare*: https://${uri.hostname}${uri.pathname}`)
-        throw new Error('This gallery has been removed or is unavailable.')
+        throw new Error('This gallery has been removed or is unavailable.', { cause: ex })
       } else {
         // logs('hentai-downloader', `*error*: ${link}\n${ex.name.toString()}`)
-        throw new Error(ex.name)
+        throw new Error(ex.name, { cause: ex })
       }
     } else {
       // logs('hentai-downloader', `*error*: ${link}\n${ex.toString()}`)

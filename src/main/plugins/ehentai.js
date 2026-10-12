@@ -75,9 +75,11 @@ const reqHentai = async (link, options = {}) => {
       signal: options.signal || AbortSignal.timeout(30_000)
     })
   } catch (ex) {
-    const msg = ex.name === 'TimeoutError' ? `Request timed out: ${link}` : ex.message
+    const reason = ex.cause?.code || ex.cause?.message
+    const base = ex.name === 'TimeoutError' ? `Request timed out: ${link}` : ex.message
+    const msg = reason && reason !== base ? `${base} (${reason})` : base
     wError(`URL ERROR: ${msg}`)
-    throw new Error(msg)
+    throw new Error(msg, { cause: ex })
   }
   if (!res.ok) {
     const text = await res.text()

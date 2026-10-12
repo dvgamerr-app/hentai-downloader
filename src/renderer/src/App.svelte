@@ -2,8 +2,8 @@
   import { onMount, tick } from 'svelte'
   import landingJpg from './assets/landing.jpg'
 
-  const _SERVER_DONATE = 'https://touno.io/s/8jal'
-  const _SERVER_COMMUNITY = 'https://touno.io/s/ixj7'
+  const _SERVER_STAR = 'https://github.com/dvgamerr-app/hentai-downloader'
+  const _SERVER_COMMUNITY = 'https://discord.com/invite/QDccF497Mw'
   const _SERVER_WIKI = 'https://touno.io/s/dv0z'
   const STATE = { FAIL: 0, PREPARE: 1, DOWNLOAD: 2, SUCCESS: 3 }
 
@@ -12,7 +12,9 @@
   let exmsg = $state('')
 
   let sign = $state({ name: null, cookie: '' })
-  let page = $state({ signin: false, option: false })
+  let page = $state({ signin: false, option: false, history: false })
+  let history = $state([])
+  let history_error = $state('')
 
   let bar = $state({ step: 0, total: 1 })
   let state_verify = $state(false)
@@ -25,8 +27,6 @@
   let url = $state('')
   let error_message = $state('')
   let directory_name = $state('')
-  let proxy_url = $state('')
-  let proxy_error = $state('')
   let manga = $state([])
   let urlRef = $state(null)
 
@@ -54,6 +54,7 @@
   const checkURL = (u) => /hentai\.org\/\w\/\d{1,8}\/[0-9a-f]+?\//i.test(u)
 
   async function urlBegin() {
+    page.history = false
     const [ref] = /\/\w\/\d{1,8}\/[0-9a-f]+?\//i.exec(new URL(url).pathname) ?? []
     const found = manga.some((m) => m.status !== STATE.SUCCESS && m.ref === ref)
     manga = manga.filter((m) => m.status !== STATE.SUCCESS)
@@ -98,6 +99,7 @@
   }
 
   function beginDownload() {
+    page.history = false
     url = ''
     error_message = ''
     state_verify = true
@@ -136,15 +138,27 @@
     }
   }
 
-  async function onSaveProxy() {
-    const result = await window.api.setProxy(proxy_url)
-    if (result.success) {
-      proxy_url = result.proxy
-      proxy_error = ''
-    } else {
-      proxy_error = result.error
-    }
+  async function toggleHistory() {
+    page.history = !page.history
+    history_error = ''
+    if (page.history) history = await window.api.historyList()
   }
+
+  async function onHistoryOpen(item) {
+    const res = await window.api.historyOpen(item.directory)
+    history_error = res.success ? '' : res.error
+  }
+
+  async function onHistoryRemove(item) {
+    history = await window.api.historyRemove(item.ref)
+  }
+
+  async function onHistoryClear() {
+    history = await window.api.historyClear()
+  }
+
+  const formatDate = (iso) =>
+    new Date(iso).toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' })
 
   function onCancel() {
     if (!state_download) {
@@ -221,7 +235,6 @@
     try {
       const config = await window.api.configLoaded()
       directory_name = config.directory || ''
-      proxy_url = config.proxy || ''
       sign.cookie = config.cookie || ''
       sign.name = config.igneous || null
       pretext = 'Initializing server...'
@@ -251,25 +264,25 @@
 >
   {#if !landing}
     <!-- ─── Toolbar ───────────────────────────────────────────────────────── -->
-    <div class="shrink-0 bg-[#2C3E50] text-white">
+    <div class="shrink-0 bg-white text-gray-800 border-b border-gray-300">
       {#if page.signin}
         <!-- Cookie sign-in form -->
         <form class="flex gap-3 px-3 py-2.5" onsubmit={onSignIn}>
           <div
-            class="flex-1 text-[10px] leading-[1.5] border-r border-white/15 pr-3 overflow-hidden"
+            class="flex-1 text-[10px] leading-[1.5] border-r border-gray-300 pr-3 overflow-hidden"
           >
-            <p class="text-white/70 mb-1">
+            <p class="text-gray-700 mb-1">
               เข้าใช้ <button
                 type="button"
                 class="text-[#18BC9C] underline font-bold cursor-pointer"
                 onclick={() => window.electron.shell.openExternal(_SERVER_WIKI)}
                 >exhentai.org</button
               >
-              &nbsp;กด <code class="bg-white/15 px-1 rounded">F12</code>
-              → <code class="bg-white/15 px-1 rounded">Console</code>
-              → พิมพ์ <code class="bg-white/15 px-1 rounded">copy(document.cookie)</code>
-              → <code class="bg-white/15 px-1 rounded">ENTER</code>
-              แล้ว <code class="bg-white/15 px-1 rounded">Ctrl+V</code> ด้านขวา
+              &nbsp;กด <code class="bg-gray-200 px-1 rounded">F12</code>
+              → <code class="bg-gray-200 px-1 rounded">Console</code>
+              → พิมพ์ <code class="bg-gray-200 px-1 rounded">copy(document.cookie)</code>
+              → <code class="bg-gray-200 px-1 rounded">ENTER</code>
+              แล้ว <code class="bg-gray-200 px-1 rounded">Ctrl+V</code> ด้านขวา
             </p>
             {#if error_message}
               <p class="flex items-center gap-1 text-red-300 font-medium mt-1">
@@ -286,8 +299,8 @@
                 type="text"
                 placeholder="Paste cookie here"
                 bind:value={sign.cookie}
-                class="border border-white/25 bg-white/10 px-2 py-1 text-[10px] text-white outline-none
-                  placeholder-white/35 focus:border-[#18BC9C] focus:bg-white/15 transition-colors rounded-sm"
+                class="border border-gray-300 bg-gray-100 px-2 py-1 text-[10px] text-gray-800 outline-none
+                  placeholder-gray-400 focus:border-[#18BC9C] focus:bg-white transition-colors rounded-sm"
               />
               <button
                 type="submit"
@@ -299,39 +312,39 @@
             </div>
           {:else}
             <div class="w-40 flex items-center justify-center gap-2 shrink-0">
-              <i class="fa fa-circle-o-notch fa-spin text-white/50"></i>
-              <span class="text-[10px] text-white/50">Signing in...</span>
+              <i class="fa fa-circle-o-notch fa-spin text-gray-500"></i>
+              <span class="text-[10px] text-gray-500">Signing in...</span>
             </div>
           {/if}
         </form>
       {:else}
         <!-- Save path row -->
-        <div class="flex items-center h-7 px-3 gap-2 border-b border-white/10">
-          <i class="fa fa-folder-o text-white/40 shrink-0 text-[10px]"></i>
+        <div class="flex items-center h-7 px-3 gap-2 border-b border-gray-200">
+          <i class="fa fa-folder-o text-gray-500 shrink-0 text-[10px]"></i>
           <span
             class="flex-1 truncate text-[10px] min-w-0 {directory_name
-              ? 'text-white/55'
-              : 'text-white/30 italic'}">{directory_name || 'No directory selected'}</span
+              ? 'text-gray-600'
+              : 'text-gray-400 italic'}">{directory_name || 'No directory selected'}</span
           >
           <div class="flex items-center gap-0.5 shrink-0">
             {#if sign.name}
-              <span class="text-white/40 text-[10px] mr-2">
+              <span class="text-gray-500 text-[10px] mr-2">
                 <i class="fa fa-user-circle-o mr-0.5"></i>{getHideName(sign.name)}
               </span>
             {/if}
             <button
               title="Join Discord Community"
               onclick={() => window.electron.shell.openExternal(_SERVER_COMMUNITY)}
-              class="w-6 h-6 flex items-center justify-center text-sky-300/70 hover:text-sky-300 hover:bg-white/10 transition-colors rounded-sm"
+              class="w-6 h-6 flex items-center justify-center border border-sky-400 text-sky-500 hover:bg-sky-50 transition-colors rounded-sm"
             >
               <i class="fa fa-comments-o text-[11px]"></i>
             </button>
             <button
-              title="Donate ❤"
-              onclick={() => window.electron.shell.openExternal(_SERVER_DONATE)}
-              class="w-6 h-6 flex items-center justify-center text-red-300/70 hover:text-red-300 hover:bg-white/10 transition-colors rounded-sm"
+              title="Star on GitHub ⭐"
+              onclick={() => window.electron.shell.openExternal(_SERVER_STAR)}
+              class="w-6 h-6 flex items-center justify-center border border-amber-400 text-amber-500 hover:bg-amber-50 transition-colors rounded-sm"
             >
-              <i class="fa fa-heart text-[11px]"></i>
+              <i class="fa fa-star text-[11px]"></i>
             </button>
             <button
               disabled={state_verify}
@@ -340,8 +353,8 @@
               }}
               class="h-6 px-2 text-[10px] font-medium transition-colors rounded-sm
                 {state_verify
-                ? 'text-white/25 cursor-not-allowed'
-                : 'text-yellow-300/80 hover:text-yellow-300 hover:bg-white/10'}"
+                ? 'border border-gray-200 text-gray-300 cursor-not-allowed'
+                : 'border border-gray-300 text-gray-500 hover:bg-gray-100'}"
             >
               <i class="fa fa-key mr-0.5"></i>Cookie
             </button>
@@ -355,7 +368,7 @@
               {#if !state_verify}
                 <div class="relative">
                   <i
-                    class="fa fa-link absolute left-2 top-1/2 -translate-y-1/2 text-white/25 text-[10px] pointer-events-none"
+                    class="fa fa-link absolute left-2 top-1/2 -translate-y-1/2 text-gray-400 text-[10px] pointer-events-none"
                   ></i>
                   <input
                     bind:this={urlRef}
@@ -367,24 +380,24 @@
                       : 'https://exhentai.org/g/...'}
                     maxlength="80"
                     onkeyup={(e) => e.key === 'Enter' && onQueue()}
-                    class="w-full bg-white/10 border {error_message
+                    class="w-full bg-gray-100 border {error_message
                       ? 'border-red-400/70'
-                      : 'border-white/20'}
-                      pl-6 pr-2 py-1.5 text-[11px] text-white outline-none rounded-sm
-                      placeholder-white/25 focus:border-[#18BC9C] focus:bg-white/15 transition-colors"
+                      : 'border-gray-300'}
+                      pl-6 pr-2 py-1.5 text-[11px] text-gray-800 outline-none rounded-sm
+                      placeholder-gray-400 focus:border-[#18BC9C] focus:bg-white transition-colors"
                   />
                 </div>
               {:else}
                 <div>
                   <div class="flex items-center justify-between mb-1">
-                    <span class="text-[10px] text-white/50 truncate">{state_msg}</span>
+                    <span class="text-[10px] text-gray-500 truncate">{state_msg}</span>
                     <span class="text-[10px] text-[#18BC9C] font-medium shrink-0 ml-2"
                       >{barPct}%</span
                     >
                   </div>
-                  <div class="w-full bg-white/10 h-1.5 rounded-full overflow-hidden">
+                  <div class="w-full bg-gray-200 h-1.5 rounded-full overflow-hidden">
                     <div
-                      class="bg-[#18BC9C] h-full rounded-full transition-all duration-300"
+                      class="bg-[#4a5a6a] h-full rounded-full transition-all duration-300"
                       style="width:{barPct}%"
                     ></div>
                   </div>
@@ -399,7 +412,7 @@
                 class="flex items-center gap-1.5 h-8 px-3 text-[11px] font-medium rounded-sm transition-colors
                   {!state_verify
                   ? 'bg-[#18BC9C] text-white hover:bg-[#16a085] shadow-sm'
-                  : 'bg-white/10 text-white/35 cursor-not-allowed'}
+                  : 'bg-gray-100 text-gray-400 cursor-not-allowed'}
                   disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <i class="fa {state_icon}"></i>{state_name}
@@ -411,7 +424,7 @@
                 class="w-8 h-8 flex items-center justify-center rounded-sm transition-colors
                   {state_download
                   ? 'text-red-400 bg-red-400/15 hover:bg-red-400/25'
-                  : 'text-white/45 hover:bg-white/10 hover:text-white'}
+                  : 'text-gray-500 hover:bg-gray-100 hover:text-gray-800'}
                   disabled:opacity-25 disabled:cursor-not-allowed"
               >
                 <i class="fa {state_download ? 'fa-times' : 'fa-gear'} text-xs"></i>
@@ -419,7 +432,11 @@
               <button
                 title="History"
                 disabled={state_verify}
-                class="w-8 h-8 flex items-center justify-center text-white/35 hover:bg-white/10 hover:text-white/70 rounded-sm transition-colors
+                onclick={toggleHistory}
+                class="w-8 h-8 flex items-center justify-center rounded-sm transition-colors
+                  {page.history
+                  ? 'text-sky-600 bg-sky-50'
+                  : 'text-gray-400 hover:bg-gray-100 hover:text-gray-600'}
                   disabled:opacity-25 disabled:cursor-not-allowed"
               >
                 <i class="fa fa-history text-xs"></i>
@@ -429,14 +446,14 @@
         {:else}
           <!-- Directory picker -->
           <div class="flex items-center gap-1.5 px-3 py-2">
-            <i class="fa fa-folder-open-o text-white/40 shrink-0 text-[11px]"></i>
+            <i class="fa fa-folder-open-o text-gray-500 shrink-0 text-[11px]"></i>
             <input
               type="text"
               readonly
               bind:value={directory_name}
               placeholder="Select a download directory..."
-              class="flex-1 min-w-0 bg-white/10 border border-white/20 px-2 py-1.5 text-[11px] text-white
-                outline-none placeholder-white/30 rounded-sm"
+              class="flex-1 min-w-0 bg-gray-100 border border-gray-300 px-2 py-1.5 text-[11px] text-white
+                outline-none placeholder-gray-400 rounded-sm"
             />
             <button
               onclick={onBrowse}
@@ -449,35 +466,12 @@
               onclick={() => {
                 page.option = false
               }}
-              class="w-8 h-8 flex items-center justify-center border border-white/20 text-white/45
-                hover:border-white/40 hover:text-white transition-colors rounded-sm shrink-0"
+              class="w-8 h-8 flex items-center justify-center border border-gray-300 text-gray-500
+                hover:border-gray-400 hover:text-gray-800 transition-colors rounded-sm shrink-0"
             >
               <i class="fa fa-arrow-left text-xs"></i>
             </button>
           </div>
-          <!-- Proxy -->
-          <div class="flex items-center gap-1.5 px-3 pb-2">
-            <i class="fa fa-globe text-white/40 shrink-0 text-[11px]"></i>
-            <input
-              type="text"
-              bind:value={proxy_url}
-              onkeydown={(e) => e.key === 'Enter' && onSaveProxy()}
-              placeholder="Proxy, e.g. http://127.0.0.1:8080 (empty = none)"
-              class="flex-1 min-w-0 bg-white/10 border px-2 py-1.5 text-[11px] text-white outline-none
-                placeholder-white/30 rounded-sm {proxy_error
-                ? 'border-red-400'
-                : 'border-white/20'}"
-            />
-            <button
-              onclick={onSaveProxy}
-              class="bg-sky-500 text-white px-3 h-8 text-[11px] font-medium hover:bg-sky-400 transition-colors rounded-sm shrink-0"
-            >
-              Save
-            </button>
-          </div>
-          {#if proxy_error}
-            <div class="px-3 pb-2 text-[10px] text-red-400">{proxy_error}</div>
-          {/if}
         {/if}
       {/if}
     </div>
@@ -490,112 +484,164 @@
       </div>
     {/if}
 
-    <!-- ─── Queue Table ──────────────────────────────────────────────────── -->
-    <div class="flex-1 overflow-y-auto overflow-x-hidden bg-white">
-      <table class="w-full border-collapse table-fixed">
-        <colgroup>
-          <col class="w-[6%]" />
-          <col class="w-[55%]" />
-          <col class="w-[10%]" />
-          <col class="w-[13%]" />
-          <col class="w-[16%]" />
-        </colgroup>
-        <thead class="sticky top-0 z-10 bg-gray-100 border-b border-gray-200">
-          <tr>
-            <th
-              class="py-2 px-2 text-center font-semibold text-[9px] text-gray-400 uppercase tracking-wider"
-              >#</th
+    {#if page.history}
+      <!-- ─── History ──────────────────────────────────────────────────────── -->
+      <div class="flex-1 overflow-y-auto overflow-x-hidden bg-white">
+        <div class="sticky top-0 z-10 flex items-center justify-between bg-[#2C3E50] px-3 py-1.5">
+          <span class="text-[9px] font-semibold text-white uppercase tracking-wider">
+            History ({history.length})
+          </span>
+          {#if history.length > 0}
+            <button
+              onclick={onHistoryClear}
+              class="text-[10px] text-red-400 hover:text-red-500 transition-colors"
             >
-            <th
-              class="py-2 px-2 font-semibold text-left text-[9px] text-gray-400 uppercase tracking-wider"
-              >Name</th
-            >
-            <th
-              class="py-2 px-2 text-center font-semibold text-[9px] text-gray-400 uppercase tracking-wider"
-              >Pages</th
-            >
-            <th
-              class="py-2 px-2 text-center font-semibold text-[9px] text-gray-400 uppercase tracking-wider"
-              >Lang</th
-            >
-            <th
-              class="py-2 px-2 text-right font-semibold text-[9px] text-gray-400 uppercase tracking-wider pr-3"
-              >Size</th
-            >
-          </tr>
-        </thead>
-        <tbody>
-          {#if manga.length === 0}
-            <tr>
-              <td colspan="5" class="text-center py-14">
-                <div class="flex flex-col items-center gap-2">
-                  <i class="fa fa-inbox text-gray-200 text-4xl"></i>
-                  <span class="text-gray-400 text-[11px] font-medium">Queue is empty</span>
-                  <span class="text-gray-300 text-[10px]">Paste a gallery URL to begin</span>
-                </div>
-              </td>
-            </tr>
-          {:else}
-            {#each manga as item, i (item.ref ?? `${item.name}-${i}`)}
-              <tr
-                class="border-b border-gray-100 transition-colors
-                  {i % 2 === 1 ? 'bg-gray-50/60' : 'bg-white'}
-                  {state_download && item.status === STATE.DOWNLOAD
-                  ? '!bg-emerald-50 !border-emerald-100'
-                  : ''}
-                  {state_download && item.status === STATE.SUCCESS ? '!bg-emerald-50/40' : ''}
-                  hover:bg-blue-50/40"
+              Clear all
+            </button>
+          {/if}
+        </div>
+        {#if history_error}
+          <div class="px-3 py-1.5 text-[10px] text-red-500 bg-red-50 border-b border-red-100">
+            {history_error}
+          </div>
+        {/if}
+        {#if history.length === 0}
+          <div class="flex flex-col items-center gap-2 py-14">
+            <i class="fa fa-history text-gray-200 text-4xl"></i>
+            <span class="text-gray-400 text-[11px] font-medium">No download history yet</span>
+          </div>
+        {:else}
+          <ul>
+            {#each history as item (item.ref)}
+              <li
+                class="flex items-center gap-2 px-3 py-1.5 border-b border-gray-100 hover:bg-gray-300/60"
               >
-                <td class="py-1.5 px-2 text-center">
-                  {#if !state_download}
-                    <span class="text-gray-300 text-[10px] font-medium">{i + 1}</span>
-                  {:else}
-                    <i
-                      class="fa {statusIcon(!item.error ? item.status : 0)} text-[11px]
-                        {item.status === STATE.SUCCESS ? 'text-[#18BC9C]' : ''}
-                        {item.status === STATE.DOWNLOAD ? 'text-[#18BC9C]' : ''}
-                        {item.status === STATE.FAIL ? 'text-red-400' : ''}
-                        {item.status === STATE.PREPARE ? 'text-gray-300' : ''}"
-                    ></i>
-                  {/if}
-                </td>
-                <td class="py-1.5 px-2 min-w-0">
-                  <span
-                    class="block truncate text-[11px]
-                      {state_download && item.status === STATE.DOWNLOAD
-                      ? 'text-[#18BC9C] font-medium'
-                      : ''}
-                      {item.status === STATE.SUCCESS && state_download ? 'text-[#18BC9C]' : ''}
-                      {item.status === STATE.FAIL ? 'text-red-400' : ''}
-                      {item.status === STATE.PREPARE || !state_download ? 'text-gray-700' : ''}"
-                  >
+                <div class="flex-1 min-w-0">
+                  <span class="block truncate text-[11px] text-gray-700" title={item.name}>
                     {item.name}
                   </span>
+                  <span class="block truncate text-[10px] text-gray-400">
+                    {formatDate(item.date)} · {item.page ?? '?'} pages{item.language
+                      ? ` · ${item.language}`
+                      : ''}{item.size ? ` · ${item.size}` : ''}
+                  </span>
+                </div>
+                <button
+                  title="Open folder"
+                  onclick={() => onHistoryOpen(item)}
+                  class="w-6 h-6 flex items-center justify-center text-sky-400 hover:bg-sky-50 transition-colors rounded-sm shrink-0"
+                >
+                  <i class="fa fa-folder-open-o text-[11px]"></i>
+                </button>
+                <button
+                  title="Remove from history"
+                  onclick={() => onHistoryRemove(item)}
+                  class="w-6 h-6 flex items-center justify-center text-gray-300 hover:text-red-400 hover:bg-red-50 transition-colors rounded-sm shrink-0"
+                >
+                  <i class="fa fa-trash text-[11px]"></i>
+                </button>
+              </li>
+            {/each}
+          </ul>
+        {/if}
+      </div>
+    {:else}
+      <!-- ─── Queue Table ──────────────────────────────────────────────────── -->
+      <div class="flex-1 overflow-y-auto overflow-x-hidden bg-white">
+        <table class="w-full border-collapse table-fixed">
+          <colgroup>
+            <col class="w-[6%]" />
+            <col class="w-[55%]" />
+            <col class="w-[10%]" />
+            <col class="w-[13%]" />
+            <col class="w-[16%]" />
+          </colgroup>
+          <thead class="sticky top-0 z-10 bg-[#2C3E50]">
+            <tr>
+              <th class="py-2 px-2 text-center font-bold text-[11px] text-white">#</th>
+              <th
+                class="py-2 px-2 font-semibold text-left text-[9px] text-gray-400 uppercase tracking-wider"
+                >Name</th
+              >
+              <th class="py-2 px-2 text-center font-bold text-[11px] text-white">Pages</th>
+              <th class="py-2 px-2 text-center font-bold text-[11px] text-white">Lang</th>
+              <th class="py-2 px-2 text-right font-bold text-[11px] text-white pr-3">Size</th>
+            </tr>
+          </thead>
+          <tbody>
+            {#if manga.length === 0}
+              <tr>
+                <td colspan="5" class="text-center py-14">
+                  <div class="flex flex-col items-center gap-2">
+                    <i class="fa fa-inbox text-gray-200 text-4xl"></i>
+                    <span class="text-gray-400 text-[11px] font-medium">Queue is empty</span>
+                    <span class="text-gray-300 text-[10px]">Paste a gallery URL to begin</span>
+                  </div>
                 </td>
-                {#if item.error}
-                  <td colspan="3" class="py-1.5 px-2">
-                    <span class="flex items-center gap-1 text-[10px] text-red-400">
-                      <i class="fa fa-exclamation-triangle shrink-0"></i>
-                      <span class="truncate italic">{item.error}</span>
+              </tr>
+            {:else}
+              {#each manga as item, i (item.ref ?? `${item.name}-${i}`)}
+                <tr
+                  data-active={state_download && item.status === STATE.DOWNLOAD}
+                  class="group border-b border-white transition-colors
+                  {i % 2 === 1 ? 'bg-gray-100' : 'bg-gray-200/70'}
+                  {state_download && item.status === STATE.DOWNLOAD ? '!bg-[#18BC9C]' : ''}
+                  hover:bg-gray-300/60"
+                >
+                  <td class="py-1.5 px-2 text-center">
+                    {#if !state_download}
+                      <span class="text-gray-300 text-[10px] font-medium">{i + 1}</span>
+                    {:else}
+                      <i
+                        class="fa {statusIcon(!item.error ? item.status : 0)} text-[11px]
+                        {item.status === STATE.SUCCESS ? 'text-gray-700' : ''}
+                        {item.status === STATE.DOWNLOAD ? 'text-white' : ''}
+                        {item.status === STATE.FAIL ? 'text-red-400' : ''}
+                        {item.status === STATE.PREPARE ? 'text-gray-700' : ''}"
+                      ></i>
+                    {/if}
+                  </td>
+                  <td class="py-1.5 px-2 min-w-0">
+                    <span
+                      class="block truncate text-[11px]
+                      {state_download && item.status === STATE.DOWNLOAD
+                        ? 'text-white font-medium'
+                        : ''}
+                      {item.status === STATE.SUCCESS && state_download ? 'text-gray-800' : ''}
+                      {item.status === STATE.FAIL ? 'text-red-400' : ''}
+                      {item.status === STATE.PREPARE || !state_download ? 'text-gray-700' : ''}"
+                    >
+                      {item.name}
                     </span>
                   </td>
-                {:else}
-                  <td class="py-1.5 px-2 text-center text-[10px] text-gray-500"
-                    >{item.page ?? ''}</td
-                  >
-                  <td class="py-1.5 px-2 text-center text-[10px] text-gray-500"
-                    >{item.language ?? ''}</td
-                  >
-                  <td class="py-1.5 px-2 text-right text-[10px] text-gray-400 pr-3"
-                    >{item.size ?? ''}</td
-                  >
-                {/if}
-              </tr>
-            {/each}
-          {/if}
-        </tbody>
-      </table>
-    </div>
+                  {#if item.error}
+                    <td colspan="3" class="py-1.5 px-2">
+                      <span class="flex items-center gap-1 text-[10px] text-red-400">
+                        <i class="fa fa-exclamation-triangle shrink-0"></i>
+                        <span class="truncate italic">{item.error}</span>
+                      </span>
+                    </td>
+                  {:else}
+                    <td
+                      class="py-1.5 px-2 text-center text-[10px] text-gray-600 group-data-[active=true]:text-white"
+                      >{item.page ?? ''}</td
+                    >
+                    <td
+                      class="py-1.5 px-2 text-center text-[10px] text-gray-600 group-data-[active=true]:text-white"
+                      >{item.language ?? ''}</td
+                    >
+                    <td
+                      class="py-1.5 px-2 text-right text-[10px] text-gray-500 pr-3 group-data-[active=true]:text-white"
+                      >{item.size ?? ''}</td
+                    >
+                  {/if}
+                </tr>
+              {/each}
+            {/if}
+          </tbody>
+        </table>
+      </div>
+    {/if}
 
     <!-- ─── Status Bar ────────────────────────────────────────────────────── -->
     <div class="shrink-0 h-[18px] bg-[#2C3E50] px-3 flex items-center justify-between gap-2">

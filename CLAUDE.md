@@ -42,6 +42,10 @@ All UI→main calls go through `window.api.*` exposed in `src/preload/index.js`:
 | `download(data, onWatch)` | Starts download queue, calls `onWatch` per image       |
 | `login(cookie)`           | Parses and saves exhentai cookies, returns `{success}` |
 | `clipboard(onPaste)`      | Starts clipboard polling, calls `onPaste` on new text  |
+| `historyList()`           | Returns saved download history (newest first)          |
+| `historyRemove(ref)`      | Removes one entry, returns the updated list            |
+| `historyClear()`          | Clears all history, returns `[]`                       |
+| `historyOpen(directory)`  | Opens the entry's folder, returns `{success, error?}`  |
 
 ### IPC channels (events.js)
 
@@ -62,6 +66,7 @@ All renderer↔main communication goes through named IPC channels defined in `sr
 ### Scraping layer (`src/main/plugins/`)
 
 - `ehentai.js` — core scraping module. Uses **native `fetch`** (Node.js built-in, no axios) with manual cookie headers. Exports `parseHentai` (metadata fetch), `download` (image queue), `cancel`.
+- `lib/history.js` — download history persisted in `electron-settings` under `history` (max 200, newest first, one entry per gallery `ref`). `ehentai.js` calls `addHistory` after each gallery finishes; the History button in `App.svelte` toggles the list view.
 - `lib/config.js` — minimal file, just ensures the `./config` directory exists.
 - `ex/gallery.js`, `ex/login.js`, `ex/logout.js` — exhentai-specific page parsing (legacy, not wired up).
 
@@ -104,3 +109,10 @@ All renderer↔main communication goes through named IPC channels defined in `sr
 - `bun run build`: passed for main, preload, and renderer.
 - Playwright Electron smoke test: the repository driver launched a child Electron process but did not return a window within the automation timeout; the spawned process tree was terminated.
 - No automated test suite exists.
+
+## Dependency refresh — 2026-10-12
+
+- Bumped Electron 41 → 44, ESLint 9 → 10 (with `@electron-toolkit/eslint-config` 3), prettier-plugin-svelte 3 → 4, and minor/patch updates. Vite stays on ^7 because electron-vite 5 only declares peer support up to Vite 7.
+- ESLint 10 enables `preserve-caught-error`; rethrown errors in `ehentai.js` and `ex/gallery.js` now carry `{ cause: ex }`. `reqHentai` also appends the fetch cause code (e.g. `ECONNREFUSED`) to the `fetch failed` message so network failures are diagnosable.
+- Verified: `bun install --frozen-lockfile`, `bun run build` (main, preload, renderer), `bunx eslint src` (0 errors). Do not run `bun run lint` casually: `--fix` rewrites line endings across source files.
+- Not verified: app launch under Electron 44. The `bun audit` counts above predate this refresh.

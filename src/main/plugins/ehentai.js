@@ -5,7 +5,7 @@ import { Readable } from 'stream'
 import { pipeline } from 'stream/promises'
 import dayjs from 'dayjs'
 import settings from 'electron-settings'
-import { proxyFetch } from './lib/proxy.js'
+import { addHistory } from './lib/history.js'
 
 const USER_AGENT =
   'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36'
@@ -65,7 +65,7 @@ const reqHentai = async (link, options = {}) => {
   wLog(`URL REQUEST: ${link}`)
   let res
   try {
-    res = await proxyFetch(link, {
+    res = await fetch(link, {
       method: options.method || 'GET',
       headers: {
         ...DEFAULT_HEADERS,
@@ -76,9 +76,11 @@ const reqHentai = async (link, options = {}) => {
       signal: options.signal || AbortSignal.timeout(30_000)
     })
   } catch (ex) {
-    const msg = ex.name === 'TimeoutError' ? `Request timed out: ${link}` : ex.message
+    const reason = ex.cause?.code || ex.cause?.message
+    const base = ex.name === 'TimeoutError' ? `Request timed out: ${link}` : ex.message
+    const msg = reason && reason !== base ? `${base} (${reason})` : base
     wError(`URL ERROR: ${msg}`)
-    throw new Error(msg)
+    throw new Error(msg, { cause: ex })
   }
   if (!res.ok) {
     const text = await res.text()
@@ -136,7 +138,7 @@ const getImage = async (res, manga, listIndex, imageIndex, dir, emit) => {
     wLog(`Downloading... '${imageIndex + 1}' of ${manga.page} files`)
 
     try {
-      const imgRes = await proxyFetch(imageUrl, {
+      const imgRes = await fetch(imageUrl, {
         headers: {
           'user-agent': USER_AGENT,
           accept: 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
@@ -221,6 +223,7 @@ export const download = async (list, directory, emit) => {
         iImage++
         imgTotal++
       }
+      addHistory(manga, mangaDir)
       iManga++
     }
   } catch (ex) {

@@ -10,7 +10,13 @@ const requestOnce = (channel, transform, ...args) =>
 const api = {
   configLoaded: () => ipcRenderer.invoke('CONFIG_LOADED'),
 
-  setProxy: (value) => ipcRenderer.invoke('SET_PROXY', value),
+  historyList: () => ipcRenderer.invoke('HISTORY_LIST'),
+
+  historyRemove: (ref) => ipcRenderer.invoke('HISTORY_REMOVE', ref),
+
+  historyClear: () => ipcRenderer.invoke('HISTORY_CLEAR'),
+
+  historyOpen: (directory) => ipcRenderer.invoke('HISTORY_OPEN', directory),
 
   clearCookie: () => ipcRenderer.invoke('CLEAR_COOKIE'),
 

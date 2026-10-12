@@ -38,8 +38,11 @@
   }
 }
 
-.fa-heart:before {
-  content: '\f004';
+.fa-star:before {
+  content: '\f005';
+}
+.fa-trash:before {
+  content: '\f1f8';
 }
 .fa-check:before {
   content: '\f00c';

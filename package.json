@@ -29,6 +29,7 @@
   "main": "./out/main/index.js",
   "scripts": {
     "format": "prettier --plugin prettier-plugin-svelte --write .",
+    "lint:check": "eslint src",
     "lint": "eslint . --ext .js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix",
     "start": "electron-vite preview",
     "dev": "electron-vite dev",

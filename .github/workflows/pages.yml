@@ -33,11 +33,16 @@ jobs:
           persist-credentials: false
 
       - name: Assemble site
+        env:
+          PUBLIC_TRACEWAY_DSN: ${{ secrets.PUBLIC_TRACEWAY_DSN }}
         run: |
           mkdir -p _site/screenshots
           cp -r site/. _site/
           cp docs/screenshots/*.png _site/screenshots/
           cp resources/256x256.png _site/icon.png
+          if [ -n "$PUBLIC_TRACEWAY_DSN" ]; then
+            sed -i "s|__PUBLIC_TRACEWAY_DSN__|$PUBLIC_TRACEWAY_DSN|" _site/index.html
+          fi
 
       - name: Configure Pages
         uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0

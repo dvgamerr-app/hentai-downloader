@@ -236,5 +236,14 @@ bun run build:win</pre><button class="chip" id="copy" type="button"><span data-e
     .catch(function () {});
 })();
 </script>
+<script src="https://cdn.jsdelivr.net/npm/@tracewayapp/frontend@1.2.1/dist/traceway.iife.global.js"></script>
+<script>
+(function () {
+  // Replaced with the PUBLIC_TRACEWAY_DSN secret at deploy time; stays a no-op when unset.
+  var dsn = "__PUBLIC_TRACEWAY_DSN__";
+  if (dsn.indexOf("@") < 1 || !window.Traceway) return;
+  try { window.Traceway.init(dsn, { recordAllSessions: true }); } catch (e) {}
+})();
+</script>
 </body>
 </html>

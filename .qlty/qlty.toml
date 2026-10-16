@@ -100,3 +100,7 @@ file_patterns = [".claude/**", ".github/**", ".vscode/**", "docs/**", "site/**",
 [[exclude]]
 plugins = ["zizmor"]
 file_patterns = [".github/workflows/release.yml"]
+
+[[exclude]]
+plugins = ["editorconfig-checker"]
+file_patterns = [".github/**", "docs/**", "*.md"]
